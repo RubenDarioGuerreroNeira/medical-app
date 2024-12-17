@@ -1,40 +1,39 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import { Usuario } from '../Entities/Usuarios.entity';
-import { Roles } from '../Entities/Usuarios.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { CreateUsuarioDto } from "./dto/create-usuario.dto";
+import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
+import { Usuario } from "../Entities/Usuarios.entity";
+import { Roles } from "../Entities/Usuarios.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
-
 export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
-    private usuarioRepository:Repository <Usuario>) {}
-  
-  
-    async validatePassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
-      return await bcrypt.compare(plainPassword, hashedPassword);
-    }
-  
-  
-    async create(createUsuarioDto: CreateUsuarioDto):Promise<Usuario> {
-    
+    private usuarioRepository: Repository<Usuario>
+  ) {}
+
+  async validatePassword(
+    plainPassword: string,
+    hashedPassword: string
+  ): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
     const bUsuario = await this.usuarioRepository.findOneBy({
       email: createUsuarioDto.email,
     });
 
     if (bUsuario) {
-      throw new Error('Usuario ya existente');
-    } 
-    
+      throw new Error("Usuario ya existente");
+    }
+
     try {
-     
-     const salt=await bcrypt.genSalt(10)
-     const hashedPAss=await bcrypt.hash(createUsuarioDto.contrasena,salt)
-     
+      const salt = await bcrypt.genSalt(10);
+      const hashedPAss = await bcrypt.hash(createUsuarioDto.contrasena, salt);
+
       const usuario = this.usuarioRepository.create({
         nombre: createUsuarioDto.nombre,
         apellido: createUsuarioDto.apellido,
@@ -49,8 +48,7 @@ export class UsuariosService {
       });
 
       return await this.usuarioRepository.save(usuario);
-    }
-    catch (error) {
+    } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
@@ -60,22 +58,137 @@ export class UsuariosService {
   }
 
   findOne(usuarioId: string) {
-    try{
-      const bUsuario= this.usuarioRepository.findOneBy({id:usuarioId});
-      if(!bUsuario){
-        throw new Error('Usuario no encontrado');
+    try {
+      const bUsuario = this.usuarioRepository.findOneBy({ id: usuarioId });
+      if (!bUsuario) {
+        throw new Error("Usuario no encontrado");
       }
       return bUsuario;
-    }catch(error){
+    } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
+  // async update(
+  //   usuarioId: string,
+  //   updateUsuarioDto: UpdateUsuarioDto
+  // ): Promise<Usuario> {
+  //   const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
+  //   if (!usuario) {
+  //     throw new Error("Usuario no encontrado");
+  //   }
+  //   try {
+  //     let hashedPass = usuario.contrasena;
+  //     if (updateUsuarioDto.contrasena) {
+  //       const salt = await bcrypt.genSalt(10);
+  //       hashedPass = await bcrypt.hash(updateUsuarioDto.contrasena, salt);
+  //     }
+
+  //     const usuarioModificado = this.usuarioRepository.create({
+  //       nombre: updateUsuarioDto.nombre ?? usuario.nombre,
+  //       apellido: updateUsuarioDto.apellido ?? usuario.apellido,
+  //       fecha_nacimiento:
+  //         updateUsuarioDto.fecha_nacimiento ?? usuario.fecha_nacimiento,
+  //       genero: updateUsuarioDto.genero ?? usuario.genero,
+  //       direccion: updateUsuarioDto.direccion ?? usuario.direccion,
+  //       telefonoCelular:
+  //         updateUsuarioDto.telefonoCelular ?? usuario.telefonoCelular,
+  //       telefonoContacto:
+  //         updateUsuarioDto.telefonoContacto ?? usuario.telefonoContacto,
+  //       email: updateUsuarioDto.email ?? usuario.email,
+  //       contrasena: hashedPass ?? usuario.contrasena,
+  //       rol: (updateUsuarioDto.rol as Roles) ?? usuario.rol,
+  //     });
+
+  //     return await this.usuarioRepository.save(usuarioModificado);
+  //   } catch (error) {
+  //     throw new BadRequestException(error.message);
+  //   }
+  // }
+
+  async update(
+    usuarioId: string,
+    updateUsuarioDto: UpdateUsuarioDto
+  ): Promise<Usuario> {
+    const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
+    if (!usuario) {
+      throw new Error("Usuario no encontrado");
+    }
+
+    try {
+      // Preparamos los datos actualizados
+      const datosActualizados: Partial<Usuario> = {
+        ...usuario,
+        nombre: updateUsuarioDto.nombre || usuario.nombre,
+        apellido: updateUsuarioDto.apellido || usuario.apellido,
+        fecha_nacimiento:
+          updateUsuarioDto.fecha_nacimiento || usuario.fecha_nacimiento,
+        genero: updateUsuarioDto.genero || usuario.genero,
+        direccion: updateUsuarioDto.direccion || usuario.direccion,
+        telefonoCelular:
+          updateUsuarioDto.telefonoCelular || usuario.telefonoCelular,
+        telefonoContacto:
+          updateUsuarioDto.telefonoContacto || usuario.telefonoContacto,
+        email: updateUsuarioDto.email || usuario.email,
+        rol: updateUsuarioDto.rol
+          ? (updateUsuarioDto.rol as Roles)
+          : usuario.rol,
+      };
+
+      // Manejamos la contraseña si existe
+      if (updateUsuarioDto.contrasena) {
+        const salt = await bcrypt.genSalt(10);
+        datosActualizados.contrasena = await bcrypt.hash(
+          updateUsuarioDto.contrasena,
+          salt
+        );
+      }
+
+      // Verificamos si el email ya existe (solo si se está actualizando)
+      if (updateUsuarioDto.email && updateUsuarioDto.email !== usuario.email) {
+        const emailExistente = await this.usuarioRepository.findOneBy({
+          email: updateUsuarioDto.email,
+        });
+        if (emailExistente) {
+          throw new BadRequestException("El email ya está registrado");
+        }
+      }
+
+      // Actualizamos y retornamos el usuario
+      const usuarioActualizado = await this.usuarioRepository.save({
+        ...datosActualizados,
+        id: usuarioId,
+      });
+
+      // Eliminamos la contraseña de la respuesta
+      delete usuarioActualizado.contrasena;
+
+      return usuarioActualizado;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        error.code === "23505"
+          ? "Error de duplicación en datos únicos"
+          : "Error al actualizar usuario"
+      );
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
+  async remove(usuarioId: string) {
+    const bUsuario = this.usuarioRepository.findOneBy({ id: usuarioId });
+    if (!bUsuario) {
+      throw new Error("Usuario no encontrado");
+    }
+    try {
+      await this.usuarioRepository.delete(usuarioId);
+      return {
+        message: "Usuario eliminado correctamente",
+        status: 200,
+      };
+    } catch (error) {
+      throw new Error("Usuario no encontrado");
+    }
   }
 }

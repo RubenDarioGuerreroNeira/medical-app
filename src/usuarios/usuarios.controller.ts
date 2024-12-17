@@ -25,18 +25,21 @@ export class UsuariosController {
     return this.usuariosService.findAll();
   }
 
-  @Get("/:usuarioId")
+  @Get(":usuarioId")
   findOne(@Param("usuarioId") usuarioId: string) {
     return this.usuariosService.findOne(usuarioId);
   }
 
-  @Patch(":id")
-  update(@Param("id") id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
-    return this.usuariosService.update(+id, updateUsuarioDto);
+  @Patch("update/:usuarioId")
+  update(
+    @Param("usuarioId") usuarioId: string,
+    @Body() updateUsuarioDto: UpdateUsuarioDto
+  ) {
+    return this.usuariosService.update(usuarioId, updateUsuarioDto);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.usuariosService.remove(+id);
+  @Delete("delete/:usuarioId")
+  remove(@Param("usuarioId") usuarioId: string) {
+    return this.usuariosService.remove(usuarioId);
   }
 }
