@@ -1,7 +1,5 @@
 <img src="/src/images/Logo 2 .jpg" width="320" alt="Medical Logo" />
 
-<title>Medical Appointments API</title>
-
 # Medical Appointments API
 
 ## Descripción
