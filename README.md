@@ -1,73 +1,53 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+<img src="/src/images/Logo 2 .jpg" width="320" alt="Medical Logo" />
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API de Gestión de Citas Médicas
+Descripción:
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Esta API, desarrollada con NestJS, ofrece una solución completa para la gestión de citas médicas, facilitando la administración de pacientes, médicos y sus respectivas citas en centros de salud. Está dirigida a clínicas, hospitales y consultorios médicos que buscan optimizar la organización y el control de su flujo de pacientes.
 
-## Description
+Funcionalidades:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Gestión de Citas Médicas: Permite crear, consultar, modificar y eliminar citas médicas de forma eficiente. Incluye la gestión del estado de la cita (Confirmada, Cancelada, Completada).
+Administración de Médicos: Facilita el registro y la gestión de la información de los médicos, incluyendo sus especialidades y disponibilidad.
+Control de Pacientes: Permite el registro y la gestión de la información de los pacientes, incluyendo su historial médico.
+Historial Médico: Almacena y permite el acceso al historial médico de los pacientes, mejorando la calidad de la atención.
+Autenticación Segura: Utiliza JWT (JSON Web Tokens) para garantizar la seguridad y el acceso autorizado a la API.
+Reportes: Permite generar reportes.
+Tecnologías Utilizadas:
 
-## Installation
+NestJS
+TypeScript
+PostgreSQL
+TypeORM
+Class Validator
+JWT
+Instalación:
 
-```bash
-$ npm install
-```
+Ejecución:
 
-## Running the app
+Desarrollo: npm run start:dev
+Producción: npm run build y luego npm run start:prod
+Pruebas:
 
-```bash
-# development
-$ npm run start
+Unitarias: npm run test
+E2E: npm run test:e2e
+Cobertura: npm run test:cov
+Documentación:
 
-# watch mode
-$ npm run start:dev
+Consultar la documentación de la API.
 
-# production mode
-$ npm run start:prod
-```
+Seguridad:
 
-## Test
+Autenticación mediante JWT.
+Validación de datos con Class Validator.
+Contribución:
 
-```bash
-# unit tests
-$ npm run test
+Se aceptan contribuciones. Crear un fork del repositorio, desarrollar la nueva funcionalidad en una rama separada y luego crear un Pull Request.
 
-# e2e tests
-$ npm run test:e2e
+Soporte:
 
-# test coverage
-$ npm run test:cov
-```
+Para soporte o consultas, por favor contactar a través de los canales disponibles.
 
-## Support
+Licencia:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+MIT
