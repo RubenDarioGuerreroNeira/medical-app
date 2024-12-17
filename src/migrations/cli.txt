@@ -1,0 +1,45 @@
+-- creo la migracion:   
+npm run migration:generate
+
+de la menra 2 para generar la migracion
+npx typeorm-ts-node-commonjs migration:generate ./src/migrations/RolToEnum -d ./src/data-source.ts
+
+-- ejecuto la migracion 
+npm run migration:run
+
+instalo npm install --save-dev typescript ts-node @types/node
+npm install --save typeorm @nestjs/typeorm pg
+
+
+en el json  en scripts agregar 
+"typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate ./src/migrations/Tablas -d ./src/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts"
+
+
+// src/data-source.ts
+import { DataSource } from "typeorm"
+
+export const AppDataSource = new DataSource({
+    type: "mysql", // o el tipo de base de datos que uses
+    host: "localhost",
+    port: 5432,
+    username: "Postgres",
+    password: "2980",
+    database: "test",
+    entities: ["src/**/*.entity{.ts,.js}"],
+    migrations: ["src/migrations/**/*{.ts,.js}"],
+    synchronize: false,
+})
+
+Asegurarte de tener las dependencias necesarias:
+npm install @types/node ts-node typescript
+
+ejecuto el comando
+npx typeorm-ts-node-commonjs migration:generate src/migrations/Tablas -d src/data-source.ts
+
+
+npx typeorm-ts-node migration:generate -n NombreDeTuMigracion
+
+
+npx typeorm-ts-node migration:generate -n Tablas
