@@ -1,0 +1,8 @@
+Este código proporciona:
+
+Generación de tokens seguros
+Envío de emails de verificación
+Verificación de tokens
+Reenvío de emails de verificación
+Manejo de errores
+Expiración de tokens

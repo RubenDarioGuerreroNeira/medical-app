@@ -6,12 +6,15 @@ import { Roles } from "../Entities/Usuarios.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
+import { MailerService } from "@nestjs-modules/mailer";
 
 @Injectable()
 export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
-    private usuarioRepository: Repository<Usuario>
+    private usuarioRepository: Repository<Usuario>,
+    private readonly mailerService: MailerService
   ) {}
 
   async validatePassword(
