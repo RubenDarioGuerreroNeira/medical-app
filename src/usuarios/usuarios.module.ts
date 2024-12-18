@@ -7,10 +7,12 @@ import { UsuariosController } from "./usuarios.controller";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MailerService as MailServicio } from "src/Mail/mailService";
 import { JwtModule } from "@nestjs/jwt";
+import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Usuario]),
+    AuthModule,
     // ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

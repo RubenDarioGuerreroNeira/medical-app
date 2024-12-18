@@ -10,6 +10,7 @@ import * as crypto from "crypto";
 import { JwtService } from "@nestjs/jwt";
 import { MailerService } from "@nestjs-modules/mailer";
 import { MailerService as MailServicio } from "../Mail/mailService";
+import { AuthService } from "../auth/auth.service";
 
 @Injectable()
 export class UsuariosService {
@@ -18,7 +19,8 @@ export class UsuariosService {
     private usuarioRepository: Repository<Usuario>,
     private readonly mailerService: MailerService,
     private readonly servicioMail: MailServicio,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    private readonly authService: AuthService
   ) {}
 
   async validatePassword(
@@ -30,15 +32,15 @@ export class UsuariosService {
   // creo el usuario y verifco la identidad enviando un token al email
   // envio el email de bienvenida
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
-    const bUsuario = await this.usuarioRepository.findOneBy({
-      email: createUsuarioDto.email,
-    });
-
-    if (bUsuario) {
-      throw new Error("Usuario ya existente");
-    }
-
     try {
+      const bUsuario = await this.usuarioRepository.findOneBy({
+        email: createUsuarioDto.email,
+      });
+
+      if (bUsuario) {
+        throw new Error("Usuario ya existente");
+      }
+
       const salt = await bcrypt.genSalt(10);
       const hashedPAss = await bcrypt.hash(createUsuarioDto.contrasena, salt);
 
@@ -56,8 +58,11 @@ export class UsuariosService {
       });
 
       const nuevoUsuario = await this.usuarioRepository.save(usuario);
-      const payload = { email: nuevoUsuario.email, rol: nuevoUsuario.rol };
-      const token = this.jwtService.sign(payload);
+
+      const token = await this.authService.generateToken({
+        email: nuevoUsuario.email,
+        rol: nuevoUsuario.rol,
+      });
 
       //  Envio Token  al email
       await this.servicioMail.sendVerificationMail(
