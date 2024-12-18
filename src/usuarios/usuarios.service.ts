@@ -7,14 +7,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
+import { JwtService } from "@nestjs/jwt";
 import { MailerService } from "@nestjs-modules/mailer";
+import { MailerService as MailServicio } from "../Mail/mailService";
 
 @Injectable()
 export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
-    private readonly mailerService: MailerService
+    private readonly mailerService: MailerService,
+    private readonly servicioMail: MailServicio,
+    private readonly jwtService: JwtService
   ) {}
 
   async validatePassword(
@@ -23,7 +27,8 @@ export class UsuariosService {
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
-
+  // creo el usuario y verifco la identidad enviando un token al email
+  // envio el email de bienvenida
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
     const bUsuario = await this.usuarioRepository.findOneBy({
       email: createUsuarioDto.email,
@@ -50,7 +55,23 @@ export class UsuariosService {
         rol: createUsuarioDto.rol as Roles,
       });
 
-      return await this.usuarioRepository.save(usuario);
+      const nuevoUsuario = await this.usuarioRepository.save(usuario);
+      const payload = { email: nuevoUsuario.email, rol: nuevoUsuario.rol };
+      const token = this.jwtService.sign(payload);
+
+      //  Envio Token  al email
+      await this.servicioMail.sendVerificationMail(
+        nuevoUsuario.email,
+        nuevoUsuario.nombre,
+        token
+      );
+      // Envio Email de Bienvenida
+      await this.servicioMail.sendWelcomeMail(
+        nuevoUsuario.email,
+        nuevoUsuario.nombre
+      );
+
+      return nuevoUsuario;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -71,43 +92,6 @@ export class UsuariosService {
       throw new BadRequestException(error.message);
     }
   }
-
-  // async update(
-  //   usuarioId: string,
-  //   updateUsuarioDto: UpdateUsuarioDto
-  // ): Promise<Usuario> {
-  //   const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
-  //   if (!usuario) {
-  //     throw new Error("Usuario no encontrado");
-  //   }
-  //   try {
-  //     let hashedPass = usuario.contrasena;
-  //     if (updateUsuarioDto.contrasena) {
-  //       const salt = await bcrypt.genSalt(10);
-  //       hashedPass = await bcrypt.hash(updateUsuarioDto.contrasena, salt);
-  //     }
-
-  //     const usuarioModificado = this.usuarioRepository.create({
-  //       nombre: updateUsuarioDto.nombre ?? usuario.nombre,
-  //       apellido: updateUsuarioDto.apellido ?? usuario.apellido,
-  //       fecha_nacimiento:
-  //         updateUsuarioDto.fecha_nacimiento ?? usuario.fecha_nacimiento,
-  //       genero: updateUsuarioDto.genero ?? usuario.genero,
-  //       direccion: updateUsuarioDto.direccion ?? usuario.direccion,
-  //       telefonoCelular:
-  //         updateUsuarioDto.telefonoCelular ?? usuario.telefonoCelular,
-  //       telefonoContacto:
-  //         updateUsuarioDto.telefonoContacto ?? usuario.telefonoContacto,
-  //       email: updateUsuarioDto.email ?? usuario.email,
-  //       contrasena: hashedPass ?? usuario.contrasena,
-  //       rol: (updateUsuarioDto.rol as Roles) ?? usuario.rol,
-  //     });
-
-  //     return await this.usuarioRepository.save(usuarioModificado);
-  //   } catch (error) {
-  //     throw new BadRequestException(error.message);
-  //   }
-  // }
 
   async update(
     usuarioId: string,
