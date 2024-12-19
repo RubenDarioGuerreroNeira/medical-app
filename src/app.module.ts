@@ -14,6 +14,9 @@ import { ConfigModule } from "@nestjs/config";
 import { ConfigService } from "@nestjs/config";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
+import { NotaMedica } from "./Entities/NotaMedica";
+import { RecetaMedica } from "./Entities/RecetaMedica";
+import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 
 @Module({
   imports: [
@@ -24,7 +27,15 @@ import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handleba
       username: process.env.DB_USERNAME || "postgres",
       password: process.env.DB_PASSWORD || "2980",
       database: process.env.DB_NAME || "citas",
-      entities: [Usuario, Medico, Cita, HistorialMedico],
+      entities: [
+        Usuario,
+        Medico,
+        Cita,
+        HistorialMedico,
+        RecetaMedica,
+        DocumentoConsulta,
+        NotaMedica,
+      ],
       synchronize: process.env.NODE_ENV !== "production",
     }),
 
