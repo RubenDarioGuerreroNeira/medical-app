@@ -1,4 +1,4 @@
-<img src="/src/images/Logo 2 .jpg" width="320" alt="Medical Logo" />
+<img src="/src/images/Clinica C.jpg" width="320" alt="Medical Logo" />
 
 # Medical Appointments API
 
