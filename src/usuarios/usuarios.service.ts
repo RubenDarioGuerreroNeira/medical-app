@@ -64,17 +64,19 @@ export class UsuariosService {
         rol: nuevoUsuario.rol,
       });
 
+      // estan hecha spero no he implementado la config del email
+
       //  Envio Token  al email
-      await this.servicioMail.sendVerificationMail(
-        nuevoUsuario.email,
-        nuevoUsuario.nombre,
-        token
-      );
-      // Envio Email de Bienvenida
-      await this.servicioMail.sendWelcomeMail(
-        nuevoUsuario.email,
-        nuevoUsuario.nombre
-      );
+      // await this.servicioMail.sendVerificationMail(
+      //   nuevoUsuario.email,
+      //   nuevoUsuario.nombre,
+      //   token
+      // );
+      // // Envio Email de Bienvenida
+      // await this.servicioMail.sendWelcomeMail(
+      //   nuevoUsuario.email,
+      //   nuevoUsuario.nombre
+      // );
 
       return nuevoUsuario;
     } catch (error) {
