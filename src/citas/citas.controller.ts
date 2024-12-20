@@ -1,15 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CitasService } from './citas.service';
-import { CreateCitaDto } from './dto/create-cita.dto';
-import { UpdateCitaDto } from './dto/update-cita.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from "@nestjs/common";
+import { CitasService } from "./citas.service";
+import { CreateCitaDto } from "./dto/create-cita.dto";
+import { UpdateCitaDto } from "./dto/update-cita.dto";
 
-@Controller('citas')
+@Controller("citas")
 export class CitasController {
   constructor(private readonly citasService: CitasService) {}
 
   @Post()
   create(@Body() createCitaDto: CreateCitaDto) {
-    try{
+    try {
       return this.citasService.create(createCitaDto);
     } catch (error) {
       console.log(error);
@@ -21,18 +29,25 @@ export class CitasController {
     return this.citasService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.citasService.findOne(+id);
+  @Get("getall/:citaId")
+  findOne(@Param("citaId") citaId: string) {
+    try {
+      return this.citasService.findOne(citaId);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCitaDto: UpdateCitaDto) {
-    return this.citasService.update(+id, updateCitaDto);
+  @Patch("update/:citaId")
+  update(
+    @Param("citaId") citaId: string,
+    @Body() updateCitaDto: UpdateCitaDto
+  ) {
+    return this.citasService.update(citaId, updateCitaDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.citasService.remove(+id);
+  @Delete("delete/:citaId")
+  remove(@Param("citaId") citaId: string) {
+    return this.citasService.remove(citaId);
   }
 }
