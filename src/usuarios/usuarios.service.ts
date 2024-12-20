@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { Usuario } from "../Entities/Usuarios.entity";
+import { Medico } from "src/Entities/Medico.entity";
 import { Roles } from "../Entities/Usuarios.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -17,6 +18,9 @@ export class UsuariosService {
   constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
+    @InjectRepository(Medico)
+    private medicoRepository: Repository<Medico>,
+
     private readonly mailerService: MailerService,
     private readonly servicioMail: MailServicio,
     private readonly jwtService: JwtService,
@@ -59,6 +63,15 @@ export class UsuariosService {
 
       const nuevoUsuario = await this.usuarioRepository.save(usuario);
 
+      if (nuevoUsuario.rol === Roles.MEDICO) {
+        const nuevoMedico = await this.medicoRepository.save({
+          usuario: nuevoUsuario,
+          especialidad: createUsuarioDto.especialidad,
+          horario_disponible: createUsuarioDto.horario_disponible,
+        });
+        await this.medicoRepository.save(nuevoMedico);
+      }
+
       const token = await this.authService.generateToken({
         email: nuevoUsuario.email,
         rol: nuevoUsuario.rol,
@@ -77,7 +90,7 @@ export class UsuariosService {
       //   nuevoUsuario.email,
       //   nuevoUsuario.nombre
       // );
-
+      delete nuevoUsuario.contrasena;
       return nuevoUsuario;
     } catch (error) {
       throw new BadRequestException(error.message);
