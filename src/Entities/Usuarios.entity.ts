@@ -56,6 +56,7 @@ export class Usuario {
 
   @OneToMany(() => Cita, (cita) => cita.paciente)
   citas: Cita[];
+  
   @OneToMany(
     () => HistorialMedico,
     (historialMedico) => historialMedico.paciente

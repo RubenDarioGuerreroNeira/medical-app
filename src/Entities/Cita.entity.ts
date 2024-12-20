@@ -21,6 +21,7 @@ export enum EstadoCita {
 export class Cita {
   @PrimaryGeneratedColumn("uuid")
   id: string;
+
   @Column({ type: "timestamp" }) //  timestamp para almacenar fecha y hora
   fecha_hora: Date;
 
