@@ -4,6 +4,7 @@ import { UpdateCitaDto } from "./dto/update-cita.dto";
 import { Cita } from "../Entities/Cita.entity";
 import { EstadoCita } from "../Entities/Cita.entity";
 import { Usuario } from "../Entities/Usuarios.entity";
+import { Roles } from "../Entities/Usuarios.entity";
 import { Medico } from "../Entities/Medico.entity";
 import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -39,14 +40,18 @@ export class CitasService {
       await this.verificaMedico(createCitaDto.medico_id);
 
       const paciente = await this.usuarioRepository.findOne({
-        where: { id: createCitaDto.paciente_id },
+        where: { id: createCitaDto.paciente_id, rol: Roles.PACIENTE },
       });
+
       const medico = await this.medicoRepository.findOne({
         where: { id: createCitaDto.medico_id },
       });
 
-      if (!paciente || !medico) {
-        throw new BadRequestException("Paciente o médico no encontrado");
+      if (!paciente) {
+        throw new BadRequestException("Paciente no encontrado");
+      }
+      if (!medico) {
+        throw new BadRequestException("Médico no encontrado");
       }
 
       const cita = this.citasRepository.create({
