@@ -10,6 +10,7 @@ import {
 import { UsuariosService } from "./usuarios.service";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
+import { LoginDto } from "./dto/login-dto";
 
 @Controller("usuarios")
 export class UsuariosController {
@@ -41,5 +42,11 @@ export class UsuariosController {
   @Delete("delete/:usuarioId")
   remove(@Param("usuarioId") usuarioId: string) {
     return this.usuariosService.remove(usuarioId);
+  }
+  @Post("login")
+  login(@Body() loginDto: LoginDto) {
+    try {
+      return this.usuariosService.login(loginDto);
+    } catch (error) {}
   }
 }

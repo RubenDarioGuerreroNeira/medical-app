@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
+import { LoginDto } from "./dto/login-dto";
 import { Usuario } from "../Entities/Usuarios.entity";
 import { Medico } from "src/Entities/Medico.entity";
 import { Roles } from "../Entities/Usuarios.entity";
@@ -196,6 +197,30 @@ export class UsuariosService {
       };
     } catch (error) {
       throw new Error("Usuario no encontrado");
+    }
+  }
+  async login(logindto: LoginDto): Promise<any> {
+    try {
+      const { email, password } = logindto;
+
+      const usuario = await this.usuarioRepository.findOneBy({ email: email });
+      if (!usuario) {
+        throw new BadRequestException("Usuario no encontrado");
+      }
+
+      const passValid = await bcrypt.compare(
+        logindto.password,
+        usuario.contrasena
+      );
+      if (!passValid) {
+        throw new BadRequestException("Error en Password");
+      }
+      return this.jwtService.sign({
+        email: usuario.email,
+        rol: usuario.rol,
+      });
+    } catch {
+      throw new BadRequestException("Error en Login");
     }
   }
 }
