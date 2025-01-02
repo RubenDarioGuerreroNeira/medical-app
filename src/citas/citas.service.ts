@@ -111,7 +111,7 @@ export class CitasService {
     return citaModificada;
   }
 
-  async cancelarCita(idCita: string): Promise<Cita> {
+  async cancelarCita(idCita: string, userId: string): Promise<Cita> {
     try {
       const bCita = await this.verificaCita(idCita);
       if (bCita.estado === EstadoCita.CANCELADA) {
@@ -119,6 +119,7 @@ export class CitasService {
           `Cita ya estaba  cancelada con anterioridad `
         );
       }
+
       const citaModificada = await this.citasRepository.save({
         ...bCita,
         estado: EstadoCita.CANCELADA,

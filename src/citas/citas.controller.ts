@@ -6,10 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
 } from "@nestjs/common";
+
 import { CitasService } from "./citas.service";
 import { CreateCitaDto } from "./dto/create-cita.dto";
 import { UpdateCitaDto } from "./dto/update-cita.dto";
+import { RolesGuard } from "src/Guard/Guard";
+import { UseGuards } from "@nestjs/common";
+import { Roles } from "src/Entities/Usuarios.entity";
+import { RequireRoles } from "src/Guard/Decorator";
+import { GetUser } from "src/Guard/Get-User-Decorator";
 
 @Controller("citas")
 export class CitasController {
@@ -46,10 +53,15 @@ export class CitasController {
     return this.citasService.update(citaId, updateCitaDto);
   }
 
+  @RequireRoles(Roles.ADMIN, Roles.MEDICO)
   @Patch("cancelar/:citaId")
-  cancelar(@Param("citaId") citaId: string) {
+  async cancelar(
+    @Param("citaId") citaId: string,
+    // no necesito pasar el id por body porque lo tomo del inicio de sesion 
+    @GetUser("id") userId: string
+  ) {
     try {
-      return this.citasService.cancelarCita(citaId);
+      return await this.citasService.cancelarCita(citaId, userId);
     } catch (error) {
       console.log(error);
     }
