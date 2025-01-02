@@ -35,6 +35,20 @@ export class CitasService {
     return medico;
   }
 
+  async verificaCita(idCita: string): Promise<Cita> {
+    try {
+      const bCita = await this.citasRepository.findOne({
+        where: { id: idCita },
+      });
+      if (!bCita) {
+        throw new BadRequestException("Cita no Encontrada");
+      }
+      return bCita;
+    } catch {
+      throw new BadRequestException("Error al verificar cita");
+    }
+  }
+
   async create(createCitaDto: CreateCitaDto): Promise<any> {
     try {
       const medico = await this.verificaMedico(createCitaDto.medico_id);
@@ -97,6 +111,24 @@ export class CitasService {
     return citaModificada;
   }
 
+  async cancelarCita(idCita: string): Promise<Cita> {
+    try {
+      const bCita = await this.verificaCita(idCita);
+      if (bCita.estado === EstadoCita.CANCELADA) {
+        throw new BadRequestException(
+          `Cita ya estaba  cancelada con anterioridad `
+        );
+      }
+      const citaModificada = await this.citasRepository.save({
+        ...bCita,
+        estado: EstadoCita.CANCELADA,
+      });
+
+      return citaModificada;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
   async remove(citaId: string): Promise<any> {
     try {
       const bCita = this.citasRepository.findOneBy({ id: citaId });

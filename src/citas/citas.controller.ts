@@ -46,6 +46,15 @@ export class CitasController {
     return this.citasService.update(citaId, updateCitaDto);
   }
 
+  @Patch("cancelar/:citaId")
+  cancelar(@Param("citaId") citaId: string) {
+    try {
+      return this.citasService.cancelarCita(citaId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   @Delete("delete/:citaId")
   remove(@Param("citaId") citaId: string) {
     return this.citasService.remove(citaId);
