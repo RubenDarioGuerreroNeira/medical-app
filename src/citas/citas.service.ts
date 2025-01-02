@@ -37,14 +37,10 @@ export class CitasService {
 
   async create(createCitaDto: CreateCitaDto): Promise<any> {
     try {
-      await this.verificaMedico(createCitaDto.medico_id);
+      const medico = await this.verificaMedico(createCitaDto.medico_id);
 
       const paciente = await this.usuarioRepository.findOne({
         where: { id: createCitaDto.paciente_id, rol: Roles.PACIENTE },
-      });
-
-      const medico = await this.medicoRepository.findOne({
-        where: { id: createCitaDto.medico_id },
       });
 
       if (!paciente) {
@@ -77,7 +73,7 @@ export class CitasService {
     return this.citasRepository.find();
   }
 
-  findOne(citaId: string): Promise<Cita> {
+  async findOneCita(citaId: string): Promise<Cita> {
     try {
       const bCita = this.citasRepository.findOneBy({ id: citaId });
       if (!bCita) {
@@ -90,7 +86,7 @@ export class CitasService {
   }
 
   async update(citaId: string, updateCitaDto: UpdateCitaDto): Promise<Cita> {
-    const bCita = this.citasRepository.findOneBy({ id: citaId });
+    const bCita = await this.findOneCita(citaId);
     if (!bCita) {
       throw new BadRequestException(`Cita no encontrada ${citaId}`);
     }

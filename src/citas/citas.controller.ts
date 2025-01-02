@@ -30,9 +30,9 @@ export class CitasController {
   }
 
   @Get("getall/:citaId")
-  findOne(@Param("citaId") citaId: string) {
+  findOneCita(@Param("citaId") citaId: string) {
     try {
-      return this.citasService.findOne(citaId);
+      return this.citasService.findOneCita(citaId);
     } catch (error) {
       console.log(error);
     }
