@@ -8,6 +8,7 @@ import {
 } from "typeorm";
 import { Usuario } from "./Usuarios.entity"; // Asegúrate de importar la entidad Usuario
 import { Cita } from "./Cita.entity"; // Asegúrate de importar la entidad Cita
+import { HistorialMedico } from "./HistorialMedico.entity";
 
 @Entity()
 export class Medico {
@@ -18,8 +19,8 @@ export class Medico {
   @JoinColumn({ name: "usuario_id" }) // Nombre de la columna en la base de datos
   usuario: Usuario;
 
-  @Column()
-  especialidad: string;
+  @OneToMany(() => HistorialMedico, (historialMedico) => historialMedico.medico)
+  historialesMedicos: HistorialMedico[];
 
   @Column({ type: "jsonb" }) // Recomendado para horarios complejos
   horario_disponible: any; // Define el tipo adecuado para tu horario

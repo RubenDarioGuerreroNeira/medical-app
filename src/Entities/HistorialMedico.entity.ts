@@ -7,6 +7,7 @@ import {
   CreateDateColumn,
 } from "typeorm";
 import { Usuario } from "./Usuarios.entity";
+import { Medico } from "./Medico.entity";
 
 @Entity()
 export class HistorialMedico {
@@ -16,6 +17,10 @@ export class HistorialMedico {
   @ManyToOne(() => Usuario, (usuario) => usuario.historialMedico)
   @JoinColumn({ name: "paciente_id" })
   paciente: Usuario;
+
+  @ManyToOne(() => Medico, (medico) => medico.historialesMedicos)
+  @JoinColumn({ name: "medico_id" })
+  medico: Medico;
 
   @Column({ type: "text" }) // Permite textos largos
   descripcion: string;

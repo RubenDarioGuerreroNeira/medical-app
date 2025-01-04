@@ -158,10 +158,8 @@ export class CitasService {
   }
   async remove(citaId: string): Promise<any> {
     try {
-      const bCita = this.citasRepository.findOneBy({ id: citaId });
-      if (!bCita) {
-        throw new BadRequestException(`Cita no encontrada ${citaId}`);
-      }
+      const bCita = await this.findOneCita(citaId);
+
       await this.citasRepository.delete(citaId);
       return {
         message: `Cita ${citaId} eliminada correctamente`,
