@@ -21,8 +21,30 @@ export class HistorialMedicoService {
 
     private dataSource: DataSource
   ) {}
-  create(createHistorialMedicoDto: CreateHistorialMedicoDto) {
-    return "This action adds a new historialMedico";
+
+  async validaFecha(fecha: CreateHistorialMedicoDto): Promise<Date> {
+    const fechaActual = new Date();
+    const fechaNueva = new Date(fecha.fecha_creacion);
+    if (fechaNueva.getTime() < fechaActual.getTime()) {
+      throw new BadRequestException(
+        "La fecha no puede ser menor a la fecha actual"
+      );
+    }
+    return fechaNueva;
+  }
+  async create(
+    createHistorialMedicoDto: CreateHistorialMedicoDto
+  ): Promise<HistorialMedico> {
+    try {
+      await this.validaFecha(createHistorialMedicoDto);
+      const nHistorialMedico = await this.historialMedicoRepository.create(
+        createHistorialMedicoDto
+      );
+      await this.historialMedicoRepository.save(nHistorialMedico);
+      return nHistorialMedico;
+    } catch (error) {
+      throw error;
+    }
   }
 
   findAll() {

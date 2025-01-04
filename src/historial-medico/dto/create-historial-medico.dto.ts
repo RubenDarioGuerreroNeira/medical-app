@@ -1,7 +1,7 @@
 export class CreateHistorialMedicoDto {
   paciente_id: string;
   medico_id: string;
-  description: string;
+  descripcion: string;
   fecha_creacion: Date;
   diagostico: string;
   tratamiento: string;
