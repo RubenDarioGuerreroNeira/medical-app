@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { HistorialMedico } from "../Entities/HistorialMedico.entity";
@@ -32,16 +32,52 @@ export class HistorialMedicoService {
     }
     return fechaNueva;
   }
+
+  async existenciaHistorial(
+    createHistorialMedicoDto: CreateHistorialMedicoDto
+  ): Promise<boolean> {
+    const bHistorial = await this.historialMedicoRepository.findOneBy({
+      descripcion: createHistorialMedicoDto.descripcion,
+      fecha_creacion: createHistorialMedicoDto.fecha_creacion,
+    });
+    if (bHistorial) {
+      throw new BadRequestException(
+        `Ya existe este registro de Historial Médico con la fecha:${bHistorial.fecha_creacion} para el Diagnóstico, ${bHistorial.diagnostico}`
+      );
+    }
+    return;
+  }
+
   async create(
     createHistorialMedicoDto: CreateHistorialMedicoDto
   ): Promise<HistorialMedico> {
     try {
       await this.validaFecha(createHistorialMedicoDto);
-      const nHistorialMedico = await this.historialMedicoRepository.create(
-        createHistorialMedicoDto
+      await this.existenciaHistorial(createHistorialMedicoDto);
+
+      const paciente = await this.usuarioRepository.findOneBy({
+        id: createHistorialMedicoDto.paciente_id,
+      });
+
+      const medico = await this.medicoRepository.findOneBy({
+        id: createHistorialMedicoDto.medico_id,
+      });
+
+      if (!paciente || !medico) {
+        throw new NotFoundException(
+          "Paciente o Médico no Esta Registrado en nuestra Bd"
+        );
+      }
+
+      const nHistorialMedico = await this.historialMedicoRepository.create({
+        ...createHistorialMedicoDto,
+        paciente: paciente,
+        medico: medico,
+      });
+      const nuevoHistorialMedico = await this.historialMedicoRepository.save(
+        nHistorialMedico
       );
-      await this.historialMedicoRepository.save(nHistorialMedico);
-      return nHistorialMedico;
+      return nuevoHistorialMedico;
     } catch (error) {
       throw error;
     }
