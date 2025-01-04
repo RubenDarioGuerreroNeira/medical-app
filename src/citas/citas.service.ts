@@ -36,17 +36,36 @@ export class CitasService {
     return medico;
   }
 
-  async verificaCita(idCita: string): Promise<Cita> {
+  async verificaCita(datosCita: CreateCitaDto): Promise<Cita> {
+    const fechaCita = new Date(datosCita.fecha_hora);
+    const fechaActual = new Date();
+
+    if (fechaCita.getTime() <= fechaActual.getTime()) {
+      throw new BadRequestException(
+        "La fecha y hora de la cita debe ser mayor a la fecha actual"
+      );
+    }
+
     try {
       const bCita = await this.citasRepository.findOne({
-        where: { id: idCita },
+        where: {
+          fecha_hora: datosCita.fecha_hora,
+          medico: { id: datosCita.medico_id },
+        },
+        relations: ["medico"],
       });
-      if (!bCita) {
-        throw new BadRequestException("Cita no Encontrada");
+      if (bCita) {
+        throw new BadRequestException("Cita ya Existe");
       }
+
       return bCita;
-    } catch {
-      throw new BadRequestException("Error al verificar cita");
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        "Error al Verificar Disponibilidad de la Cita"
+      );
     }
   }
 
@@ -58,12 +77,18 @@ export class CitasService {
         where: { id: createCitaDto.paciente_id, rol: Roles.PACIENTE },
       });
 
-      if (!paciente) {
-        throw new BadRequestException("Paciente no encontrado");
-      }
-      if (!medico) {
-        throw new BadRequestException("Médico no encontrado");
-      }
+      const bcita = await this.verificaCita(createCitaDto);
+
+      // if (!paciente) {
+      //   throw new BadRequestException("Paciente no encontrado");
+      // }
+      // if (!medico) {
+      //   throw new BadRequestException("Médico no encontrado");
+      // }
+
+      // if (!bcita) {
+      //   throw new BadRequestException("Cita no encontrada");
+      // }
 
       const cita = this.citasRepository.create({
         paciente,
@@ -112,9 +137,9 @@ export class CitasService {
     return citaModificada;
   }
 
-  async cancelarCita(idCita: string, userId: string): Promise<Cita> {
+  async cancelarCita(citaId: string, userId: string): Promise<Cita> {
     try {
-      const bCita = await this.verificaCita(idCita);
+      const bCita = await this.findOneCita(citaId);
       if (bCita.estado === EstadoCita.CANCELADA) {
         throw new BadRequestException(
           `Cita ya estaba  cancelada con anterioridad `
