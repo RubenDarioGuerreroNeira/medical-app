@@ -4,6 +4,7 @@ import { Repository } from "typeorm";
 import { HistorialMedico } from "../Entities/HistorialMedico.entity";
 import { Usuario } from "../Entities/Usuarios.entity";
 import { Medico } from "../Entities/Medico.entity";
+import { Roles } from "../Entities/Usuarios.entity";
 import { DataSource } from "typeorm";
 import { CreateHistorialMedicoDto } from "./dto/create-historial-medico.dto";
 import { UpdateHistorialMedicoDto } from "./dto/update-historial-medico.dto";
@@ -37,12 +38,13 @@ export class HistorialMedicoService {
     createHistorialMedicoDto: CreateHistorialMedicoDto
   ): Promise<boolean> {
     const bHistorial = await this.historialMedicoRepository.findOneBy({
-      descripcion: createHistorialMedicoDto.descripcion,
-      fecha_creacion: createHistorialMedicoDto.fecha_creacion,
+      diagnostico: createHistorialMedicoDto.diagnostico,
+      tratamiento: createHistorialMedicoDto.tratamiento,
     });
     if (bHistorial) {
       throw new BadRequestException(
-        `Ya existe este registro de Historial Médico con la fecha:${bHistorial.fecha_creacion} para el Diagnóstico, ${bHistorial.diagnostico}`
+        `Ya existe este registro de Historial Médico para el diagnóstico: ${bHistorial.diagnostico} 
+        con el tratamiento: ${bHistorial.tratamiento}`
       );
     }
     return;
@@ -57,10 +59,12 @@ export class HistorialMedicoService {
 
       const paciente = await this.usuarioRepository.findOneBy({
         id: createHistorialMedicoDto.paciente_id,
+        rol: Roles.PACIENTE,
       });
 
       const medico = await this.medicoRepository.findOneBy({
         id: createHistorialMedicoDto.medico_id,
+        usuario: { rol: Roles.MEDICO },
       });
 
       if (!paciente || !medico) {
