@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { LoginDto } from "./dto/login-dto";
@@ -36,6 +40,23 @@ export class UsuariosService {
   }
   // creo el usuario y verifco la identidad enviando un token al email
   // envio el email de bienvenida
+
+  async validaUsuario(datos: CreateUsuarioDto): Promise<Usuario> {
+    try {
+      const usuario = await this.usuarioRepository.findOneBy({
+        apellido: datos.apellido,
+        fecha_nacimiento: datos.fecha_nacimiento,
+      });
+
+      if (!usuario) {
+        throw new NotFoundException("Usuario no Encontrado");
+      }
+      return usuario;
+    } catch (error) {
+      throw new error();
+    }
+  }
+
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
     try {
       const bUsuario = await this.usuarioRepository.findOneBy({
@@ -223,4 +244,15 @@ export class UsuariosService {
       throw new BadRequestException("Error en Login");
     }
   }
-}
+
+  async recoveryUser(datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
+    try {
+      const usuario = await this.validaUsuario(datos);
+      return {
+        email: usuario.email,
+      } as Partial<Usuario>;
+    } catch (error) {
+      throw new error();
+    }
+  }
+} // fin
