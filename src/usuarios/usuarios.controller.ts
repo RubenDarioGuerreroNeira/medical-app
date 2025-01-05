@@ -65,4 +65,19 @@ export class UsuariosController {
       throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
     }
   }
+
+  @Post("restorePassword")
+  async restorePassword(
+    @Body() datos: CreateUsuarioDto
+  ): Promise<Partial<Usuario>> {
+    try {
+      const email = await this.usuariosService.restorePassword(datos);
+      return {
+        email: email,
+        contrasena: datos.contrasena,
+      } as Partial<Usuario>;
+    } catch (error) {
+      throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+    }
+  }
 }

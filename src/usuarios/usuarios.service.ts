@@ -255,4 +255,22 @@ export class UsuariosService {
       throw new error();
     }
   }
+
+  async restorePassword(datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
+    try {
+      const usuario = await this.validaUsuario(datos);
+      const hashh = await bcrypt.hash(datos.contrasena, 10);
+
+      await this.usuarioRepository.update(usuario.id, {
+        contrasena: hashh,
+      });
+
+      return {
+        email: usuario.email,
+        contrasena: hashh,
+      } as Partial<Usuario>;
+    } catch (error) {
+      throw new error();
+    }
+  }
 } // fin
