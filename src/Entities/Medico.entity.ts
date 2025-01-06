@@ -22,11 +22,32 @@ export class Medico {
   @OneToMany(() => HistorialMedico, (historialMedico) => historialMedico.medico)
   historialesMedicos: HistorialMedico[];
 
-  @Column({ type: "jsonb" }) // Recomendado para horarios complejos
-  horario_disponible: any; // Define el tipo adecuado para tu horario
-
   @OneToMany(() => Cita, (cita) => cita.medico)
   citas: Cita[];
+
+  @Column({ unique: true, nullable: true })
+  numeroColegiado: string;
+
+  @Column({ unique: true, default: "Indique la Especialidad" })
+  especialidad: string;
+
+  @Column({ type: "date", default: () => "CURRENT_DATE" })
+  fechaContratacion: Date;
+
+  @Column({ default: true })
+  activo: boolean;
+
+  @Column({ nullable: true })
+  fotoPerfil: string;
+
+  @Column("simple-array", { nullable: true })
+  certificaciones: string[];
+
+  @Column("simple-array", { nullable: true })
+  idiomas: string[];
+
+  @Column({ type: "jsonb" }) // Recomendado para horarios complejos
+  horario_disponible: any; // Define el tipo adecuado para tu horario
 }
 
 /*
