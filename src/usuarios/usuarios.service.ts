@@ -273,4 +273,23 @@ export class UsuariosService {
       throw new error();
     }
   }
+
+  async generateToken(email: string, rol: Roles): Promise<string> {
+    try {
+      const payload = { email, rol };
+      const token = this.jwtService.sign(payload);
+      return token;
+    } catch (error) {
+      throw new error();
+    }
+  }
+
+  async decodeToken(token: string) {
+    try {
+      const decodedToken = this.authService.decodeToken(token);
+      return decodedToken;
+    } catch (error) {
+      throw new error();
+    }
+  }
 } // fin

@@ -14,7 +14,7 @@ import { UsuariosService } from "./usuarios.service";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { LoginDto } from "./dto/login-dto";
-import { Usuario } from "src/Entities/Usuarios.entity";
+import { Roles, Usuario } from "src/Entities/Usuarios.entity";
 
 @Controller("usuarios")
 export class UsuariosController {
@@ -78,6 +78,28 @@ export class UsuariosController {
       } as Partial<Usuario>;
     } catch (error) {
       throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Post("token")
+  async generateToken(@Body() email: string, rol: Roles): Promise<any> {
+    try {
+      const token = await this.usuariosService.generateToken(email, rol);
+      return token;
+    } catch (error) {
+      throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+    }
+  }
+  @Post("decodeToken")
+  async decodeToken(@Body() body: { token: string }): Promise<any> {
+    try {
+      const decodedToken = await this.usuariosService.decodeToken(body.token);
+      return decodedToken;
+    } catch (error) {
+      throw new HttpException(
+        error.message || "Error message",
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 }

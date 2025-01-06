@@ -12,4 +12,8 @@ export class AuthService {
   async verifyToken(token: string) {
     return this.jwtService.verify(token);
   }
+
+  async decodeToken(token: string) {
+    return this.jwtService.decode(token);
+  }
 }
