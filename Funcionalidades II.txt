@@ -58,4 +58,7 @@ Botón de Pánico: Para que los pacientes contacten rápidamente con un médico 
 13. Escalabilidad y Soporte Empresarial
 Multiclínicas: Permitir que una clínica administre varios médicos y sucursales.
 APIs Públicas: Crear endpoints para que terceros integren tu sistema con sus plataformas.
-Estas funcionalidades no solo mejorarán tu API, sino que también la harán más competitiva y valiosa para los usuarios. Si te interesa desarrollar alguna de estas ideas en detalle, ¡puedo ayudarte con los pasos técnicos o la arquitectura! 
+Estas funcionalidades no solo mejorarán tu API, 
+sino que también la harán más competitiva y valiosa para los usuarios. 
+Si te interesa desarrollar alguna de estas ideas en detalle, 
+¡puedo ayudarte con los pasos técnicos o la arquitectura! 

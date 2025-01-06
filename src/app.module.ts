@@ -11,6 +11,7 @@ import { MedicosModule } from "./medicos/medicos.module";
 import { CitasModule } from "./citas/citas.module";
 import { HistorialMedicoModule } from "./historial-medico/historial-medico.module";
 import { ConfigModule } from "@nestjs/config";
+import { CloudinaryModule } from "./cloudinary/cloudinary.module";
 import { ConfigService } from "@nestjs/config";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handlebars.adapter";
@@ -20,13 +21,18 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ".env",
+    }),
+
     TypeOrmModule.forRoot({
       type: "postgres",
-      host: process.env.DB_HOST || "localhost",
-      port: parseInt(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME || "postgres",
-      password: process.env.DB_PASSWORD || "2980",
-      database: process.env.DB_NAME || "citas",
+      host: process.env.DB_HOST /*|| "localhost",*/,
+      port: parseInt(process.env.DB_PORT) /* || 5432,*/,
+      username: process.env.DB_USERNAME /* || "postgres",*/,
+      password: process.env.DB_PASSWORD /* || "2980",*/,
+      database: process.env.DB_NAME /* || "citas",*/,
       entities: [
         Usuario,
         Medico,
@@ -37,11 +43,6 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
         NotaMedica,
       ],
       synchronize: process.env.NODE_ENV !== "production",
-    }),
-
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ".env",
     }),
 
     MailerModule.forRootAsync({
@@ -75,6 +76,7 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
     MedicosModule,
     CitasModule,
     HistorialMedicoModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
