@@ -18,6 +18,7 @@ import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handleba
 import { NotaMedica } from "./Entities/NotaMedica";
 import { RecetaMedica } from "./Entities/RecetaMedica";
 import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
+import { NotaMedicaModule } from './nota_medica/nota_medica.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
     CitasModule,
     HistorialMedicoModule,
     CloudinaryModule,
+    NotaMedicaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
