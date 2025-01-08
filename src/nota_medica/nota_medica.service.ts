@@ -32,14 +32,20 @@ export class NotaMedicaService {
     }
   }
 
-  async create(datos: CreateNotaMedicaDto) {
+  async create(datos: CreateNotaMedicaDto): Promise<NotaMedica> {
     try {
       const notaMedica = await this.verificaNotaMedica(datos);
-      if (notaMedica) {
+      if (notaMedica !== null) {
         throw new Error("La nota médica ya existe");
       }
 
-      const nuevaNotaMedica = this.notaMedicaRepository.create(datos);
+      const nuevaNotaMedica = this.notaMedicaRepository.create({
+        contenido: "Image Example",
+        fecha_creacion: datos.fecha_creacion,
+        es_privada: datos.es_privada,
+        cita: { id: datos.cita_id },
+      });
+
       return await this.notaMedicaRepository.save(nuevaNotaMedica);
     } catch (error) {
       throw new Error(`Error al crear la nota médica: ${error.message}`);
