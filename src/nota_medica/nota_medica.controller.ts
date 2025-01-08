@@ -14,6 +14,8 @@ import { CloudinaryService } from "../cloudinary/cloudinary.service";
 import { NotaMedicaService } from "./nota_medica.service";
 import { CreateNotaMedicaDto } from "./dto/create-nota_medica.dto";
 import { UpdateNotaMedicaDto } from "./dto/update-nota_medica.dto";
+import { NotFoundError } from "rxjs";
+import { NotFoundException } from "@nestjs/common";
 
 @Controller("nota-medica")
 export class NotaMedicaController {
@@ -60,21 +62,46 @@ export class NotaMedicaController {
     return this.notaMedicaService.findAll();
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.notaMedicaService.findOne(+id);
+  @Get("nota-medica/:id")
+  async findOne(@Param("id") id: string) {
+    try {
+      const notaMedica = await this.notaMedicaService.findOne(id);
+      return notaMedica;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      } else {
+        throw new Error(`Error al encontrar la nota medica: ${error.message}`);
+      }
+    }
   }
 
-  @Patch(":id")
+  @Patch("update/:id")
   update(
     @Param("id") id: string,
     @Body() updateNotaMedicaDto: UpdateNotaMedicaDto
   ) {
-    return this.notaMedicaService.update(+id, updateNotaMedicaDto);
+    try {
+      return this.notaMedicaService.update(id, updateNotaMedicaDto);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      } else {
+        throw new Error(`Error al actualizar la nota medica: ${error.message}`);
+      }
+    }
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.notaMedicaService.remove(+id);
+  async remove(@Param("id") id: string) {
+    try {
+      return await this.notaMedicaService.remove(id);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      } else {
+        throw new Error(`Error al eliminar la nota medica: ${error.message}`);
+      }
+    }
   }
 }

@@ -1,6 +1,9 @@
 import { IsDate, IsString, isUUID, IsBoolean, IsUUID } from "class-validator";
 
 export class CreateNotaMedicaDto {
+  @IsUUID()
+  id?: string;
+
   @IsString()
   contenido: string;
 
