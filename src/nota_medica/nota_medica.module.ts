@@ -3,11 +3,12 @@ import { NotaMedicaService } from "./nota_medica.service";
 import { NotaMedicaController } from "./nota_medica.controller";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { NotaMedica } from "../Entities/NotaMedica";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([NotaMedica])],
   controllers: [NotaMedicaController],
-  providers: [NotaMedicaService],
+  providers: [NotaMedicaService, CloudinaryService],
   exports: [NotaMedicaService],
 })
 export class NotaMedicaModule {}
