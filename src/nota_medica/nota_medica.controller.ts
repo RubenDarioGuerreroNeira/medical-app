@@ -39,7 +39,7 @@ export class NotaMedicaController {
       // 1. Primero subimos la imagen a Cloudinary
       const uploadResult = await this.cloudinaryService.uploadImage(
         file,
-        "notas-medicas"
+        "notas-medicas"// carpeta en Cloudinary
       );
 
       // 2. Luego actualizamos la nota médica con la URL
