@@ -19,6 +19,7 @@ import { NotaMedica } from "./Entities/NotaMedica";
 import { RecetaMedica } from "./Entities/RecetaMedica";
 import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 import { NotaMedicaModule } from './nota_medica/nota_medica.module';
+import { RecetaMedicaModule } from './receta-medica/receta-medica.module';
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { NotaMedicaModule } from './nota_medica/nota_medica.module';
     HistorialMedicoModule,
     CloudinaryModule,
     NotaMedicaModule,
+    RecetaMedicaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
