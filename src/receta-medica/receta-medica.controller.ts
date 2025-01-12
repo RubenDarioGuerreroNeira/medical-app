@@ -1,15 +1,64 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { RecetaMedicaService } from './receta-medica.service';
-import { CreateRecetaMedicaDto } from './dto/create-receta-medica.dto';
-import { UpdateRecetaMedicaDto } from './dto/update-receta-medica.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+} from "@nestjs/common";
+import { RecetaMedicaService } from "./receta-medica.service";
+import { CreateRecetaMedicaDto } from "./dto/create-receta-medica.dto";
+import { UpdateRecetaMedicaDto } from "./dto/update-receta-medica.dto";
+import { NotFoundError } from "rxjs";
+import { NotFoundException } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 
-@Controller('receta-medica')
+@Controller("receta-medica")
 export class RecetaMedicaController {
-  constructor(private readonly recetaMedicaService: RecetaMedicaService) {}
+  constructor(
+    private readonly recetaMedicaService: RecetaMedicaService,
+    private readonly cloudinaryService: CloudinaryService
+  ) {}
 
   @Post()
   create(@Body() createRecetaMedicaDto: CreateRecetaMedicaDto) {
-    return this.recetaMedicaService.create(createRecetaMedicaDto);
+    try {
+      return this.recetaMedicaService.create(createRecetaMedicaDto);
+    } catch (error) {
+      throw new NotFoundException(error.message);
+    }
+  }
+
+  @Post("upload-imagen/:id")
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Param("id") id: string
+  ) {
+    try {
+      // 1. Primero subimos la imagen a Cloudinary
+      const uploadResult = await this.cloudinaryService.uploadImage(
+        file,
+        "recetas-medicas" // carpeta en Cloudinary
+      );
+      // 2. Luego actualizamos la receta médica con la URL
+      const recetaActualizada = await this.recetaMedicaService.updateImageUrl(
+        id,
+        uploadResult.secure_url
+      );
+      return recetaActualizada;
+
+      return {
+        message: "Imagen subida y receta médica actualizada exitosamente",
+        recetaMedica: recetaActualizada,
+      };
+    } catch (error) {
+      throw new Error(`Error en el proceso: ${error.message}`);
+    }
   }
 
   @Get()
@@ -17,18 +66,21 @@ export class RecetaMedicaController {
     return this.recetaMedicaService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
+  @Get(":id")
+  findOne(@Param("id") id: string) {
     return this.recetaMedicaService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRecetaMedicaDto: UpdateRecetaMedicaDto) {
+  @Patch(":id")
+  update(
+    @Param("id") id: string,
+    @Body() updateRecetaMedicaDto: UpdateRecetaMedicaDto
+  ) {
     return this.recetaMedicaService.update(+id, updateRecetaMedicaDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Delete(":id")
+  remove(@Param("id") id: string) {
     return this.recetaMedicaService.remove(+id);
   }
 }

@@ -16,8 +16,42 @@ export class RecetaMedicaService {
     private citaRepository: Repository<Cita>
   ) {}
 
-  create(createRecetaMedicaDto: CreateRecetaMedicaDto) {
-    return "This action adds a new recetaMedica";
+  async create(
+    createRecetaMedicaDto: CreateRecetaMedicaDto
+  ): Promise<RecetaMedica> {
+    try {
+      if (!createRecetaMedicaDto.cita_id) {
+        throw new Error("Cita ID no proporcionada");
+      }
+      const cita = this.citaRepository.findOne({
+        where: { id: createRecetaMedicaDto.cita_id },
+      });
+
+      if (!cita) {
+        throw new Error("Cita no encontrada");
+      }
+      const nuevaRecetaMedica = this.recetaMedicaRepository.create({
+        medicamentos: createRecetaMedicaDto.medicamentos,
+        indicaciones: createRecetaMedicaDto.indicaciones,
+        fecha_emision: createRecetaMedicaDto.fecha_emision,
+        archivo_url: createRecetaMedicaDto.archivo_url,
+        cita: await cita,
+      });
+      return await this.recetaMedicaRepository.save(nuevaRecetaMedica);
+    } catch (error) {
+      throw new Error(`Error al crear la receta médica: ${error.message}`);
+    }
+  }
+
+  async updateImageUrl(id: string, imageUrl: string): Promise<RecetaMedica> {
+    const recetaMedica = await this.recetaMedicaRepository.findOneBy({
+      id: id,
+    });
+    if (!recetaMedica) {
+      throw new Error("La receta médica No existe");
+    }
+    recetaMedica.archivo_url = imageUrl;
+    return await this.recetaMedicaRepository.save(recetaMedica);
   }
 
   findAll() {
