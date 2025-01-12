@@ -39,6 +39,12 @@ export class RecetaMedicaService {
       if (!datos.cita_id) {
         throw new Error("Cita ID no proporcionada");
       }
+
+      const fecha_actual = new Date();
+      if (datos.fecha_emision === null || datos.fecha_emision < fecha_actual) {
+        throw new Error("Fecha de emisión no válida");
+      }
+
       const cita = await this.verificaRecetaMedica(datos);
       if (cita !== null) {
         throw new Error("La receta médica ya existe");
