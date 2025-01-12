@@ -16,26 +16,39 @@ export class RecetaMedicaService {
     private citaRepository: Repository<Cita>
   ) {}
 
-  async create(
-    createRecetaMedicaDto: CreateRecetaMedicaDto
-  ): Promise<RecetaMedica> {
+  private async verificaRecetaMedica(datos: CreateRecetaMedicaDto) {
     try {
-      if (!createRecetaMedicaDto.cita_id) {
+      const recetaMedica = await this.recetaMedicaRepository.findOne({
+        where: {
+          fecha_emision: datos.fecha_emision,
+          cita: { id: datos.cita_id },
+        },
+        relations: ["cita"],
+      });
+      if (recetaMedica) {
+        return recetaMedica;
+      }
+      return null;
+    } catch (error) {
+      throw new Error(`Error al verificar la receta médica: ${error.message}`);
+    }
+  }
+
+  async create(datos: CreateRecetaMedicaDto): Promise<RecetaMedica> {
+    try {
+      if (!datos.cita_id) {
         throw new Error("Cita ID no proporcionada");
       }
-      const cita = this.citaRepository.findOne({
-        where: { id: createRecetaMedicaDto.cita_id },
-      });
-
-      if (!cita) {
-        throw new Error("Cita no encontrada");
+      const cita = await this.verificaRecetaMedica(datos);
+      if (cita !== null) {
+        throw new Error("La receta médica ya existe");
       }
       const nuevaRecetaMedica = this.recetaMedicaRepository.create({
-        medicamentos: createRecetaMedicaDto.medicamentos,
-        indicaciones: createRecetaMedicaDto.indicaciones,
-        fecha_emision: createRecetaMedicaDto.fecha_emision,
-        archivo_url: createRecetaMedicaDto.archivo_url,
-        cita: await cita,
+        medicamentos: datos.medicamentos,
+        indicaciones: datos.indicaciones,
+        fecha_emision: datos.fecha_emision,
+        archivo_url: datos.archivo_url,
+        cita: cita,
       });
       return await this.recetaMedicaRepository.save(nuevaRecetaMedica);
     } catch (error) {
