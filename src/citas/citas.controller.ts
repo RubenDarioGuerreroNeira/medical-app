@@ -14,7 +14,6 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
 import { PaginationDto } from "src/Dto Pagination/Pagination";
-
 import { Cita } from "src/Entities/Cita.entity";
 import { CitasService } from "./citas.service";
 import { CreateCitaDto } from "./dto/create-cita.dto";
@@ -31,10 +30,25 @@ interface citaInterface {
   data: Cita;
 }
 
+@ApiTags("Citas")
 @Controller("citas")
 export class CitasController {
+  private readonly logger = new Logger(CitasController.name);
   constructor(private readonly citasService: CitasService) {}
-
+  @ApiOperation({ summary: "Crear Cita" })
+  @ApiResponse({
+    status: 200,
+    description: "Cita creada correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cita no creada",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Post()
   async create(@Body() createCitaDto: CreateCitaDto): Promise<citaInterface> {
     try {
@@ -60,6 +74,22 @@ export class CitasController {
     }
   }
 
+  @ApiOperation({ summary: "Obtiene todas la Citas" })
+  @ApiQuery({ name: "page", required: false, type: Number })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({
+    status: 200,
+    description: "Citas obtenidas correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Citas no obtenidas",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Get()
   async findAll(@Query() pagination: PaginationDto) {
     return await this.citasService.findAll(pagination);
