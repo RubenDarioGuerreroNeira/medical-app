@@ -7,8 +7,15 @@ import {
   Param,
   Delete,
   Req,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Query,
 } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
+import { PaginationDto } from "src/Dto Pagination/Pagination";
 
+import { Cita } from "src/Entities/Cita.entity";
 import { CitasService } from "./citas.service";
 import { CreateCitaDto } from "./dto/create-cita.dto";
 import { UpdateCitaDto } from "./dto/update-cita.dto";
@@ -18,25 +25,47 @@ import { Roles } from "src/Entities/Usuarios.entity";
 import { RequireRoles } from "src/Guard/Decorator";
 import { GetUser } from "src/Guard/Get-User-Decorator";
 
+interface citaInterface {
+  status: number;
+  mesagge: string;
+  data: Cita;
+}
+
 @Controller("citas")
 export class CitasController {
   constructor(private readonly citasService: CitasService) {}
 
   @Post()
-  create(@Body() createCitaDto: CreateCitaDto) {
+  async create(@Body() createCitaDto: CreateCitaDto): Promise<citaInterface> {
     try {
-      return this.citasService.create(createCitaDto);
+      const cita = await this.citasService.create(createCitaDto);
+      return {
+        status: 200,
+        mesagge: "Cita creada exitosamente",
+        data: cita,
+      };
     } catch (error) {
-      console.log(error);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
     }
   }
 
   @Get()
-  findAll() {
-    return this.citasService.findAll();
+  async findAll(@Query() pagination: PaginationDto) {
+    return await this.citasService.findAll(pagination);
   }
 
-  @Get("getall/:citaId")
+  @Get("getId/:citaId")
   findOneCita(@Param("citaId") citaId: string) {
     try {
       return this.citasService.findOneCita(citaId);
@@ -57,7 +86,7 @@ export class CitasController {
   @Patch("cancelar/:citaId")
   async cancelar(
     @Param("citaId") citaId: string,
-    // no necesito pasar el id por body porque lo tomo del inicio de sesion 
+    // no necesito pasar el id por body porque lo tomo del inicio de sesion
     @GetUser("id") userId: string
   ) {
     try {

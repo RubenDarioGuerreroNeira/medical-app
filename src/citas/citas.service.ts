@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateCitaDto } from "./dto/create-cita.dto";
 import { UpdateCitaDto } from "./dto/update-cita.dto";
+import { HttpException, HttpStatus } from "@nestjs/common";
 
 import { Cita } from "../Entities/Cita.entity";
 import { EstadoCita } from "../Entities/Cita.entity";
@@ -10,6 +11,7 @@ import { Medico } from "../Entities/Medico.entity";
 import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
+import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
 
 @Injectable()
 export class CitasService {
@@ -69,7 +71,7 @@ export class CitasService {
     }
   }
 
-  async create(createCitaDto: CreateCitaDto): Promise<any> {
+  async create(createCitaDto: CreateCitaDto) {
     try {
       const medico = await this.verificaMedico(createCitaDto.medico_id);
 
@@ -79,38 +81,40 @@ export class CitasService {
 
       const bcita = await this.verificaCita(createCitaDto);
 
-      // if (!paciente) {
-      //   throw new BadRequestException("Paciente no encontrado");
-      // }
-      // if (!medico) {
-      //   throw new BadRequestException("Médico no encontrado");
-      // }
-
-      // if (!bcita) {
-      //   throw new BadRequestException("Cita no encontrada");
-      // }
-
       const cita = this.citasRepository.create({
         paciente,
         medico,
-        fecha_hora: createCitaDto.fecha_hora,
+        fecha_hora: bcita.fecha_hora,
         estado: EstadoCita.CONFIRMADA,
       });
 
-      const res = await this.citasRepository.save(cita);
-      return {
-        ...res,
-        paciente: paciente,
-        medico: medico,
-        message: "Cita creada exitosamente",
-      };
+      return cita;
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
 
-  async findAll(): Promise<Cita[]> {
-    return this.citasRepository.find();
+  async findAll(pagination: PaginationDto): Promise<PaginatedResult<Cita>> {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+    const [data, total] = await this.citasRepository.findAndCount({
+      skip,
+      take: limit,
+      relations: ["paciente", "medico"],
+      order: { fecha_hora: "DESC" },
+    });
+    const totalPages = Math.ceil(total / limit);
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPAge: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findOneCita(citaId: string): Promise<Cita> {
