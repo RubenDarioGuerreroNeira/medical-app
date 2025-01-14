@@ -36,13 +36,16 @@ export class RecetaMedicaController {
   ) {}
 
   @Post()
-  create(@Body() createRecetaMedicaDto: CreateRecetaMedicaDto) {
+  async create(@Body() createRecetaMedicaDto: CreateRecetaMedicaDto) {
     try {
       // return this.recetaMedicaService.create(createRecetaMedicaDto);
+      const receta = await this.recetaMedicaService.create(
+        createRecetaMedicaDto
+      );
       return {
         status: HttpStatus.CREATED,
         message: "Receta médica creada exitosamente",
-        recetaMedica: createRecetaMedicaDto,
+        data: receta,
       };
     } catch (error) {
       throw new NotFoundException(error.message);
@@ -155,15 +158,25 @@ export class RecetaMedicaController {
         message: error.message || "Error al actualizar la receta médica",
       });
     }
-    // return {
-    //   status: HttpStatus.OK,
-    //   message: "Receta médica actualizada exitosamente",
-    //   data: this.recetaMedicaService.update(id, updateRecetaMedicaDto),
-    // };
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.recetaMedicaService.remove(+id);
+  @Delete("delete/:id")
+  async remove(@Param("id") id: string) {
+    try {
+      const receta = await this.recetaMedicaService.remove(id);
+      return {
+        status: HttpStatus.OK,
+        message: "Receta Médica eliminada",
+        data: receta,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException({
+        status: HttpStatus.BAD_REQUEST,
+        message: error.message || "Error al eliminar la receta médica",
+      });
+    }
   }
 }

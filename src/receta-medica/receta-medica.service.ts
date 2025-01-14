@@ -147,7 +147,22 @@ export class RecetaMedicaService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} recetaMedica`;
+  async remove(id: string) {
+    try {
+      if (!id || id === undefined || id === null) {
+        throw new BadRequestException("Id Invalido o no proporcionado");
+      }
+
+      const receta = await this.recetaMedicaRepository.findOneBy({ id });
+      if (!receta) {
+        throw new NotFoundException(
+          `No se encuentra la receta médica con id ${id}`
+        );
+      }
+      await this.recetaMedicaRepository.delete(id);
+      return receta;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }
