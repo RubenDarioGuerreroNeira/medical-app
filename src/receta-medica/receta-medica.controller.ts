@@ -22,6 +22,12 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { CloudinaryService } from "src/cloudinary/cloudinary.service";
 import { RecetaMedica } from "src/Entities/RecetaMedica";
 
+interface RecetaMedicaResponse {
+  status: number;
+  message: string;
+  data: RecetaMedica;
+}
+
 @Controller("receta-medica")
 export class RecetaMedicaController {
   constructor(
@@ -106,25 +112,54 @@ export class RecetaMedicaController {
   }
 
   @Get("findone/:id")
-  findOne(@Param("id") id: string) {
-    // return this.recetaMedicaService.findOne(id);
-    return {
-      status: HttpStatus.OK,
-      message: "Receta médica encontrada exitosamente",
-      recetaMedica: this.recetaMedicaService.findOne(id),
-    };
+  async findOne(@Param("id") id: string): Promise<RecetaMedicaResponse> {
+    try {
+      const receta = await this.recetaMedicaService.findOne(id);
+      return {
+        status: HttpStatus.OK,
+        message: "Receta médica obtenida exitosamente",
+        data: receta,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException({
+        status: HttpStatus.BAD_REQUEST,
+        message: error.message || "Error al obtener la receta médica",
+      });
+    }
   }
 
   @Patch("update/:id")
-  update(
+  async update(
     @Param("id") id: string,
     @Body() updateRecetaMedicaDto: UpdateRecetaMedicaDto
   ) {
-    return {
-      status: HttpStatus.OK,
-      message: "Receta médica actualizada exitosamente",
-      data: this.recetaMedicaService.update(id, updateRecetaMedicaDto),
-    };
+    try {
+      const receta = await this.recetaMedicaService.update(
+        id,
+        updateRecetaMedicaDto
+      );
+      return {
+        status: HttpStatus.OK,
+        message: "Receta médica actualizada exitosamente",
+        data: receta,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException({
+        status: HttpStatus.BAD_REQUEST,
+        message: error.message || "Error al actualizar la receta médica",
+      });
+    }
+    // return {
+    //   status: HttpStatus.OK,
+    //   message: "Receta médica actualizada exitosamente",
+    //   data: this.recetaMedicaService.update(id, updateRecetaMedicaDto),
+    // };
   }
 
   @Delete(":id")
