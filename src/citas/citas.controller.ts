@@ -95,6 +95,20 @@ export class CitasController {
     return await this.citasService.findAll(pagination);
   }
 
+  @ApiOperation({ summary: "Obtiene una Cita" })
+  @ApiResponse({
+    status: 200,
+    description: "Cita obtenida correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cita no obtenida",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Get("getId/:citaId")
   findOneCita(@Param("citaId") citaId: string) {
     try {
@@ -103,7 +117,20 @@ export class CitasController {
       console.log(error);
     }
   }
-
+  @ApiOperation({ summary: "Actualiza una Cita" })
+  @ApiResponse({
+    status: 200,
+    description: "Cita actualizada correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cita no actualizada",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Patch("update/:citaId")
   update(
     @Param("citaId") citaId: string,
@@ -113,6 +140,20 @@ export class CitasController {
   }
 
   @RequireRoles(Roles.ADMIN, Roles.MEDICO)
+  @ApiOperation({ summary: "Cancelar Cita" })
+  @ApiResponse({
+    status: 200,
+    description: "Cita cancelada correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cita no cancelada",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Patch("cancelar/:citaId")
   async cancelar(
     @Param("citaId") citaId: string,
@@ -126,6 +167,20 @@ export class CitasController {
     }
   }
 
+  @ApiOperation({ summary: "Elimina una Cita" })
+  @ApiResponse({
+    status: 200,
+    description: "Cita eliminada correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Cita no eliminada",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
   @Delete("delete/:citaId")
   remove(@Param("citaId") citaId: string) {
     return this.citasService.remove(citaId);
