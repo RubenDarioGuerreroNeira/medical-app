@@ -185,4 +185,53 @@ export class CitasController {
   remove(@Param("citaId") citaId: string) {
     return this.citasService.remove(citaId);
   }
+
+  @ApiOperation({ summary: "Obtiene todas las Citas de un Usuario" })
+  @ApiResponse({
+    status: 200,
+    description: "Citas obtenidas correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Citas no obtenidas",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
+  @Get("cancela/:citaId")
+  async cancelarCita(
+    @Param("citaId") citaId: string,
+    @Body("userId") userId: string
+  ) {
+    try {
+      return await this.citasService.cancelar(citaId, userId);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  @Get("citasMedico/:medicoId")
+  async citasList(
+    @Param("medicoId") medicoId: string,
+    @Query() paginationDto: PaginationDto
+  ): Promise<{ citas: Cita[]; total: number }> {
+    try {
+      const citas = await this.citasService.citasporMedico(medicoId,paginationDto);
+      return citas;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+    }
+  }
 }

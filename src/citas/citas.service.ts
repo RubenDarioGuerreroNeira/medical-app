@@ -172,4 +172,73 @@ export class CitasService {
       throw new BadRequestException(error.message);
     }
   }
+
+  async cancelar(citaId: string, userId: string): Promise<Cita> {
+    try {
+      const usuario = await this.usuarioRepository.findOne({
+        where: { id: userId },
+        relations: ["roles"],
+      });
+      if (!usuario) {
+        throw new BadRequestException("Usuario no encontrado");
+      }
+      if (usuario.rol !== Roles.MEDICO) {
+        throw new BadRequestException("No tienes permisos para cancelar citas");
+      }
+
+      const bCita = await this.findOneCita(citaId);
+      if (bCita.estado === EstadoCita.CANCELADA) {
+        throw new BadRequestException(
+          `Cita ya estaba  cancelada con anterioridad `
+        );
+      }
+
+      const citaModificada = await this.citasRepository.save({
+        ...bCita,
+        estado: EstadoCita.CANCELADA,
+      });
+
+      return citaModificada;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+  async citasporMedico(
+    medicoId: string,
+    paginationDto?: PaginationDto
+  ): Promise<{ citas: Cita[]; total: number }> {
+    try {
+      const bMedico = await this.citasRepository.findOne({
+        where: { medico: { id: medicoId } },
+      });
+
+      if (!bMedico) {
+        throw new BadRequestException(`Medico no encontrado ${medicoId}`);
+      }
+
+      const { page = 1, limit = 10 } = paginationDto || {};
+      const skip = (page - 1) * limit;
+
+      const [citas, total] = await this.citasRepository
+        .createQueryBuilder("cita")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .orderBy("cita.fecha_hora", "DESC")
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      // 5. Retornar resultados
+      return {
+        citas,
+        total,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new BadRequestException("Error al obtener citas de un medico");
+      }
+    }
+  }
 }
