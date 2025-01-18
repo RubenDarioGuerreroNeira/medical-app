@@ -228,7 +228,7 @@ export class CitasController {
     description: "Error en el Servidor",
   })
 
-  // citas de un medico por fecha
+  // citas de un medico Paginado
   @Get("citasMedico/:medicoId")
   async citasList(
     @Param("medicoId") medicoId: string,
@@ -240,6 +240,49 @@ export class CitasController {
         paginationDto
       );
       return citas;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+    }
+  }
+
+  @ApiOperation({ summary: "Obtiene todas las Citas de un Médico por fecha" })
+  @ApiResponse({
+    status: 200,
+    description: "Citas obtenidas correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Citas no obtenidas",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
+  @Get("citasMedico/:medicoId")
+  async citaMedicoFecha(
+    @Param() medicoId: string,
+    @Query() fecha: Date,
+    @Query() paginationDto: PaginationDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      const bMedicoFecha = await this.citasService.citadDelDiDeterminado(
+        fecha,
+        medicoId,
+        paginationDto
+      );
+      return bMedicoFecha;
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
