@@ -23,6 +23,7 @@ import { UseGuards } from "@nestjs/common";
 import { Roles } from "src/Entities/Usuarios.entity";
 import { RequireRoles } from "src/Guard/Decorator";
 import { GetUser } from "src/Guard/Get-User-Decorator";
+import { PaginatedResult } from "src/Dto Pagination/Pagination";
 
 interface citaInterface {
   status: number;
@@ -211,13 +212,33 @@ export class CitasController {
       console.log(error);
     }
   }
+
+  @ApiOperation({ summary: "Obtiene todas las Citas de un Médico" })
+  @ApiResponse({
+    status: 200,
+    description: "Citas obtenidas correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Citas no obtenidas",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
+
+  // citas de un medico por fecha
   @Get("citasMedico/:medicoId")
   async citasList(
     @Param("medicoId") medicoId: string,
     @Query() paginationDto: PaginationDto
-  ): Promise<{ citas: Cita[]; total: number }> {
+  ): Promise<PaginatedResult<Cita>> {
     try {
-      const citas = await this.citasService.citasporMedico(medicoId,paginationDto);
+      const citas = await this.citasService.citasporMedico(
+        medicoId,
+        paginationDto
+      );
       return citas;
     } catch (error) {
       if (error instanceof HttpException) {

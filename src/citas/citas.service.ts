@@ -12,6 +12,7 @@ import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
+import { isMainThread } from "worker_threads";
 
 @Injectable()
 export class CitasService {
@@ -206,7 +207,7 @@ export class CitasService {
   async citasporMedico(
     medicoId: string,
     paginationDto?: PaginationDto
-  ): Promise<{ citas: Cita[]; total: number }> {
+  ): Promise<PaginatedResult<Cita>> {
     try {
       const bMedico = await this.citasRepository.findOne({
         where: { medico: { id: medicoId } },
@@ -227,10 +228,80 @@ export class CitasService {
         .take(limit)
         .getManyAndCount();
 
+      const totalPages = Math.ceil(total / limit);
+
       // 5. Retornar resultados
       return {
-        citas,
-        total,
+        data: citas,
+        meta: {
+          total: total,
+          page: page,
+          limit: limit,
+          totalPages: totalPages,
+          hasNextPAge: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new BadRequestException("Error al obtener citas de un medico");
+      }
+    }
+  }
+
+  async citadDelDiDeterminado(
+    fecha: Date,
+    medicoId: string,
+    paginationDto: PaginationDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      if (!fecha) {
+        throw new BadRequestException("Fecha no puede ser nula");
+      }
+      if (!medicoId) {
+        throw new BadRequestException("Medico no puede ser nulo");
+      }
+
+      const bFecha = await this.citasRepository.findOne({
+        where: { fecha_hora: fecha },
+      });
+
+      if (!bFecha) {
+        throw new BadRequestException("Fecha No existe");
+      }
+
+      const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
+
+      if (!bMedico) {
+        throw new BadRequestException("Medico no existe");
+      }
+
+      const { page = 1, limit = 10 } = paginationDto || {};
+      const skip = (page - 1) * limit;
+
+      const [citas, total] = await this.citasRepository
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.fecha_hora = :fecha", { fecha })
+        .andWhere("cita.medico_id=:medicoId", { medicoId })
+        .orderBy("cita.fecha_hora", "DESC")
+        .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: citas,
+        meta: {
+          page: page,
+          limit: limit,
+          totalPages: totalPages,
+          hasNextPAge: page < totalPages,
+          hasPreviousPage: page > 1,
+          total: total,
+        },
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
