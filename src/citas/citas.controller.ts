@@ -327,11 +327,21 @@ export class CitasController {
     }
   }
 
-  @ApiOperation({ summary: "Obtener citas del día actual" })
+  @ApiOperation({ summary: "Obtener citas del Médico en un Rango de Fechas " })
   @ApiParam({
     name: "medicoId",
     description: "Identificador del médico",
     type: String,
+  })
+  @ApiParam({
+    name: "Fecha",
+    description: "desde la Fecha",
+    type: Date,
+  })
+  @ApiParam({
+    name: "FechaFin",
+    description: "Hasta la Fecha:",
+    type: Date,
   })
   @ApiResponse({
     description: "Devuelve una lista de citas del día actual",
