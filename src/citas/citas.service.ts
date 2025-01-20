@@ -13,6 +13,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
 import { isMainThread } from "worker_threads";
+import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
 
 @Injectable()
 export class CitasService {
@@ -28,18 +29,26 @@ export class CitasService {
   ) {}
 
   async verificaMedico(medico_id: string): Promise<Medico> {
-    const medico = await this.medicoRepository.findOne({
-      where: { id: medico_id },
-    });
+    try {
+      const medico = await this.medicoRepository.findOne({
+        where: { id: medico_id },
+      });
 
-    if (!medico) {
-      throw new BadRequestException("Médico no encontrado");
+      if (!medico) {
+        throw new BadRequestException("Médico no encontrado");
+      }
+      return medico;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(
+        "Error al Verificar Disponibilidad de la Cita"
+      );
     }
-
-    return medico;
   }
 
-  async verificaCita(datosCita: CreateCitaDto): Promise<Cita> {
+  async verificaCita(datosCita: CreateCitaDto): Promise<void> {
     const fechaCita = new Date(datosCita.fecha_hora);
     const fechaActual = new Date();
 
@@ -60,8 +69,6 @@ export class CitasService {
       if (bCita) {
         throw new BadRequestException("Cita ya Existe");
       }
-
-      return bCita;
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -79,16 +86,20 @@ export class CitasService {
       const paciente = await this.usuarioRepository.findOne({
         where: { id: createCitaDto.paciente_id, rol: Roles.PACIENTE },
       });
+      if (!paciente) {
+        throw new BadRequestException("El paciente no existe");
+      }
 
-      const bcita = await this.verificaCita(createCitaDto);
+      await this.verificaCita(createCitaDto);
 
       const cita = this.citasRepository.create({
         paciente,
         medico,
-        fecha_hora: bcita.fecha_hora,
+        fecha_hora: createCitaDto.fecha_hora,
         estado: EstadoCita.CONFIRMADA,
       });
 
+      await this.citasRepository.save(cita);
       return cita;
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -312,4 +323,57 @@ export class CitasService {
       }
     }
   }
-}
+
+  async citadMedicoRangoFechas(
+    medicoId: string,
+    query: GetCitasRangoFechaDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      const { fecha, fechaFin, page = 1, limit = 10 } = query;
+
+      if (!medicoId) {
+        throw new BadRequestException("El ID del médico es requerido");
+      }
+
+      const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
+      if (!bMedico) {
+        throw new BadRequestException("Médico no encontrado");
+      }
+
+      const skip = (page - 1) * limit;
+      const fechaInicio = new Date(fecha);
+      const fechaFinal = new Date(fechaFin);
+
+      const [citas, total] = await this.citasRepository
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .andWhere("cita.fecha_hora >= :fechaInicio", { fechaInicio })
+        .andWhere("cita.fecha_hora <= :fechaFinal", { fechaFinal })
+        .orderBy("cita.fecha_hora", "DESC")
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: citas,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPAge: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException("Error al obtener citas del médico");
+    }
+  }
+} // fin

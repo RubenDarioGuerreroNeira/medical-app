@@ -11,9 +11,17 @@ import {
   HttpStatus,
   Logger,
   Query,
+  BadRequestException,
+  ParseUUIDPipe,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from "@nestjs/swagger";
-import { PaginationDto } from "src/Dto Pagination/Pagination";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from "@nestjs/swagger";
+
 import { Cita } from "src/Entities/Cita.entity";
 import { CitasService } from "./citas.service";
 import { CreateCitaDto } from "./dto/create-cita.dto";
@@ -24,7 +32,8 @@ import { Roles } from "src/Entities/Usuarios.entity";
 import { RequireRoles } from "src/Guard/Decorator";
 import { GetUser } from "src/Guard/Get-User-Decorator";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
-
+import { PaginationDto } from "src/Dto Pagination/Pagination";
+import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
 interface citaInterface {
   status: number;
   mesagge: string;
@@ -257,9 +266,28 @@ export class CitasController {
   }
 
   @ApiOperation({ summary: "Obtiene todas las Citas de un Médico por fecha" })
+  @ApiParam({
+    name: "medicoId",
+    description: "Identificador del médico",
+    type: String,
+  })
   @ApiResponse({
     status: 200,
     description: "Citas obtenidas correctamente",
+    type: Cita,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Citas no obtenidas",
+  })
+  @ApiResponse({
+    status: 500,
+    description: "Error en el Servidor",
+  })
+  @ApiOperation({ summary: "Obtener citas de un medico por fecha" })
+  @ApiResponse({
+    status: 200,
+    description: "Citas obtenidas",
     type: Cita,
   })
   @ApiResponse({
@@ -296,6 +324,59 @@ export class CitasController {
           HttpStatus.BAD_REQUEST
         );
       }
+    }
+  }
+
+  @ApiOperation({ summary: "Obtener citas del día actual" })
+  @ApiParam({
+    name: "medicoId",
+    description: "Identificador del médico",
+    type: String,
+  })
+  @ApiResponse({
+    description: "Devuelve una lista de citas del día actual",
+    type: Cita,
+  })
+  @Get("/citasRangoFecha/:medicoId")
+  @ApiOperation({ summary: "Obtener citas de un médico en un rango de fechas" })
+  async getCitasPorRangoFecha(
+    @Param("medicoId", ParseUUIDPipe) medicoId: string,
+    @Query() query: GetCitasRangoFechaDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      const { fecha, fechaFin } = query;
+
+      if (!fecha || !fechaFin) {
+        throw new BadRequestException("Las fechas son requeridas");
+      }
+
+      const fechaInicio = new Date(fecha);
+      const fechaFinal = new Date(fechaFin);
+
+      if (fechaInicio > fechaFinal) {
+        throw new BadRequestException(
+          "La fecha final debe ser mayor a la fecha inicial"
+        );
+      }
+
+      return await this.citasService.citadMedicoRangoFechas(medicoId, query);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: "Error interno del servidor",
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
     }
   }
 }
