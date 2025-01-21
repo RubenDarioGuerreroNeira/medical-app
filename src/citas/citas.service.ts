@@ -376,4 +376,30 @@ export class CitasService {
       throw new BadRequestException("Error al obtener citas del médico");
     }
   }
+
+  async reprogramarCita(
+    citaId: string,
+    userId: string,
+    updateCitaDto: UpdateCitaDto
+  ): Promise<Cita> {
+    try {
+      const usuario = await this.citasRepository.findOne({
+        where: { medico: { id: userId } },
+      });
+      if (!usuario) {
+        throw new BadRequestException("Usuario no encontrado");
+      }
+      const bCita = await this.findOneCita(citaId);
+      const citaModificada = await this.citasRepository.save({
+        ...bCita,
+        ...updateCitaDto,
+      });
+      return citaModificada;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException("Error al Reprogramar Cita con el médico");
+    }
+  }
 } // fin

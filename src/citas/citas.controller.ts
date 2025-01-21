@@ -389,4 +389,55 @@ export class CitasController {
       );
     }
   }
+  @ApiOperation({
+    summary: "Reprograma una Cita de un médico para un paciente.",
+  })
+  @ApiParam({
+    name: "citaId",
+    description: "Identificador del médico",
+    type: String,
+  })
+  @ApiParam({
+    name: "userId",
+    description: "Identificador del paciente",
+    type: String,
+  })
+  @ApiParam({
+    name: "fecha_hora",
+    description: "Fecha de la cita",
+    type: Date,
+  })
+  @Patch("reprograma/:citaId/:userId")
+  async reprogramaCita(
+    @Param("citaId") citaId: string,
+    @Param("userId") userId: string,
+    @Body() updateCitaDto: UpdateCitaDto
+  ): Promise<citaInterface> {
+    try {
+      const { fecha_hora } = updateCitaDto;
+      const citaReprogramada = await this.citasService.reprogramarCita(
+        citaId,
+        userId,
+        updateCitaDto
+      );
+      return {
+        status: 200,
+        mesagge: "Cita reprogramada exitosamente",
+        data: citaReprogramada,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+    }
+  }
 }
