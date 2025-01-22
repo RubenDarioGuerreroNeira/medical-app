@@ -34,6 +34,9 @@ import { GetUser } from "src/Guard/Get-User-Decorator";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
 import { PaginationDto } from "src/Dto Pagination/Pagination";
 import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
+import { AuthService } from "src/auth/auth.service";
+import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
+
 interface citaInterface {
   status: number;
   mesagge: string;
@@ -59,6 +62,7 @@ export class CitasController {
     status: 500,
     description: "Error en el Servidor",
   })
+  // @UseGuards(RolesGuard)
   @Post()
   async create(@Body() createCitaDto: CreateCitaDto): Promise<citaInterface> {
     try {
@@ -149,7 +153,6 @@ export class CitasController {
     return this.citasService.update(citaId, updateCitaDto);
   }
 
-  @RequireRoles(Roles.ADMIN, Roles.MEDICO)
   @ApiOperation({ summary: "Cancelar Cita" })
   @ApiResponse({
     status: 200,
@@ -191,9 +194,29 @@ export class CitasController {
     status: 500,
     description: "Error en el Servidor",
   })
+  @UseGuards(JwtAuthGuard)
+  @RequireRoles(Roles.ADMIN)
   @Delete("delete/:citaId")
-  remove(@Param("citaId") citaId: string) {
-    return this.citasService.remove(citaId);
+  async remove(@Param("citaId", ParseUUIDPipe) citaId: string) {
+    try {
+      const result = await this.citasService.remove(citaId);
+      return {
+        status: HttpStatus.OK,
+        message: "Cita eliminada exitosamente",
+        data: result,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          message: error.message,
+        },
+        HttpStatus.BAD_REQUEST
+      );
+    }
   }
 
   @ApiOperation({ summary: "Obtiene todas las Citas de un Usuario" })
