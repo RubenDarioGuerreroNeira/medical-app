@@ -10,12 +10,11 @@ import { Medico } from "../Entities/Medico.entity";
 import { HistorialMedico } from "../Entities/HistorialMedico.entity";
 import { JwtStrategy } from "../auth/strategies/jwt.strategy";
 import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
-import { AuthModule } from "../auth/auth.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cita, Usuario, Medico, HistorialMedico]),
-    AuthModule,
+
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
