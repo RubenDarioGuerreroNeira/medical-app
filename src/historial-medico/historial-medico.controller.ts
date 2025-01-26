@@ -6,10 +6,19 @@ import {
   Patch,
   Param,
   Delete,
+  HttpException,
+  HttpStatus,
 } from "@nestjs/common";
 import { HistorialMedicoService } from "./historial-medico.service";
 import { CreateHistorialMedicoDto } from "./dto/create-historial-medico.dto";
 import { UpdateHistorialMedicoDto } from "./dto/update-historial-medico.dto";
+import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
+
+interface respuestaInterface {
+  status: number;
+  message: string;
+  data: any;
+}
 
 @Controller("historial-medico")
 export class HistorialMedicoController {
@@ -33,9 +42,27 @@ export class HistorialMedicoController {
     return this.historialMedicoService.findAll();
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.historialMedicoService.findOne(+id);
+  @Get("findOne/:id")
+  async findOne(@Param("id") id: string): Promise<respuestaInterface> {
+    try {
+      const historialMedico = await this.historialMedicoService.findOne(id);
+      return {
+        status: 200,
+        message: "Historial médico encontrado exitosamente",
+        data: historialMedico,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          message: error.message,
+        },
+        HttpStatus.BAD_REQUEST
+      );
+    }
   }
 
   @Patch(":id")

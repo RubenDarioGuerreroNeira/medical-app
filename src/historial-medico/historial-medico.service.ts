@@ -9,10 +9,15 @@ import { DataSource } from "typeorm";
 import { CreateHistorialMedicoDto } from "./dto/create-historial-medico.dto";
 import { UpdateHistorialMedicoDto } from "./dto/update-historial-medico.dto";
 import { BadRequestException } from "@nestjs/common";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Cache } from "cache-manager";
+import { Inject } from "@nestjs/common";
 
 @Injectable()
 export class HistorialMedicoService {
   constructor(
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
     @InjectRepository(HistorialMedico)
     private historialMedicoRepository: Repository<HistorialMedico>,
     @InjectRepository(Usuario)
@@ -91,8 +96,18 @@ export class HistorialMedicoService {
     return `This action returns all historialMedico`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} historialMedico`;
+  async findOne(id: string): Promise<HistorialMedico> {
+    const cacheData = await this.cacheManager.get<HistorialMedico>(id);
+
+    if (cacheData) {
+      return cacheData;
+    }
+    const historial = await this.historialMedicoRepository.findOneBy({ id });
+    if (!historial) {
+      throw new NotFoundException("Historial Médico no encontrado");
+    }
+    await this.cacheManager.set(id, historial);
+    return historial;
   }
 
   update(id: number, updateHistorialMedicoDto: UpdateHistorialMedicoDto) {

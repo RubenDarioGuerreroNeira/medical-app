@@ -18,14 +18,19 @@ import { HandlebarsAdapter } from "@nestjs-modules/mailer/dist/adapters/handleba
 import { NotaMedica } from "./Entities/NotaMedica";
 import { RecetaMedica } from "./Entities/RecetaMedica";
 import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
-import { NotaMedicaModule } from './nota_medica/nota_medica.module';
-import { RecetaMedicaModule } from './receta-medica/receta-medica.module';
+import { NotaMedicaModule } from "./nota_medica/nota_medica.module";
+import { RecetaMedicaModule } from "./receta-medica/receta-medica.module";
+import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
+    }),
+    CacheModule.register({
+      ttl: 60000, // tiempo de vida en milisegundos
+      max: 100, //max numero de items en cache
     }),
 
     TypeOrmModule.forRoot({
