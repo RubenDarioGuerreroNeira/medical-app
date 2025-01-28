@@ -14,10 +14,16 @@ import { Repository } from "typeorm";
 import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
 import { isMainThread } from "worker_threads";
 import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
+import { Cache } from "cache-manager";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject } from "@nestjs/common";
 
 @Injectable()
 export class CitasService {
   constructor(
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
+
     @InjectRepository(Cita)
     private citasRepository: Repository<Cita>,
     @InjectRepository(Usuario)
@@ -130,13 +136,32 @@ export class CitasService {
   }
 
   async findOneCita(citaId: string): Promise<Cita> {
+    // try {
+    //   const bCita = this.citasRepository.findOneBy({ id: citaId });
+    //   if (!bCita) {
+    //     throw new BadRequestException(`Cita no encontrada ${citaId}`);
+    //   }
+    //   return bCita;
+    // } catch (error) {
+    //   throw new BadRequestException(error.message);
+    // }
+
     try {
+      const cacheData = await this.cacheManager.get<Cita>(citaId);
+
+      if (cacheData) {
+        return cacheData;
+      }
       const bCita = this.citasRepository.findOneBy({ id: citaId });
       if (!bCita) {
         throw new BadRequestException(`Cita no encontrada ${citaId}`);
       }
+      await this.cacheManager.set(citaId, bCita, 3600000);
       return bCita;
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException(error.message);
     }
   }

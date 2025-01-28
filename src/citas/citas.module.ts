@@ -10,10 +10,15 @@ import { Medico } from "../Entities/Medico.entity";
 import { HistorialMedico } from "../Entities/HistorialMedico.entity";
 import { JwtStrategy } from "../auth/strategies/jwt.strategy";
 import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cita, Usuario, Medico, HistorialMedico]),
+    CacheModule.register({
+      ttl: 60000, // tiempo de vida en milisegundos
+      max: 100, //max numero de items en cache
+    }),
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
