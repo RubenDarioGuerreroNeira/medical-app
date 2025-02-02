@@ -65,7 +65,6 @@ export class MedicosController {
       );
     }
   }
-
   // @Get(":id")
   // findOne(@Param("id") id: string) {
   //   return this.medicosService.findOne(id);
