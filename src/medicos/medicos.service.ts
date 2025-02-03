@@ -156,12 +156,45 @@ export class MedicosService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} medico`;
+  async update(medicoID: string, updateMedicoDto: UpdateMedicoDto) {
+    try {
+      // Si no está en cache, verificamos directamente con preload
+      const medicoUpdate = await this.medicoRepository.preload({
+        id: medicoID,
+        ...updateMedicoDto,
+      });
+
+      if (!medicoUpdate) {
+        throw new HttpException(
+          {
+            status: 404,
+            message: "El medico no existe",
+          },
+          404
+        );
+      }
+      // guardo los cambios en la bd
+      const medicoActualizado = await this.medicoRepository.save(medicoUpdate);
+
+      // actualizo la cache del medico
+      await this.cacheManager.set(medicoID, medicoActualizado);
+      return medicoActualizado;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: 400,
+          message: error.message,
+        },
+        400
+      );
+    }
   }
 
-  update(id: number, updateMedicoDto: UpdateMedicoDto) {
-    return `This action updates a #${id} medico`;
+  findOne(id: number) {
+    return `This action returns a #${id} medico`;
   }
 
   remove(id: number) {
