@@ -20,6 +20,7 @@ import {
 
 import { MedicosService } from "./medicos.service";
 import { CreateMedicoDto } from "./dto/create-medico.dto";
+import { CreateUsuarioDto } from "src/usuarios/dto/create-usuario.dto";
 import { UpdateMedicoDto } from "./dto/update-medico.dto";
 import { Medico } from "src/Entities/Medico.entity";
 
@@ -32,6 +33,44 @@ interface MedicoInterface {
 @Controller("medicos")
 export class MedicosController {
   constructor(private readonly medicosService: MedicosService) {}
+
+  @ApiOperation({ summary: "Crear un nuevo médico" })
+  @ApiResponse({
+    status: 200,
+    description: "Médico creado correctamente",
+    type: Medico,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "Error al crear el médico",
+  })
+  @Post()
+  async create(
+    @Body() requestBody: { usuario: CreateUsuarioDto; medico: CreateMedicoDto }
+  ) {
+    try {
+      const result = await this.medicosService.create(
+        requestBody.usuario,
+        requestBody.medico
+      );
+      return {
+        status: 200,
+        mesagge: "Médico creado correctamente",
+        data: result,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          message: error.message,
+        },
+        HttpStatus.BAD_REQUEST
+      );
+    }
+  }
 
   @ApiOperation({ summary: "Obtener todos los médicos de la aplicación" })
   @ApiResponse({
