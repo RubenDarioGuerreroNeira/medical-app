@@ -23,6 +23,19 @@ export class MedicosService {
 
   async verificaUsuario(CreateUsuarioDto: CreateUsuarioDto) {
     try {
+      const medicoCahce = await this.cacheManager.get<Usuario>(
+        CreateUsuarioDto.email
+      );
+      if (medicoCahce) {
+        throw new HttpException(
+          {
+            status: 400,
+            message: "El usuario ya existe",
+          },
+          400
+        );
+      }
+
       const usuario = await this.usuarioRepository.findOne({
         where: {
           nombre: CreateUsuarioDto.nombre,
