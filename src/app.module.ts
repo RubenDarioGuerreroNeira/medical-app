@@ -21,6 +21,7 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 import { NotaMedicaModule } from "./nota_medica/nota_medica.module";
 import { RecetaMedicaModule } from "./receta-medica/receta-medica.module";
 import { CacheModule } from "@nestjs/cache-manager";
+import { TelegramModule } from "./telegram/telegram-modules";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CacheModule } from "@nestjs/cache-manager";
       isGlobal: true,
       envFilePath: ".env",
     }),
+    TelegramModule,
     CacheModule.register({
       ttl: 60000, // tiempo de vida en milisegundos
       max: 100, //max numero de items en cache

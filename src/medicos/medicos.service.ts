@@ -204,7 +204,36 @@ export class MedicosService {
     return `This action returns a #${id} medico`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} medico`;
+  async remove(medicoId: string): Promise<any> {
+    try {
+      const medicoCache = await this.medicoRepository.preload({ id: medicoId });
+
+      if (!medicoCache) {
+        throw new HttpException(
+          {
+            status: 404,
+            message: "El medico no existe",
+          },
+          404
+        );
+      }
+      await this.medicoRepository.delete(medicoId);
+      return {
+        status: 200,
+        mesagge: "Médico eliminado correctamente",
+        data: medicoCache,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        {
+          status: 400,
+          message: error.message,
+        },
+        400
+      );
+    }
   }
 }

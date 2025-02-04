@@ -133,13 +133,13 @@ export class MedicosController {
     }
   }
 
+  @Delete(":medicoId")
+  remove(@Param("medicoId") medicoId: string) {
+    return this.medicosService.remove(medicoId);
+  }
+
   // @Get(":id")
   // findOne(@Param("id") id: string) {
   //   return this.medicosService.findOne(id);
-  // }
-
-  // @Delete(":id")
-  // remove(@Param("id") id: string) {
-  //   return this.medicosService.remove(+id);
   // }
 }
