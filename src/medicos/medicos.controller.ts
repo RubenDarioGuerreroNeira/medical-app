@@ -105,12 +105,15 @@ export class MedicosController {
     }
   }
   @Patch(":medicoId")
-  update(
+  async update(
     @Param("medicoId") medicoId: string,
     @Body() updateMedicoDto: UpdateMedicoDto
   ) {
     try {
-      const result = this.medicosService.update(medicoId, updateMedicoDto);
+      const result = await this.medicosService.update(
+        medicoId,
+        updateMedicoDto
+      );
       return {
         status: 200,
         mesagge: "Médico actualizado correctamente",

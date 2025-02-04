@@ -156,7 +156,10 @@ export class MedicosService {
     }
   }
 
-  async update(medicoID: string, updateMedicoDto: UpdateMedicoDto) {
+  async update(
+    medicoID: string,
+    updateMedicoDto: UpdateMedicoDto
+  ): Promise<any> {
     try {
       // Si no está en cache, verificamos directamente con preload
       const medicoUpdate = await this.medicoRepository.preload({
@@ -178,7 +181,11 @@ export class MedicosService {
 
       // actualizo la cache del medico
       await this.cacheManager.set(medicoID, medicoActualizado);
-      return medicoActualizado;
+      return {
+        // status: 200,
+        // mesagge: "Médico actualizado correctamente",
+        data: medicoActualizado,
+      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
