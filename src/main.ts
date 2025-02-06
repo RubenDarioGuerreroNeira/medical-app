@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from "./all-exceptions.filter";
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
+    app.enableCors();
     const config = new DocumentBuilder()
       .setTitle("API Rest")
       .setDescription("API Rest MedicalAppointments")
@@ -17,9 +18,13 @@ async function bootstrap() {
     SwaggerModule.setup("api", app, document);
 
     app.useGlobalFilters(new AllExceptionsFilter());
-    await app.listen(3000);
+
+    const port = process.env.PORT || 3000;
+    await app.listen(port, "0.0.0.0");
+    console.log(`Server started on port ${port}`);
   } catch (error) {
-    console.error(error);
+    console.error("Error starting server", error);
+    process.exit(1);
   }
 }
 bootstrap();
