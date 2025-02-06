@@ -343,12 +343,21 @@ Use los botones del menú principal.
     );
 
     // Esperar la respuesta del usuario
-
-    this.bot.onReplyToMessage(chatId, sentMessage.message_id, (msg) => {
+    this.bot.onReplyToMessage(chatId, sentMessage.message_id, async (msg) => {
       if (msg.text) {
-        this.procesarPreguntaMedica(chatId, msg.text);
+        // Primero enviamos el mensaje de espera
+        const waitingMessage = await this.bot.sendMessage(
+          chatId,
+          "🤔 Estoy analizando tu consulta, por favor espera un momento..."
+        );
+
+        // Procesamos la pregunta médica
+        await this.procesarPreguntaMedica(chatId, msg.text);
+
+        // Eliminamos el mensaje de espera después de procesar la respuesta
+        await this.bot.deleteMessage(chatId, waitingMessage.message_id);
       } else {
-        this.bot.sendMessage(
+        await this.bot.sendMessage(
           chatId,
           "Por favor, escribe un texto con tu pregunta."
         );
@@ -369,25 +378,26 @@ Use los botones del menú principal.
 
       const MAX_LENGTH = 4096; // Define el valor de MAX_LENGTH según tus necesidades
 
-if (respuesta.length > MAX_LENGTH) {
-  const chunks: string[] = respuesta.match(new RegExp(`.{1,${MAX_LENGTH}}`, "g")) || [];
-  for (const chunk of chunks) {
-    const options: TelegramBot.SendMessageOptions = {
-      parse_mode: "MarkdownV2",
-      reply_markup:
-        chunks.indexOf(chunk) === chunks.length - 1
-          ? {
-              inline_keyboard: [
-                [
-                  {
-                    text: "🔙 Volver al menú principal",
-                    callback_data: "menu_principal",
-                  },
-                ],
-              ],
-            }
-          : undefined,
-    };
+      if (respuesta.length > MAX_LENGTH) {
+        const chunks: string[] =
+          respuesta.match(new RegExp(`.{1,${MAX_LENGTH}}`, "g")) || [];
+        for (const chunk of chunks) {
+          const options: TelegramBot.SendMessageOptions = {
+            parse_mode: "MarkdownV2",
+            reply_markup:
+              chunks.indexOf(chunk) === chunks.length - 1
+                ? {
+                    inline_keyboard: [
+                      [
+                        {
+                          text: "🔙 Volver al menú principal",
+                          callback_data: "menu_principal",
+                        },
+                      ],
+                    ],
+                  }
+                : undefined,
+          };
           await this.bot.sendMessage(chatId, chunk, options);
         }
       } else {
@@ -427,7 +437,6 @@ if (respuesta.length > MAX_LENGTH) {
       );
     }
   }
-
   async obtenerRespuestaMedica(pregunta: string): Promise<string> {
     const respuestaSimulada = await this.generarRespuesta(pregunta);
     return respuestaSimulada;
