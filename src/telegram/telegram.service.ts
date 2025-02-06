@@ -2,6 +2,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as TelegramBot from "node-telegram-bot-api";
+import { GeminiAIService } from "../Gemini/gemini.service";
 import {
   AppointmentNotification,
   TelegramKeyboard,
@@ -12,101 +13,92 @@ export class TelegramService {
   private bot: TelegramBot;
   private readonly logger = new Logger(TelegramService.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private geminiService: GeminiAIService
+  ) {
     const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.bot = new TelegramBot(token, { polling: true });
     this.initializeBot();
   }
 
   private initializeBot(): void {
-    // Comando /start con botones
+    this.setupCommands();
+    this.setupCallbackHandler();
+    this.setupMessageHandler();
+    this.setupErrorHandler();
+  }
+
+  private setupCommands(): void {
     this.bot.onText(/\/start/, async (msg) => {
       const chatId = msg.chat.id;
       const userName = msg.from.first_name;
-
-      // Log del chatId para guardarlo
       this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
-
       await this.mostrarMenuPrincipal(chatId, userName);
     });
 
-    // Manejador de callbacks para botones
+    this.bot.onText(/\/help/, (msg) => {
+      const chatId = msg.chat.id;
+      this.mostrarAyuda(chatId);
+    });
+  }
+
+  private setupCallbackHandler(): void {
     this.bot.on("callback_query", async (callbackQuery) => {
       const action = callbackQuery.data;
       const msg = callbackQuery.message;
       const chatId = msg.chat.id;
 
-      switch (action) {
-        case "ver_citas":
-          await this.mostrarCitas(chatId);
-          break;
-        case "nueva_cita":
-          await this.iniciarNuevaCita(chatId);
-          break;
-        case "cancelar_cita":
-          await this.mostrarCitasParaCancelar(chatId);
-          break;
-        case "contacto":
-          await this.mostrarContacto(chatId);
-          break;
-        case "menu_principal":
-          await this.mostrarMenuPrincipal(chatId);
-          break;
-        default:
-          if (action.startsWith("especialidad_")) {
-            await this.seleccionarEspecialidad(
-              chatId,
-              action.replace("especialidad_", "")
-            );
-          } else if (action.startsWith("cancelar_")) {
-            await this.confirmarCancelacion(
-              chatId,
-              action.replace("cancelar_", "")
-            );
-          }
-      }
-
-      // Responder al callback para quitar el "loading" del botón
+      await this.handleCallbackAction(action, chatId);
       await this.bot.answerCallbackQuery(callbackQuery.id);
     });
+  }
 
-    // Comando /help
-    this.bot.onText(/\/help/, (msg) => {
-      const chatId = msg.chat.id;
-      this.mostrarAyuda(chatId);
-    });
+  private async handleCallbackAction(
+    action: string,
+    chatId: number
+  ): Promise<void> {
+    const actionHandlers = {
+      ver_citas: () => this.mostrarCitas(chatId),
+      nueva_cita: () => this.iniciarNuevaCita(chatId),
+      cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
+      contacto: () => this.mostrarContacto(chatId),
+      consulta_medica: () => this.iniciarConsultaMedica(chatId),
+      menu_principal: () => this.mostrarMenuPrincipal(chatId),
+    };
 
-    // Manejador de mensajes generales
+    if (action in actionHandlers) {
+      await actionHandlers[action]();
+    } else if (action.startsWith("especialidad_")) {
+      await this.seleccionarEspecialidad(
+        chatId,
+        action.replace("especialidad_", "")
+      );
+    } else if (action.startsWith("cancelar_")) {
+      await this.confirmarCancelacion(chatId, action.replace("cancelar_", ""));
+    }
+  }
+
+  private setupMessageHandler(): void {
     this.bot.on("message", (msg) => {
       if (msg.text && !msg.text.startsWith("/")) {
         const chatId = msg.chat.id;
-        this.bot.sendMessage(
-          chatId,
-          "Gracias por tu mensaje. Un representante te responderá pronto.\n" +
-            "Mientras tanto, puedes usar los botones del menú principal:",
-          { reply_markup: this.getMainMenuKeyboard() }
-        );
+        this.handleGeneralMessage(chatId);
       }
     });
+  }
 
-    // Manejador de errores
+  private setupErrorHandler(): void {
     this.bot.on("error", (error) => {
       this.logger.error("Error en el bot de Telegram:", error);
     });
   }
 
-  // Métodos para los diferentes menús y acciones
-  private async mostrarMenuPrincipal(
-    chatId: number,
-    userName?: string
-  ): Promise<void> {
-    const welcomeMessage = userName
-      ? `¡Hola ${userName}! 👋\n\n`
-      : "¡Bienvenido! 👋\n\n";
-
+  private async handleGeneralMessage(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      welcomeMessage + "Por favor, selecciona una opción:",
+      "Gracias por tu mensaje. Un representante te responderá pronto.\n" +
+        "Mientras tanto, puedes usar los botones del menú principal:",
       { reply_markup: this.getMainMenuKeyboard() }
     );
   }
@@ -122,8 +114,24 @@ export class TelegramService {
           { text: "❌ Cancelar cita", callback_data: "cancelar_cita" },
           { text: "📞 Contacto", callback_data: "contacto" },
         ],
+        [{ text: "🩺 Consulta Médica", callback_data: "consulta_medica" }],
       ],
     };
+  }
+
+  private async mostrarMenuPrincipal(
+    chatId: number,
+    userName?: string
+  ): Promise<void> {
+    const welcomeMessage = userName
+      ? `¡Hola ${userName}! 👋\n\n`
+      : "¡Bienvenido! 👋\n\n";
+
+    await this.bot.sendMessage(
+      chatId,
+      welcomeMessage + "Por favor, selecciona una opción:",
+      { reply_markup: this.getMainMenuKeyboard() }
+    );
   }
 
   private async mostrarCitas(chatId: number): Promise<void> {
@@ -319,6 +327,131 @@ Use los botones del menú principal.
     } catch (error) {
       this.logger.error("Error enviando mensaje:", error);
       return false;
+    }
+  }
+
+  private async iniciarConsultaMedica(chatId: number): Promise<void> {
+    const sentMessage = await this.bot.sendMessage(
+      chatId,
+      "Por favor, escribe tu pregunta médica:",
+      {
+        reply_markup: {
+          force_reply: true, // Forzar al usuario a responder
+          selective: true,
+        },
+      }
+    );
+
+    // Esperar la respuesta del usuario
+
+    this.bot.onReplyToMessage(chatId, sentMessage.message_id, (msg) => {
+      if (msg.text) {
+        this.procesarPreguntaMedica(chatId, msg.text);
+      } else {
+        this.bot.sendMessage(
+          chatId,
+          "Por favor, escribe un texto con tu pregunta."
+        );
+      }
+    });
+  }
+
+  private async procesarPreguntaMedica(
+    chatId: number,
+    pregunta: string
+  ): Promise<void> {
+    try {
+      await this.bot.sendChatAction(chatId, "typing");
+
+      const respuesta = await this.geminiService.generateMedicalResponse(
+        pregunta
+      );
+
+      const MAX_LENGTH = 4096; // Define el valor de MAX_LENGTH según tus necesidades
+
+if (respuesta.length > MAX_LENGTH) {
+  const chunks: string[] = respuesta.match(new RegExp(`.{1,${MAX_LENGTH}}`, "g")) || [];
+  for (const chunk of chunks) {
+    const options: TelegramBot.SendMessageOptions = {
+      parse_mode: "MarkdownV2",
+      reply_markup:
+        chunks.indexOf(chunk) === chunks.length - 1
+          ? {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            }
+          : undefined,
+    };
+          await this.bot.sendMessage(chatId, chunk, options);
+        }
+      } else {
+        const options: TelegramBot.SendMessageOptions = {
+          parse_mode: "MarkdownV2",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        };
+        await this.bot.sendMessage(chatId, respuesta, options);
+      }
+    } catch (error) {
+      this.logger.error("Error processing medical question:", error);
+      const errorOptions: TelegramBot.SendMessageOptions = {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🔙 Volver al menú principal",
+                callback_data: "menu_principal",
+              },
+            ],
+          ],
+        },
+      };
+      await this.bot.sendMessage(
+        chatId,
+        "Lo siento, hubo un error al procesar tu consulta. Por favor, intenta nuevamente más tarde.",
+        errorOptions
+      );
+    }
+  }
+
+  async obtenerRespuestaMedica(pregunta: string): Promise<string> {
+    const respuestaSimulada = await this.generarRespuesta(pregunta);
+    return respuestaSimulada;
+  }
+
+  async generarRespuesta(pregunta: string): Promise<string> {
+    const disclaimer =
+      "\n\n**Importante:** Esta información es solo para fines informativos y no sustituye el consejo médico profesional. Siempre consulta a un médico para obtener un diagnóstico y tratamiento adecuados.";
+
+    if (pregunta.toLowerCase().includes("fiebre")) {
+      return (
+        "La fiebre puede ser un síntoma de muchas enfermedades. Es importante medir tu temperatura y consultar a un médico si es alta o persistente. También debes buscar atención médica si tienes otros síntomas como dificultad para respirar, dolor de cabeza intenso o erupciones cutáneas." +
+        disclaimer
+      );
+    } else if (pregunta.toLowerCase().includes("dolor de cabeza")) {
+      return (
+        "El dolor de cabeza puede tener muchas causas, desde estrés hasta migrañas. Descansa, hidrátate y toma un analgésico de venta libre si es necesario. Si el dolor de cabeza es intenso, persistente o está acompañado de otros síntomas como visión borrosa o fiebre, consulta a un médico." +
+        disclaimer
+      );
+    } else {
+      return (
+        "Soy un modelo de lenguaje y no puedo proporcionar diagnósticos médicos. Por favor, consulta a un médico para obtener asesoramiento profesional sobre tu problema de salud." +
+        disclaimer
+      );
     }
   }
 }

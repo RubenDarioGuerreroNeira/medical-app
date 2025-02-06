@@ -81,3 +81,81 @@ Utilización de UUIDs como identificadores únicos para las entidades.
 El diseño de la API se centra en la eficiencia en el manejo de datos, especialmente para la gestión de historiales médicos, horarios y datos médicos complejos. La utilización de JSONB permite realizar búsquedas y consultas optimizadas.
 
 La arquitectura de NestJS y la modularidad del código promueven la escalabilidad y el mantenimiento a largo plazo.
+
+# Medical Appointment Telegram Bot
+
+## Overview
+
+This module implements a Telegram bot designed to manage medical appointments. It provides an interactive interface for patients to view, schedule, and cancel medical appointments through Telegram's messaging platform.
+
+## Features
+
+- **Interactive Menu System**: User-friendly button-based navigation
+- **Appointment Management**:
+  - View upcoming appointments
+  - Schedule new appointments
+  - Cancel existing appointments
+- **Specialty Selection**: Choose from various medical specialties
+- **Contact Information**: Quick access to medical center details
+- **Automated Notifications**: Appointment reminders and confirmations
+- **Error Handling**: Robust error management system
+
+## Main Functionalities
+
+### 1. Main Menu
+
+- View appointments
+- Schedule new appointments
+- Cancel appointments
+- Access contact information
+
+### 2. Appointment Scheduling
+
+- Select medical specialty
+- Choose available time slots
+- Receive confirmation
+
+### 3. Appointment Management
+
+- List of upcoming appointments
+- Detailed appointment information
+- Cancellation options
+
+### 4. Notification System
+
+- Appointment reminders
+- Confirmation messages
+- Status updates
+
+## Technical Details
+
+- Built with NestJS framework
+- Uses node-telegram-bot-api
+- Implements callback query handling
+- Includes caching system for improved performance
+
+## Commands
+
+- `/start` - Initialize bot and display main menu
+- `/help` - Show available commands and options
+- Interactive buttons for all main functions
+
+## Implementation
+
+The bot is implemented using TypeScript and follows a modular architecture:
+
+- Service-based implementation
+- Interface-driven development
+- Error handling middleware
+- Callback query processing
+
+## Configuration
+
+Requires the following environment variables:
+
+```env
+
+
+
+
+```
