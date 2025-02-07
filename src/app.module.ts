@@ -21,7 +21,7 @@ import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 import { NotaMedicaModule } from "./nota_medica/nota_medica.module";
 import { RecetaMedicaModule } from "./receta-medica/receta-medica.module";
 import { CacheModule } from "@nestjs/cache-manager";
-import { TelegramModule } from "./telegram/telegram-modules";
+import { TelegramModule } from "./telegram/telegram.module";
 
 @Module({
   imports: [

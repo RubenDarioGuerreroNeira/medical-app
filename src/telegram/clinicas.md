@@ -138,9 +138,6 @@ export class ClinicasVenezuelaService {
     return (grados * Math.PI) / 180;
   }
 }
-Copy
-Insert
-
 
 2. Integración con el bot de Telegram:
 
@@ -285,8 +282,6 @@ constructor(
   this.initializeBot();
   this.telegramClinicasService.agregarComandosClinica(this.bot);
 }
-Copy
-Insert
 
 Agrega un botón en tu menú principal:
 private getMainMenuKeyboard(): TelegramKeyboard {
