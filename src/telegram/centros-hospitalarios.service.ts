@@ -25,7 +25,7 @@ export class ClinicasVenezuelaService {
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "Av. Libertador - Rdoma dle Educador",
-      telefono: "02763558774", // Agregado código de área
+      telefono: "04140854174", // Agregado código de área
       especialidades: ["Cardiología", "Pediatría", "Traumatología"],
       horario: "24 horas",
       emergencia24h: true,
@@ -40,7 +40,7 @@ export class ClinicasVenezuelaService {
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "La Guayana , Frente a la Escuela de Artes Plásticas",
-      telefono: "02763344558", // Removidos espacios extra
+      telefono: "04168963965", // Removidos espacios extra
       especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
@@ -56,7 +56,7 @@ export class ClinicasVenezuelaService {
       ciudad: "San Cristóbal",
       direccion:
         "Av. Principal de Pueblo Nuevo, Centro de Cirugía San Sebastián, Pueblo Nuevo, Al lado de Residencias el Bosque",
-      telefono: "02763422266", // Removido espacio al final
+      telefono: "04149635474", // Removido espacio al final
       especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
@@ -71,7 +71,7 @@ export class ClinicasVenezuelaService {
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "Centro Comercial Paseo la Villa, Av. Guayana",
-      telefono: "02763418574", // Corregido número
+      telefono: "04160897020", // Corregido número
       especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
