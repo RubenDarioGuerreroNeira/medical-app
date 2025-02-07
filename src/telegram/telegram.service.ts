@@ -12,6 +12,7 @@ import {
   TelegramKeyboard,
 } from "./telegram.interfaces";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
+import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 
 @Injectable()
 export class TelegramService {
@@ -22,7 +23,8 @@ export class TelegramService {
     private configService: ConfigService,
     private geminiService: GeminiAIService,
     private clinicasVenezuelaService: ClinicasVenezuelaService,
-    private locationHandler: TelegramLocationHandler
+    private locationHandler: TelegramLocationHandler,
+    private messageFormatter: TelegramMessageFormatter
   ) {
     const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.bot = new TelegramBot(token, { polling: true });
@@ -679,53 +681,251 @@ Use los botones del menú principal.
       );
     }
   }
+  //   private async enviarInformacionClinica(
+  //     bot: TelegramBot,
+  //     chatId: number,
+  //     clinica: Clinica
+  //   ): Promise<void> {
+
+  //     const mensaje = `
+  // 🏥 *${clinica.nombre}*
+
+  // 📍 *Dirección:* ${clinica.direccion}
+  // 🏙 *Ciudad:* ${clinica.ciudad}
+  // 📞 *Teléfono:* ${clinica.telefono}
+  // ⏰ *Horario:* ${clinica.horario}
+  // ${clinica.emergencia24h ? "🚨 *Servicio de Emergencia 24h*" : ""}
+  // 👨‍⚕️ *Especialidades:*
+  // ${clinica.especialidades.map((esp) => `• ${esp}`).join("\n")}
+  //     `;
+
+  //     // Enviar ubicación si hay coordenadas disponibles
+  //     if (clinica.coordenadas) {
+  //       await bot.sendLocation(
+  //         chatId,
+  //         clinica.coordenadas.lat,
+  //         clinica.coordenadas.lng
+  //       );
+  //     }
+  // const message=await this.messageFormatter.formatClinicMessage(clinica);
+  // const phoneUrl=await this.messageFormatter.formatPhoneNumber(clinica.telefono);
+
+  //     await bot.sendMessage(chatId, mensaje, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "📞 Llamar",
+  //               url: `tel:${clinica.telefono.replace(/\s/g, "")}`,
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   }
+
+  // private async enviarInformacionClinica(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   clinica: Clinica
+  // ): Promise<void> {
+  //   try {
+  //     // Enviar ubicación si hay coordenadas disponibles
+  //     if (clinica.coordenadas) {
+  //       await bot.sendLocation(
+  //         chatId,
+  //         clinica.coordenadas.lat,
+  //         clinica.coordenadas.lng
+  //       );
+  //     }
+
+  //     // Usar el formatter para crear el mensaje con caracteres escapados
+  //     const message = await this.messageFormatter.formatClinicMessage(clinica);
+  //     const phoneUrl = await this.messageFormatter.formatPhoneNumber(
+  //       clinica.telefono
+  //     );
+
+  //     await bot.sendMessage(chatId, message, {
+  //       // Cambiar mensaje por message
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "📞 Llamar",
+  //               url: phoneUrl, // Usar phoneUrl en lugar de crear la URL directamente
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error("Error sending clinic information:", error);
+  //     const errorMessage = this.messageFormatter.formatErrorMessage(
+  //       "Lo siento, ocurrió un error al mostrar la información. Por favor, intenta nuevamente."
+  //     );
+  //     await bot.sendMessage(chatId, errorMessage, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   }
+  // }
+
+  // private async enviarInformacionClinica(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   clinica: Clinica
+  // ): Promise<void> {
+  //   try {
+  //     // Enviar ubicación si hay coordenadas disponibles
+  //     if (clinica.coordenadas) {
+  //       await bot.sendLocation(
+  //         chatId,
+  //         clinica.coordenadas.lat,
+  //         clinica.coordenadas.lng
+  //       );
+  //     }
+
+  //     const message = await this.messageFormatter.formatClinicMessage(clinica);
+  //     const phoneUrl = await this.messageFormatter.formatPhoneNumber(
+  //       clinica.telefono
+  //     );
+
+  //     // Crear el teclado inline basado en si tenemos un número válido
+  //     const inlineKeyboard =
+  //       phoneUrl !== "#"
+  //         ? [
+  //             [
+  //               {
+  //                 text: "📞 Llamar",
+  //                 url: phoneUrl,
+  //               },
+  //             ],
+  //             [
+  //               {
+  //                 text: "🔙 Volver al menú principal",
+  //                 callback_data: "menu_principal",
+  //               },
+  //             ],
+  //           ]
+  //         : [
+  //             [
+  //               {
+  //                 text: "🔙 Volver al menú principal",
+  //                 callback_data: "menu_principal",
+  //               },
+  //             ],
+  //           ];
+
+  //     await bot.sendMessage(chatId, message, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: inlineKeyboard,
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error("Error sending clinic information:", error);
+  //     const errorMessage = this.messageFormatter.formatErrorMessage(
+  //       "Lo siento, ocurrió un error al mostrar la información. Por favor, intenta nuevamente."
+  //     );
+  //     await bot.sendMessage(chatId, errorMessage, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   }
+  // }
+
   private async enviarInformacionClinica(
     bot: TelegramBot,
     chatId: number,
     clinica: Clinica
-  ): Promise<void> {
-    const mensaje = `
-🏥 *${clinica.nombre}*
+): Promise<void> {
+    try {
+        // Enviar ubicación si hay coordenadas disponibles
+        if (clinica.coordenadas) {
+            await bot.sendLocation(
+                chatId,
+                clinica.coordenadas.lat,
+                clinica.coordenadas.lng
+            );
+        }
 
-📍 *Dirección:* ${clinica.direccion}
-🏙 *Ciudad:* ${clinica.ciudad}
-📞 *Teléfono:* ${clinica.telefono}
-⏰ *Horario:* ${clinica.horario}
-${clinica.emergencia24h ? "🚨 *Servicio de Emergencia 24h*" : ""}
-👨‍⚕️ *Especialidades:*
-${clinica.especialidades.map((esp) => `• ${esp}`).join("\n")}
-    `;
+        const message = await this.messageFormatter.formatClinicMessage(clinica);
+        const phoneUrl = await this.messageFormatter.formatPhoneNumber(clinica.telefono);
 
-    // Enviar ubicación si hay coordenadas disponibles
-    if (clinica.coordenadas) {
-      await bot.sendLocation(
-        chatId,
-        clinica.coordenadas.lat,
-        clinica.coordenadas.lng
-      );
+        // Crear el teclado inline
+        const inlineKeyboard = [
+            [
+                {
+                    text: "📞 Contactar",
+                    url: phoneUrl,
+                },
+            ],
+            [
+                {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                },
+            ],
+        ];
+
+        await bot.sendMessage(chatId, message, {
+            parse_mode: "MarkdownV2",
+            reply_markup: {
+                inline_keyboard: inlineKeyboard,
+            },
+        });
+    } catch (error) {
+        this.logger.error('Error sending clinic information:', error);
+        const errorMessage = this.messageFormatter.formatErrorMessage(
+            'Lo siento, ocurrió un error al mostrar la información. Por favor, intenta nuevamente.'
+        );
+        await bot.sendMessage(chatId, errorMessage, {
+            parse_mode: 'MarkdownV2',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: '🔙 Volver al menú principal',
+                            callback_data: 'menu_principal',
+                        },
+                    ],
+                ],
+            },
+        });
     }
-
-    await bot.sendMessage(chatId, mensaje, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "📞 Llamar",
-              url: `tel:${clinica.telefono.replace(/\s/g, "")}`,
-            },
-          ],
-          [
-            {
-              text: "🔙 Volver al menú principal",
-              callback_data: "menu_principal",
-            },
-          ],
-        ],
-      },
-    });
-  }
-
+}
   async agregarComandosClinica(bot: TelegramBot): Promise<void> {
     bot.onText(/\/clinicas/, async (msg) => {
       const chatId = msg.chat.id;

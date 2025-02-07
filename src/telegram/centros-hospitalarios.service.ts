@@ -21,38 +21,34 @@ export class ClinicasVenezuelaService {
   private clinicas: Clinica[] = [
     {
       id: "1",
-      nombre: "Policlínica Táchira",
+      nombre: "Clinica el Samán",
       estado: "Táchira",
       ciudad: "San Cristóbal",
-      direccion:
-        "Av. 19 de Abril, Edif. Policlínica Táchira, Las Acacias, San Cristobal",
-      telefono:
-        "+58 (0276)349.0300 - 0276)349.0400 - (0276)349.0387 - (0276)349.0341",
+      direccion: "Av. Libertador - Rdoma dle Educador",
+      telefono: "02763558774", // Agregado código de área
       especialidades: ["Cardiología", "Pediatría", "Traumatología"],
       horario: "24 horas",
       emergencia24h: true,
       coordenadas: {
-        lat: 10.506098,
-        lng: -66.886967,
+        lat: 7.778356783838923,
+        lng: -72.23430507697839,
       },
     },
     {
       id: "2",
-      nombre: "Urologico Hospital Clínico",
+      nombre: "Centro Cliníco San Cristóbal",
       estado: "Táchira",
       ciudad: "San Cristóbal",
-      direccion:
-        "Carrera 19, Barrio Obrero 3 cuadras bajando de La Plaza los Mangos",
-      telefono: "(0412)129.0651 - +58 (0276)349.8091",
-      especialidades: ["Medicina General", "Ginecología", "Oftalmología", ""],
+      direccion: "La Guayana , Frente a la Escuela de Artes Plásticas",
+      telefono: "02763344558", // Removidos espacios extra
+      especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 10.498765,
-        lng: -66.879543,
+        lat: 7.779887,
+        lng: -72.226291,
       },
     },
-
     {
       id: "3",
       nombre: "Centro de Cirugía San Sebastian",
@@ -60,29 +56,28 @@ export class ClinicasVenezuelaService {
       ciudad: "San Cristóbal",
       direccion:
         "Av. Principal de Pueblo Nuevo, Centro de Cirugía San Sebastián, Pueblo Nuevo, Al lado de Residencias el Bosque",
-      telefono: "(0414)706.0954 - +58 (0276)342.2266",
+      telefono: "02763422266", // Removido espacio al final
       especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 10.498765,
-        lng: -66.879543,
+        lat: 7.782711422373458,
+        lng: -72.21794496163493,
       },
     },
     {
       id: "4",
-      nombre: "Centro Médico Quirúrgico La Trinidad",
+      nombre: "CEMOC",
       estado: "Táchira",
       ciudad: "San Cristóbal",
-      direccion:
-        "Av. Los Agustinos, Conjunto Res. Paramillo, Casa Nº. 1, Zona Industrial Paramillo",
-      telefono: "+58 (0276)510.5690 - (0276)510.5600 - (0276)510.5698",
+      direccion: "Centro Comercial Paseo la Villa, Av. Guayana",
+      telefono: "02763418574", // Corregido número
       especialidades: ["Medicina General", "Ginecología", "Oftalmología"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 10.498765,
-        lng: -66.879543,
+        lat: 7.782736,
+        lng: -72.225904,
       },
     },
   ];

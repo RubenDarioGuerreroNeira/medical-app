@@ -6,6 +6,7 @@ import { ConfigModule } from "@nestjs/config";
 import { GeminiAIService } from "src/Gemini/gemini.service";
 import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
+import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TelegramLocationHandler } from "./telegram-location-handler.service";
     GeminiAIService,
     ClinicasVenezuelaService,
     TelegramLocationHandler,
+    TelegramMessageFormatter,
   ],
   controllers: [TelegramController],
   exports: [TelegramService],
