@@ -86,7 +86,8 @@ export class ClinicasVenezuelaService {
       nombre: "Protección Civil",
       estado: "Táchira",
       ciudad: "San Cristóbal",
-      direccion: "Pueblo Nuevo Parte Alta, Cruce a mano Izquierda de los PAbellones",
+      direccion:
+        "Pueblo Nuevo Parte Alta, Cruce a mano Izquierda de los PAbellones",
       telefono: "04160897020", // Corregido número
       especialidades: ["Primeros Auxilios"],
       horario: "Lunes a Domingo 24h",
@@ -97,13 +98,13 @@ export class ClinicasVenezuelaService {
       },
     },
 
-
     {
       id: "6",
       nombre: "Policliníca Táchira",
       estado: "Táchira",
       ciudad: "San Cristóbal",
-      direccion: "Av 19 de Abril, frente a Residencias el Parque, Parque Metropolitano",
+      direccion:
+        "Av 19 de Abril, frente a Residencias el Parque, Parque Metropolitano",
       telefono: "04160897020", // Corregido número
       especialidades: ["Todas las Especialidades"],
       horario: "Lunes a Domingo 24h",
@@ -111,9 +112,8 @@ export class ClinicasVenezuelaService {
       coordenadas: {
         lat: 7.757779,
         lng: -72.218912,
-      },   
+      },
     },
-
 
     {
       id: "7",
@@ -121,13 +121,13 @@ export class ClinicasVenezuelaService {
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "Av Lucio Oquendo Frente al Colegio de Médicos",
-      telefono: "04160897020", 
+      telefono: "04160897020",
       especialidades: ["Todas las Especialidades"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 7.756495,     
-        lng: -72.226321 
+        lat: 7.75699,
+        lng: -72.22617,
       },
     },
 
@@ -137,35 +137,47 @@ export class ClinicasVenezuelaService {
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "Av. Principal La Castra, San Cristóbal 5001, Táchira",
-      telefono: "04160897020", 
+      telefono: "04160897020",
       especialidades: ["Todas las Especialidades"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 7.752030,
-        lng: -72.226182 
+        lat: 7.75203,
+        lng: -72.226182,
       },
     },
 
-
- {
+    {
       id: "9",
       nombre: "Hospital Militar",
       estado: "Táchira",
       ciudad: "San Cristóbal",
       direccion: "Via la Cueva del Oso Pueblo Nuevo ",
-      telefono: "04160897020", 
+      telefono: "04160897020",
       especialidades: ["Todas las Especialidades"],
       horario: "Lunes a Domingo 24h",
       emergencia24h: true,
       coordenadas: {
-        lat: 7.798255, 
-        lng: -72.194435
+        lat: 7.798255,
+        lng: -72.194435,
       },
     },
- 
 
-
+    {
+      id: "10",
+      nombre: "Hospital Alfredo J. Gonzalez (Cruz Roja)",
+      estado: "Táchira",
+      ciudad: "San Cristóbal",
+      direccion: "Carrera 6, con C. 3, San Cristóbal 5001, Táchira",
+      telefono: "04160897020",
+      especialidades: ["Todas las Especialidades"],
+      horario: "Lunes a Domingo 24h",
+      emergencia24h: true,
+      coordenadas: {
+        lat: 7.778793,
+        lng: -72.218521,
+      },
+    },
   ];
 
   async buscarClinicas(params: {
