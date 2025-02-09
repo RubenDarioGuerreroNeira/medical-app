@@ -3,10 +3,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as TelegramBot from "node-telegram-bot-api";
 import { GeminiAIService } from "../Gemini/gemini.service";
-import {
-  ClinicasVenezuelaService,
-  Clinica,
-} from "./centros-hospitalarios.service";
+import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
+import { Clinica } from "./intrfaces/interface-clinicas";
 import {
   AppointmentNotification,
   TelegramKeyboard,
@@ -356,7 +354,7 @@ export class TelegramService {
       "📞 Información de contacto:\n\n" +
         "🏥 Centro Médico: Centro Médico XYZ\n" +
         "📍 Dirección: [Tu dirección]\n" +
-        "☎️ Teléfono: +58 0416 0897020\n" +
+        "☎️ Teléfono: +580416 0897020\n" +
         "📧 Email: rudargeneira@gmail.com\n" +
         "⏰ Horario: Lunes a Viernes 8:00 AM - 5:00 PM",
       {
