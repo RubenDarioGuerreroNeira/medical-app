@@ -140,13 +140,160 @@ export class TelegramService {
     });
   }
 
+  // manejador de mensaje a Ia para verificar si el mensaje contiene foto
   private setupMessageHandler(): void {
-    this.bot.on("message", (msg) => {
+    this.bot.on("message", async (msg) => {
       if (msg.text && !msg.text.startsWith("/")) {
         const chatId = msg.chat.id;
         this.handleGeneralMessage(chatId);
+      } else if (msg.photo) {
+        // Check if the message contains a photo
+        const chatId = msg.chat.id;
+        await this.handleImageMessage(chatId, msg); // Call function to handle image messages
       }
     });
+  }
+
+  // manejador de imagen a la ia
+  private async handleImageMessage(
+    chatId: number,
+    msg: TelegramBot.Message
+  ): Promise<void> {
+    try {
+      await this.bot.sendChatAction(chatId, "typing");
+
+      if (!msg.photo || msg.photo.length === 0) {
+        await this.bot.sendMessage(chatId, "No se pudo procesar la imagen.");
+        return;
+      }
+
+      // Get the largest photo size
+      const photo = msg.photo[msg.photo.length - 1];
+      const fileId = photo.file_id;
+
+      // Get the download link for the photo
+      const fileLink = await this.bot.getFileLink(fileId);
+
+      // Download the image from Telegram servers
+      const imageResponse = await fetch(fileLink);
+
+      // Validar el tipo MIME
+      const contentType = imageResponse.headers.get("content-type");
+      const supportedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+      const mimeType =
+        contentType && supportedMimeTypes.includes(contentType)
+          ? contentType
+          : "image/jpeg";
+
+      // Validar que la respuesta sea exitosa
+      if (!imageResponse.ok) {
+        throw new Error(
+          `Error al descargar la imagen: ${imageResponse.statusText}`
+        );
+      }
+
+      // Convert the response to ArrayBuffer first
+      const arrayBuffer = await imageResponse.arrayBuffer();
+
+      // Validar el tamaño de la imagen (máximo 4MB)
+      if (arrayBuffer.byteLength > 4 * 1024 * 1024) {
+        await this.bot.sendMessage(
+          chatId,
+          "La imagen es demasiado grande. Por favor, envía una imagen menor a 4MB.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+        return;
+      }
+
+      // Then convert to Buffer
+      const imageBuffer = Buffer.from(arrayBuffer);
+
+      // Log para debugging
+      this.logger.debug(`Procesando imagen con MIME type: ${mimeType}`);
+      this.logger.debug(`Tamaño de la imagen: ${imageBuffer.length} bytes`);
+
+      // Extract text from the image using Gemini service
+      const extractedText = await this.geminiService.extractTextFromImage(
+        imageBuffer,
+        mimeType
+      );
+
+      if (extractedText) {
+        await this.bot.sendMessage(
+          chatId,
+          "Texto extraído de la imagen:\n\n" + extractedText,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      } else {
+        await this.bot.sendMessage(
+          chatId,
+          "No se pudo extraer texto de la imagen.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
+    } catch (error) {
+      this.logger.error("Error handling image message:", error);
+
+      // Mensaje de error más específico basado en el tipo de error
+      let errorMessage =
+        "Error al procesar la imagen. Por favor, intenta nuevamente más tarde.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("MIME")) {
+          errorMessage =
+            "Formato de imagen no soportado. Por favor, envía una imagen en formato JPEG, PNG o WEBP.";
+        } else if (error.message.includes("tamaño")) {
+          errorMessage =
+            "La imagen es demasiado grande. Por favor, envía una imagen menor a 4MB.";
+        }
+      }
+
+      await this.bot.sendMessage(chatId, errorMessage, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🔙 Volver al menú principal",
+                callback_data: "menu_principal",
+              },
+            ],
+          ],
+        },
+      });
+    }
   }
 
   private setupErrorHandler(): void {
