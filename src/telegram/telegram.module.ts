@@ -7,6 +7,8 @@ import { GeminiAIService } from "src/Gemini/gemini.service";
 import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
+import { OSMService } from "./farmacias-maps.service";
+import { TelegramErrorHandler } from "./telegramErrorHandler.service";
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
     ClinicasVenezuelaService,
     TelegramLocationHandler,
     TelegramMessageFormatter,
+    OSMService,
+    TelegramErrorHandler,
   ],
   controllers: [TelegramController],
   exports: [TelegramService],

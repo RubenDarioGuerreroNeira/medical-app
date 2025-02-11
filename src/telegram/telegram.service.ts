@@ -1,35 +1,390 @@
 // telegram.service.ts
-import { Injectable, Logger } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as TelegramBot from "node-telegram-bot-api";
 import { GeminiAIService } from "../Gemini/gemini.service";
 import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { Clinica } from "./intrfaces/interface-clinicas";
+import { OSMService } from "./farmacias-maps.service";
 import {
   AppointmentNotification,
   TelegramKeyboard,
 } from "./telegram.interfaces";
+import {
+  Location,
+  OSMPlace,
+  OSMStatus,
+  NominatimResponse,
+  PharmacyResponse,
+} from "./intrfaces/osm.interface";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
+import { TelegramErrorHandler } from "./telegramErrorHandler.service";
 
 @Injectable()
 export class TelegramService {
   private bot: TelegramBot;
   private readonly logger = new Logger(TelegramService.name);
+  private readonly nominatimBaseUrl = "https://nominatim.openstreetmap.org";
 
   constructor(
     private configService: ConfigService,
     private geminiService: GeminiAIService,
     private clinicasVenezuelaService: ClinicasVenezuelaService,
+    private osmService: OSMService,
     private locationHandler: TelegramLocationHandler,
-    private messageFormatter: TelegramMessageFormatter
+    private messageFormatter: TelegramMessageFormatter,
+    private errorHandler: TelegramErrorHandler
   ) {
     const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.bot = new TelegramBot(token, { polling: true });
     this.initializeBot();
     this.agregarComandosClinica(this.bot);
+    // manejdor para ubicacion
+    this.bot.on("location", async (msg) => {
+      await this.handleLocation(msg);
+    });
+    // manejador para callbacks queries
+    this.bot.on("callback_query", async (callbackQuery) => {
+      await this.handleCallbackQuery(callbackQuery);
+    });
   }
 
+  private initializeBot(): void {
+    this.setupCommands();
+    this.setupCallbackHandler();
+    this.setupMessageHandler();
+    this.setupErrorHandler();
+  }
+
+  //-----------farmacias-----------------
+
+  // Botones de Buscar Farmacias
+  private async enviarMenuPrincipal(chatId: number): Promise<void> {
+    const mensaje = "¿Qué deseas buscar?";
+    const opciones = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "🏥 Buscar farmacias en Táchira",
+              callback_data: "buscar_farmacias_tachira",
+            },
+          ],
+          [
+            {
+              text: "📍 Buscar farmacias cercanas a mi ubicación",
+              callback_data: "solicitar_ubicacion",
+            },
+          ],
+          [
+            {
+              text: "❓ Ayuda",
+              callback_data: "ayuda",
+            },
+          ],
+        ],
+      },
+    };
+
+    await this.bot.sendMessage(chatId, mensaje, opciones);
+  }
+
+  private async handleCallbackQuery(
+    callbackQuery: TelegramBot.CallbackQuery
+  ): Promise<void> {
+    const chatId = callbackQuery.message.chat.id;
+    const data = callbackQuery.data;
+
+    const actionHandlers = {
+      solicitar_ubicacion_farmacia: () =>
+        this.solicitarUbicacionFarmacia(chatId),
+      mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
+      consulta_medica: () => this.iniciarConsultaMedica(chatId),
+      ver_citas: () => this.mostrarCitas(chatId),
+      nueva_cita: () => this.iniciarNuevaCita(chatId),
+      cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
+      contacto: () => this.mostrarContacto(chatId),
+      menu_principal: () => this.mostrarMenuPrincipal(chatId),
+    };
+
+    if (data in actionHandlers) {
+      await actionHandlers[data]();
+    }
+  }
+
+  private async solicitarUbicacionFarmacia(chatId: number): Promise<void> {
+    const mensaje =
+      "Por favor, comparte tu ubicación actual para buscar farmacias cercanas.";
+
+    await this.bot.sendMessage(chatId, mensaje, {
+      reply_markup: {
+        keyboard: [
+          [
+            {
+              text: "📍 Compartir mi ubicación",
+              request_location: true,
+            },
+          ],
+          [
+            {
+              text: "❌ Cancelar",
+            },
+          ],
+        ],
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    });
+  }
+
+  private async handleLocation(msg: TelegramBot.Message): Promise<void> {
+    if (!msg.location) return;
+
+    const chatId = msg.chat.id;
+    const { latitude, longitude } = msg.location;
+
+    try {
+      await this.bot.sendMessage(chatId, "🔍 Buscando farmacias cercanas...");
+
+      const farmacia = await this.buscarFarmaciaCercana(latitude, longitude);
+
+      if (farmacia) {
+        await this.bot.sendLocation(
+          chatId,
+          farmacia.location.lat,
+          farmacia.location.lng
+        );
+
+        const mensaje = `
+🏥 ${farmacia.name}
+📍 ${farmacia.address}
+${farmacia.isOpen ? "🟢 Abierta" : "🔴 Cerrada"}
+${farmacia.rating ? `⭐ ${farmacia.rating}` : ""}`;
+
+        await this.bot.sendMessage(chatId, mensaje, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        });
+      } else {
+        await this.bot.sendMessage(
+          chatId,
+          "Lo siento, no se encontraron farmacias cercanas.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
+    } catch (error) {
+      await this.errorHandler.handleServiceError(
+        this.bot,
+        error,
+        "handleLocation",
+        chatId
+      );
+    }
+  }
+
+  // Método para cancelar la búsqueda y volver al menú principal
+  private async cancelarBusqueda(chatId: number): Promise<void> {
+    await this.bot.sendMessage(chatId, "Búsqueda cancelada", {
+      reply_markup: {
+        remove_keyboard: true,
+      },
+    });
+    // Aquí deberías llamar al método que muestra el menú principal
+  }
+
+  async buscarFarmaciasEnTachira(): Promise<Location[] | null> {
+    try {
+      const query = "farmacias en Táchira, Venezuela";
+      const url = `${this.nominatimBaseUrl}/search`;
+      const params = new URLSearchParams({
+        q: query,
+        format: "json",
+        addressdetails: "1",
+        country: "Venezuela",
+        limit: "10",
+      });
+
+      const response = await this.fetchWithRetry(`${url}?${params}`);
+      const data = await this.validateResponse<OSMPlace[]>(response);
+
+      if (!data.length) {
+        throw new HttpException(
+          "No se encontraron farmacias en Táchira",
+          HttpStatus.NOT_FOUND
+        );
+      }
+
+      return data.map((place) => ({
+        lat: parseFloat(place.lat),
+        lng: parseFloat(place.lon),
+      }));
+    } catch (error) {
+      this.errorHandler.handleServiceError(
+        this.bot,
+        error,
+        "buscarFarmaciasEnTachira"
+      );
+      return null;
+    }
+  }
+
+  // farmacias cercanas
+  async buscarFarmaciaCercana(
+    latitude: number,
+    longitude: number
+  ): Promise<PharmacyResponse | null> {
+    try {
+      this.validateCoordinates(latitude, longitude);
+      const url = `${this.nominatimBaseUrl}/reverse`;
+      const params = new URLSearchParams({
+        lat: latitude.toString(),
+        lon: longitude.toString(),
+        format: "json",
+        addressdetails: "1",
+        zoom: "18",
+      });
+
+      const response = await this.fetchWithRetry(`${url}?${params}`);
+      const data = await this.validateResponse<NominatimResponse>(response);
+
+      if (!data || !data.address) {
+        throw new HttpException(
+          "No se encontraron farmacias cercanas",
+          HttpStatus.NOT_FOUND
+        );
+      }
+
+      return {
+        name: data.display_name,
+        location: {
+          lat: parseFloat(data.lat),
+          lng: parseFloat(data.lon),
+        },
+        address: data.address.road || "Dirección no disponible",
+        isOpen: false,
+        rating: null,
+      };
+    } catch (error) {
+      this.errorHandler.handleServiceError(
+        this.bot,
+        error,
+        "buscarFarmaciaCercana"
+      );
+      return null;
+    }
+  }
+
+  // Improved error handling with retry mechanism
+  private async fetchWithRetry(url: string, retries = 3): Promise<Response> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response;
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * Math.pow(2, i))
+        );
+      }
+    }
+    throw new Error("Max retries reached");
+  }
+
+  // Hacemos el método genérico para manejar diferentes tipos de respuesta
+  private async validateResponse<T>(response: Response): Promise<T> {
+    const data = (await response.json()) as T;
+
+    if (!data) {
+      throw new Error(
+        `Error en la respuesta de OpenStreetMap: ${JSON.stringify(data)}`
+      );
+    }
+
+    const status = this.determineStatus(data);
+    if (status !== OSMStatus.OK) {
+      switch (status) {
+        case OSMStatus.ZERO_RESULTS:
+          throw new HttpException(
+            "No se encontraron resultados",
+            HttpStatus.NOT_FOUND
+          );
+        case OSMStatus.REQUEST_DENIED:
+          throw new HttpException(
+            "Solicitud denegada por OpenStreetMap",
+            HttpStatus.FORBIDDEN
+          );
+        default:
+          throw new Error(`OpenStreetMap API Error: ${status}`);
+      }
+    }
+
+    return data;
+  }
+
+  // status de respuesta de osm map
+  private determineStatus(data: any): OSMStatus {
+    // Si la respuesta es un array vacío
+    if (Array.isArray(data) && data.length === 0) {
+      return OSMStatus.ZERO_RESULTS;
+    }
+
+    // Si hay un error explícito en la respuesta
+    if (data.error) {
+      if (data.error.includes("permission denied")) {
+        return OSMStatus.REQUEST_DENIED;
+      }
+      return OSMStatus.INVALID_REQUEST;
+    }
+
+    // Si la respuesta tiene datos válidos
+    if (
+      (Array.isArray(data) && data.length > 0) || // Para búsquedas que devuelven arrays
+      data.place_id // Para búsquedas que devuelven un solo lugar
+    ) {
+      return OSMStatus.OK;
+    }
+
+    // Si no podemos determinar el estado
+    return OSMStatus.UNKNOWN_ERROR;
+  }
+
+  private validateCoordinates(latitude: number, longitude: number): void {
+    if (
+      !latitude ||
+      !longitude ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      throw new HttpException("Coordenadas inválidas", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  //-----------------------------------------
   private setupLocationHandler(chatId: number): void {
     const messageHandler = async (msg: TelegramBot.Message) => {
       try {
@@ -70,6 +425,8 @@ export class TelegramService {
       await this.bot.answerCallbackQuery(callbackQuery.id);
     });
   }
+
+  // manejador de respuestas del boton
   private async handleCallbackAction(
     action: string,
     chatId: number
@@ -89,6 +446,7 @@ export class TelegramService {
     }
   }
 
+  // ubicacion
   private async solicitarUbicacion(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
@@ -117,13 +475,6 @@ export class TelegramService {
 
     // Configurar el manejador de ubicación
     this.setupLocationHandler(chatId);
-  }
-
-  private initializeBot(): void {
-    this.setupCommands();
-    this.setupCallbackHandler();
-    this.setupMessageHandler();
-    this.setupErrorHandler();
   }
 
   private setupCommands(): void {
@@ -316,7 +667,13 @@ export class TelegramService {
       inline_keyboard: [
         [
           {
-            text: "🏥 Buscar Clínicas Cercanas *Funcional*",
+            text: "🏥 Buscar Farmacias Cercanas *Funcional*",
+            callback_data: "solicitar_ubicacion_farmacias",
+          },
+        ],
+        [
+          {
+            text: "👨‍🔬 Buscar Clínicas Cercanas *Funcional*",
             callback_data: "mostrarCentrosCercanos",
           },
         ],
