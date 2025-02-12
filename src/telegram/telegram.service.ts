@@ -102,10 +102,10 @@ export class TelegramService {
         this.solicitarUbicacionFarmacia(chatId),
       buscar_farmacias_tachira: () => this.enviarMenuPrincipal(chatId),
       mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
-      consulta_medica: () => this.iniciarConsultaMedica(chatId),
-      ver_citas: () => this.mostrarCitas(chatId),
-      nueva_cita: () => this.iniciarNuevaCita(chatId),
-      cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
+      // consulta_medica: () => this.iniciarConsultaMedica(chatId),
+      // ver_citas: () => this.mostrarCitas(chatId),
+      // nueva_cita: () => this.iniciarNuevaCita(chatId),
+      // cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
       contacto: () => this.mostrarContacto(chatId),
       menu_principal: () => this.mostrarMenuPrincipal(chatId),
     };
@@ -149,6 +149,8 @@ export class TelegramService {
       );
     }
   }
+
+  // UBICACION DE FARMACIAS CERCANAS
   private async handleLocation(msg: TelegramBot.Message): Promise<void> {
     if (!msg.location) return;
 
@@ -410,7 +412,6 @@ export class TelegramService {
     }
   }
 
-  //-----------------------------------------
   private setupLocationHandler(chatId: number): void {
     const messageHandler = async (msg: TelegramBot.Message) => {
       try {
@@ -461,10 +462,10 @@ export class TelegramService {
       ver_citas: () => this.mostrarCitas(chatId),
       nueva_cita: () => this.iniciarNuevaCita(chatId),
       cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
-      contacto: () => this.mostrarContacto(chatId),
+      // contacto: () => this.mostrarContacto(chatId),
       consulta_medica: () => this.iniciarConsultaMedica(chatId),
-      menu_principal: () => this.mostrarMenuPrincipal(chatId),
-      mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId), // Nuevo manejador
+      // menu_principal: () => this.mostrarMenuPrincipal(chatId),
+      // mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId), // Nuevo manejador
     };
 
     if (action in actionHandlers) {
@@ -517,7 +518,7 @@ export class TelegramService {
     });
   }
 
-  // manejador de imagen a la ia
+  // manejador de FOTOS DE LA IA
   private async handleImageMessage(
     chatId: number,
     msg: TelegramBot.Message
@@ -734,7 +735,7 @@ export class TelegramService {
     }
   }
 
-  //-------------------------------------
+  //------------MENU PRINCIPAL -------------------------
   private getMainMenuKeyboard(): TelegramKeyboard {
     return {
       inline_keyboard: [
@@ -756,6 +757,12 @@ export class TelegramService {
             callback_data: "consulta_medica",
           },
         ],
+        [
+          {
+            text: "⛺ Farmacias en Táchira*",
+            callback_data: "buscar_farmacias_tachira",
+          },
+        ],
         // [
         //   { text: "📅 Ver mis citas(Prueba)", callback_data: "ver_citas" },
         //   { text: "➕ Nueva cita", callback_data: "nueva_cita" },
@@ -768,6 +775,7 @@ export class TelegramService {
     };
   }
 
+  //***
   private async mostrarMenuPrincipal(
     chatId: number,
     userName?: string
@@ -1182,6 +1190,7 @@ Use los botones del menú principal.
     );
   }
 
+  // MUESTRA LA INFORMACION DE LA CLINICA CON LA OPCION DE LLAMAR
   private async enviarInformacionClinica(
     bot: TelegramBot,
     chatId: number,
