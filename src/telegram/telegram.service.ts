@@ -97,21 +97,10 @@ export class TelegramService {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
 
-    // const actionHandlers = {
-    //   solicitar_ubicacion_farmacia: () =>
-    //     this.solicitarUbicacionFarmacia(chatId),
-    //   mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
-    //   consulta_medica: () => this.iniciarConsultaMedica(chatId),
-    //   ver_citas: () => this.mostrarCitas(chatId),
-    //   nueva_cita: () => this.iniciarNuevaCita(chatId),
-    //   cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
-    //   contacto: () => this.mostrarContacto(chatId),
-    //   menu_principal: () => this.mostrarMenuPrincipal(chatId),
-    // };
-
     const actionHandlers = {
       solicitar_ubicacion_farmacia: () =>
         this.solicitarUbicacionFarmacia(chatId),
+      buscar_farmacias_tachira: () => this.enviarMenuPrincipal(chatId),
       mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
       consulta_medica: () => this.iniciarConsultaMedica(chatId),
       ver_citas: () => this.mostrarCitas(chatId),
@@ -127,30 +116,39 @@ export class TelegramService {
   }
 
   private async solicitarUbicacionFarmacia(chatId: number): Promise<void> {
-    const mensaje =
-      "Por favor, comparte tu ubicación actual para buscar farmacias cercanas.";
-    this.locationRequestType[chatId] = "farmacia";
-    await this.bot.sendMessage(chatId, mensaje, {
-      reply_markup: {
-        keyboard: [
-          [
-            {
-              text: "📍 Compartir mi ubicación",
-              request_location: true,
-            },
-          ],
-          [
-            {
-              text: "❌ Cancelar",
-            },
-          ],
-        ],
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    });
-  }
+    try {
+      const mensaje =
+        "Por favor, comparte tu ubicación actual para buscar farmacias cercanas.";
+      this.locationRequestType[chatId] = "farmacia";
 
+      await this.bot.sendMessage(chatId, mensaje, {
+        reply_markup: {
+          keyboard: [
+            [
+              {
+                text: "📍 Compartir mi ubicación",
+                request_location: true,
+              },
+            ],
+            [
+              {
+                text: "❌ Cancelar",
+              },
+            ],
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      });
+    } catch (error) {
+      await this.errorHandler.handleServiceError(
+        this.bot,
+        error,
+        "solicitarUbicacionFarmacia",
+        chatId
+      );
+    }
+  }
   private async handleLocation(msg: TelegramBot.Message): Promise<void> {
     if (!msg.location) return;
 
@@ -158,6 +156,13 @@ export class TelegramService {
     const { latitude, longitude } = msg.location;
 
     try {
+      // Primero removemos el teclado de ubicación
+      await this.bot.sendMessage(chatId, "Procesando tu ubicación...", {
+        reply_markup: {
+          remove_keyboard: true, // Esto elimina el teclado personalizado
+        },
+      });
+
       const requestType = this.locationRequestType[chatId];
       if (requestType === "farmacia") {
         await this.bot.sendMessage(chatId, "🔍 Buscando farmacias cercanas...");
@@ -230,6 +235,7 @@ export class TelegramService {
       },
     });
     // Aquí deberías llamar al método que muestra el menú principal
+    await this.mostrarMenuPrincipal(chatId); // Volvemos al menú principal
   }
 
   async buscarFarmaciasEnTachira(): Promise<Location[] | null> {
@@ -466,7 +472,7 @@ export class TelegramService {
     }
   }
 
-  // ubicacion
+  // SOLICITAR UBICACION PARA MOSTRAR CENTROS
   private async solicitarUbicacion(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
@@ -512,18 +518,21 @@ export class TelegramService {
   }
 
   // manejador de mensaje a Ia para verificar si el mensaje contiene foto
-  private setupMessageHandler(): void {
-    this.bot.on("message", async (msg) => {
-      if (msg.text && !msg.text.startsWith("/")) {
-        const chatId = msg.chat.id;
-        this.handleGeneralMessage(chatId);
-      } else if (msg.photo) {
-        // Check if the message contains a photo
-        const chatId = msg.chat.id;
-        await this.handleImageMessage(chatId, msg); // Call function to handle image messages
-      }
-    });
-  }
+  // private setupMessageHandler(): void {
+
+  //   this.bot.on("message", async (msg) => {
+  //     if (msg.text && !msg.text.startsWith("/")) {
+  //       const chatId = msg.chat.id;
+
+  //       this.handleGeneralMessage(chatId);
+  //     } else if (msg.photo) {
+  //       // Check if the message contains a photo
+  //       const chatId = msg.chat.id;
+  //       await this.handleImageMessage(chatId, msg); // Call function to handle image messages
+  //     }
+  //   });
+  // }
+  // manejador de mensaje en / para verificar si el mensaje contiene foto
 
   // manejador de imagen a la ia
   private async handleImageMessage(
@@ -673,22 +682,92 @@ export class TelegramService {
     });
   }
 
-  private async handleGeneralMessage(chatId: number): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      "Gracias por tu mensaje. .\n" +
-        "Mientras tanto, puedes usar los botones del menú principal:",
-      { reply_markup: this.getMainMenuKeyboard() }
-    );
+  // private async handleGeneralMessage(chatId: number): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "Gracias por tu mensaje. .\n" +
+  //       "Mientras tanto, puedes usar los botones del menú principal:",
+  //     { reply_markup: this.getMainMenuKeyboard() }
+  //   );
+  // }
+
+  private setupMessageHandler(): void {
+    this.bot.on("message", async (msg) => {
+      const chatId = msg.chat.id;
+
+      try {
+        // Manejar cancelación
+        if (msg.text === "❌ Cancelar") {
+          await this.cancelarBusqueda(chatId);
+          return;
+        }
+
+        // Manejar ubicación
+        if (msg.location) {
+          await this.handleLocation(msg);
+          return;
+        }
+
+        // Manejar mensajes de texto generales
+        if (msg.text && !msg.text.startsWith("/")) {
+          // Si hay una consulta médica activa, manejarla
+
+          await this.handleGeneralMessage(chatId);
+          return;
+        }
+
+        // Manejar fotos
+        if (msg.photo) {
+          await this.handleImageMessage(chatId, msg);
+          return;
+        }
+      } catch (error) {
+        await this.errorHandler.handleServiceError(
+          this.bot,
+          error,
+          "setupMessageHandler",
+          chatId
+        );
+      }
+    });
   }
 
+  private async handleGeneralMessage(chatId: number): Promise<void> {
+    try {
+      await this.bot.sendMessage(
+        chatId,
+        "Por favor, usa los botones del menú para interactuar conmigo.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      await this.errorHandler.handleServiceError(
+        this.bot,
+        error,
+        "handleGeneralMessage",
+        chatId
+      );
+    }
+  }
+
+  //-------------------------------------
   private getMainMenuKeyboard(): TelegramKeyboard {
     return {
       inline_keyboard: [
         [
           {
             text: "🏥 Buscar Farmacias Cercanas *Funcional*",
-            callback_data: "solicitar_ubicacion_farmacias",
+            callback_data: "solicitar_ubicacion_farmacia",
           },
         ],
         [
@@ -938,7 +1017,7 @@ Use los botones del menú principal.
   private async iniciarConsultaMedica(chatId: number): Promise<void> {
     const sentMessage = await this.bot.sendMessage(
       chatId,
-      "Por favor, escribe tu pregunta médica:",
+      "Por favor, escribe tu pregunta médica,  Toma una foto de lo que deseas saber, ó Carga una foto desde tu galería:",
       {
         reply_markup: {
           force_reply: true, // Forzar al usuario a responder
@@ -964,7 +1043,7 @@ Use los botones del menú principal.
       } else {
         await this.bot.sendMessage(
           chatId,
-          "Por favor, escribe un texto con tu pregunta."
+          "Estoy Procesando la Información para poder responder ."
         );
       }
     });
