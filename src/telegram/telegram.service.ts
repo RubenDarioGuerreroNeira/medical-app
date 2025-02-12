@@ -26,6 +26,7 @@ export class TelegramService {
   private bot: TelegramBot;
   private readonly logger = new Logger(TelegramService.name);
   private readonly nominatimBaseUrl = "https://nominatim.openstreetmap.org";
+  private locationRequestType: { [key: number]: "farmacia" | "clinica" } = {};
 
   constructor(
     private configService: ConfigService,
@@ -74,7 +75,7 @@ export class TelegramService {
           [
             {
               text: "📍 Buscar farmacias cercanas a mi ubicación",
-              callback_data: "solicitar_ubicacion",
+              callback_data: "solicitar_ubicacion_farmacia",
             },
           ],
           [
@@ -96,6 +97,18 @@ export class TelegramService {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
 
+    // const actionHandlers = {
+    //   solicitar_ubicacion_farmacia: () =>
+    //     this.solicitarUbicacionFarmacia(chatId),
+    //   mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
+    //   consulta_medica: () => this.iniciarConsultaMedica(chatId),
+    //   ver_citas: () => this.mostrarCitas(chatId),
+    //   nueva_cita: () => this.iniciarNuevaCita(chatId),
+    //   cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
+    //   contacto: () => this.mostrarContacto(chatId),
+    //   menu_principal: () => this.mostrarMenuPrincipal(chatId),
+    // };
+
     const actionHandlers = {
       solicitar_ubicacion_farmacia: () =>
         this.solicitarUbicacionFarmacia(chatId),
@@ -116,7 +129,7 @@ export class TelegramService {
   private async solicitarUbicacionFarmacia(chatId: number): Promise<void> {
     const mensaje =
       "Por favor, comparte tu ubicación actual para buscar farmacias cercanas.";
-
+    this.locationRequestType[chatId] = "farmacia";
     await this.bot.sendMessage(chatId, mensaje, {
       reply_markup: {
         keyboard: [
@@ -145,40 +158,25 @@ export class TelegramService {
     const { latitude, longitude } = msg.location;
 
     try {
-      await this.bot.sendMessage(chatId, "🔍 Buscando farmacias cercanas...");
+      const requestType = this.locationRequestType[chatId];
+      if (requestType === "farmacia") {
+        await this.bot.sendMessage(chatId, "🔍 Buscando farmacias cercanas...");
+        const farmacia = await this.buscarFarmaciaCercana(latitude, longitude);
 
-      const farmacia = await this.buscarFarmaciaCercana(latitude, longitude);
+        if (farmacia) {
+          await this.bot.sendLocation(
+            chatId,
+            farmacia.location.lat,
+            farmacia.location.lng
+          );
 
-      if (farmacia) {
-        await this.bot.sendLocation(
-          chatId,
-          farmacia.location.lat,
-          farmacia.location.lng
-        );
+          const mensaje = `
+  🏥 ${farmacia.name}
+  📍 ${farmacia.address}
+  ${farmacia.isOpen ? "🟢 Abierta" : "🔴 Cerrada"}
+  ${farmacia.rating ? `⭐ ${farmacia.rating}` : ""}`;
 
-        const mensaje = `
-🏥 ${farmacia.name}
-📍 ${farmacia.address}
-${farmacia.isOpen ? "🟢 Abierta" : "🔴 Cerrada"}
-${farmacia.rating ? `⭐ ${farmacia.rating}` : ""}`;
-
-        await this.bot.sendMessage(chatId, mensaje, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
-                },
-              ],
-            ],
-          },
-        });
-      } else {
-        await this.bot.sendMessage(
-          chatId,
-          "Lo siento, no se encontraron farmacias cercanas.",
-          {
+          await this.bot.sendMessage(chatId, mensaje, {
             reply_markup: {
               inline_keyboard: [
                 [
@@ -189,9 +187,31 @@ ${farmacia.rating ? `⭐ ${farmacia.rating}` : ""}`;
                 ],
               ],
             },
-          }
-        );
+          });
+        } else {
+          await this.bot.sendMessage(
+            chatId,
+            "Lo siento, no se encontraron farmacias cercanas.",
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "🔙 Volver al menú principal",
+                      callback_data: "menu_principal",
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+        }
+      } else if (requestType === "clinica") {
+        await this.mostrarCentrosCercanos(this.bot, chatId, msg.location);
       }
+
+      // Limpiar el tipo de solicitud después de procesarla
+      delete this.locationRequestType[chatId];
     } catch (error) {
       await this.errorHandler.handleServiceError(
         this.bot,
