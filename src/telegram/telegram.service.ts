@@ -517,23 +517,6 @@ export class TelegramService {
     });
   }
 
-  // manejador de mensaje a Ia para verificar si el mensaje contiene foto
-  // private setupMessageHandler(): void {
-
-  //   this.bot.on("message", async (msg) => {
-  //     if (msg.text && !msg.text.startsWith("/")) {
-  //       const chatId = msg.chat.id;
-
-  //       this.handleGeneralMessage(chatId);
-  //     } else if (msg.photo) {
-  //       // Check if the message contains a photo
-  //       const chatId = msg.chat.id;
-  //       await this.handleImageMessage(chatId, msg); // Call function to handle image messages
-  //     }
-  //   });
-  // }
-  // manejador de mensaje en / para verificar si el mensaje contiene foto
-
   // manejador de imagen a la ia
   private async handleImageMessage(
     chatId: number,
@@ -682,15 +665,6 @@ export class TelegramService {
     });
   }
 
-  // private async handleGeneralMessage(chatId: number): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "Gracias por tu mensaje. .\n" +
-  //       "Mientras tanto, puedes usar los botones del menú principal:",
-  //     { reply_markup: this.getMainMenuKeyboard() }
-  //   );
-  // }
-
   private setupMessageHandler(): void {
     this.bot.on("message", async (msg) => {
       const chatId = msg.chat.id;
@@ -782,12 +756,12 @@ export class TelegramService {
             callback_data: "consulta_medica",
           },
         ],
+        // [
+        //   { text: "📅 Ver mis citas(Prueba)", callback_data: "ver_citas" },
+        //   { text: "➕ Nueva cita", callback_data: "nueva_cita" },
+        // ],
         [
-          { text: "📅 Ver mis citas(Prueba)", callback_data: "ver_citas" },
-          { text: "➕ Nueva cita", callback_data: "nueva_cita" },
-        ],
-        [
-          { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
+          //   { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
           { text: "📞 Contacto", callback_data: "contacto" },
         ],
       ],
