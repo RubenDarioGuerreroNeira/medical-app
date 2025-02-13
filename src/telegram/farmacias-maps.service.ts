@@ -1,11 +1,14 @@
 import { Injectable, Logger, HttpException, HttpStatus } from "@nestjs/common";
 import fetch, { Response } from "node-fetch";
+import { Clinica } from "./intrfaces/interface-clinicas";
+
 import {
   Location,
   PharmacyResponse,
   NominatimResponse,
   OSMPlace,
 } from "./intrfaces/osm.interface";
+import axios from "axios";
 
 // Enum para manejar estados de respuesta de Nominatim
 export enum OSMStatus {
@@ -20,7 +23,8 @@ export enum OSMStatus {
 export class OSMService {
   private readonly logger = new Logger(OSMService.name);
   private readonly nominatimBaseUrl = "https://nominatim.openstreetmap.org";
-
+  private readonly OVERPASS_BASE_URL =
+    "https://overpass-api.de/api/interpreter";
   constructor() {}
 
   async buscarFarmaciasEnTachira(): Promise<Location[] | null> {
@@ -96,6 +100,70 @@ export class OSMService {
     }
   }
 
+  async buscarClinicaCercana(
+    latitude: number,
+    longitude: number
+  ): Promise<Clinica | null> {
+    try {
+      const params = new URLSearchParams({
+        format: "json",
+        lat: latitude.toString(),
+        lon: longitude.toString(),
+        amenity: "hospital,clinicas,doctors,healthcare,clinica,centro medico",
+        addressdetails: "1",
+        limit: "1",
+        radius: "1000", // Radio de búsqueda en metros
+      });
+
+      const response = await axios.get(
+        `${this.nominatimBaseUrl}/reverse?${params}`,
+        {
+          headers: {
+            "User-Agent": "TelegramBot/1.0", // Importante para evitar bloqueos
+          },
+        }
+      );
+
+      if (!response.data) return null;
+
+      return this.formatClinicData(response.data);
+    } catch (error) {
+      this.logger.error("Error buscando clínica cercana:", error);
+      return null;
+    }
+  }
+
+  private formatClinicData(data: any): Clinica {
+    const address = data.address || {};
+
+    return {
+      id: data.place_id || "ID no disponible", // Asegúrate de proporcionar un valor para 'id'
+      estado: address.state || "Estado no Disponible",
+      nombre: data.name || data.display_name.split(",")[0],
+      direccion: this.formatAddress(address),
+      ciudad: address.city || address.town || address.state || "Venezuela",
+      telefono: address.phone || "No disponible",
+      coordenadas: {
+        lat: parseFloat(data.lat),
+        lng: parseFloat(data.lon),
+      },
+      horario: "Horario no disponible",
+      especialidades: ["Medicina General"],
+      emergencia24h: false,
+    };
+  }
+
+  private formatAddress(address: any): string {
+    const components = [];
+    if (address.road) components.push(address.road);
+    if (address.house_number) components.push(address.house_number);
+    if (address.suburb) components.push(address.suburb);
+    if (address.city || address.town)
+      components.push(address.city || address.town);
+    return components.join(", ") || "Dirección no disponible";
+  }
+
+  // VALIDAR COORDENADAS
   private validateCoordinates(lat: number, lng: number): void {
     if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       throw new Error("Coordenadas geográficas inválidas");

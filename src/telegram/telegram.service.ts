@@ -107,7 +107,7 @@ export class TelegramService {
       // ver_citas: () => this.mostrarCitas(chatId),
       // nueva_cita: () => this.iniciarNuevaCita(chatId),
       // cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
-      contacto: () => this.mostrarContacto(chatId),
+      // contacto: () => this.mostrarContacto(chatId),
       menu_principal: () => this.mostrarMenuPrincipal(chatId),
     };
 
@@ -237,7 +237,7 @@ export class TelegramService {
         remove_keyboard: true,
       },
     });
-    // Aquí deberías llamar al método que muestra el menú principal
+    //  método que muestra el menú principal
     await this.mostrarMenuPrincipal(chatId); // Volvemos al menú principal
   }
 
@@ -323,7 +323,7 @@ export class TelegramService {
     }
   }
 
-  // Improved error handling with retry mechanism
+  // Mejora del manejador de errores
   private async fetchWithRetry(url: string, retries = 3): Promise<Response> {
     for (let i = 0; i < retries; i++) {
       try {
@@ -413,6 +413,7 @@ export class TelegramService {
     }
   }
 
+  // manejador de ubicacion
   private setupLocationHandler(chatId: number): void {
     const messageHandler = async (msg: TelegramBot.Message) => {
       try {
@@ -443,6 +444,8 @@ export class TelegramService {
 
     this.bot.on("message", messageHandler);
   }
+
+  // manejador de callback queries
   private setupCallbackHandler(): void {
     this.bot.on("callback_query", async (callbackQuery) => {
       const action = callbackQuery.data;
@@ -454,15 +457,15 @@ export class TelegramService {
     });
   }
 
-  // manejador de respuestas del boton
+  // manejador de respuestas del boton de citas
   private async handleCallbackAction(
     action: string,
     chatId: number
   ): Promise<void> {
     const actionHandlers = {
-      ver_citas: () => this.mostrarCitas(chatId),
-      nueva_cita: () => this.iniciarNuevaCita(chatId),
-      cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
+      // ver_citas: () => this.mostrarCitas(chatId),
+      // nueva_cita: () => this.iniciarNuevaCita(chatId),
+      // cancelar_cita: () => this.mostrarCitasParaCancelar(chatId),
       // contacto: () => this.mostrarContacto(chatId),
       consulta_medica: () => this.iniciarConsultaMedica(chatId),
       // menu_principal: () => this.mostrarMenuPrincipal(chatId),
@@ -505,6 +508,7 @@ export class TelegramService {
     this.setupLocationHandler(chatId);
   }
 
+  // capturo el nombre del usuario y el chatId , luego le muestro ek el menú principal
   private setupCommands(): void {
     this.bot.onText(/\/start/, async (msg) => {
       const chatId = msg.chat.id;
@@ -519,6 +523,7 @@ export class TelegramService {
     });
   }
 
+  // --------------------IA------------------------
   // manejador de FOTOS DE LA IA
   private async handleImageMessage(
     chatId: number,
@@ -661,12 +666,14 @@ export class TelegramService {
     }
   }
 
+  // --------------------ERROR------------------------
   private setupErrorHandler(): void {
     this.bot.on("error", (error) => {
       this.logger.error("Error en el bot de Telegram:", error);
     });
   }
 
+  // MANEJO DE MENSAJES AL USUARIO CUANDO INGRESA DATOS AL TEXTBOX
   private setupMessageHandler(): void {
     this.bot.on("message", async (msg) => {
       const chatId = msg.chat.id;
@@ -708,6 +715,7 @@ export class TelegramService {
     });
   }
 
+  // manejador de mensajes  al usuario invitandolo a interactuar con el menu
   private async handleGeneralMessage(chatId: number): Promise<void> {
     try {
       await this.bot.sendMessage(
@@ -742,28 +750,28 @@ export class TelegramService {
       inline_keyboard: [
         [
           {
-            text: "🏥 Buscar Farmacias Cercanas *Funcional*",
+            text: "🏥 Buscar Farmacias Cercanas ",
             callback_data: "solicitar_ubicacion_farmacia",
           },
         ],
         [
           {
-            text: "👨‍🔬 Buscar Clínicas Cercanas *Funcional*",
+            text: "👨‍🔬 Buscar Centros de Atención Medica Cercanos ",
             callback_data: "mostrarCentrosCercanos",
           },
         ],
         [
           {
-            text: "🩺 Preguntale a Nuestra IA *Funcional*",
+            text: "🩺 Preguntale a Nuestra IA ",
             callback_data: "consulta_medica",
           },
         ],
-        [
-          {
-            text: "⛺ Farmacias en Táchira*",
-            callback_data: "buscar_farmacias_tachira",
-          },
-        ],
+        // [
+        //   {
+        //     text: "⛺ Farmacias en Táchira*",
+        //     callback_data: "buscar_farmacias_tachira",
+        //   },
+        // ],
         // [
         //   { text: "📅 Ver mis citas(Prueba)", callback_data: "ver_citas" },
         //   { text: "➕ Nueva cita", callback_data: "nueva_cita" },
@@ -776,7 +784,7 @@ export class TelegramService {
     };
   }
 
-  //***
+  //*** mensaje de bienvenida al usuario
   private async mostrarMenuPrincipal(
     chatId: number,
     userName?: string
@@ -792,167 +800,168 @@ export class TelegramService {
     );
   }
 
-  private async mostrarCitas(chatId: number): Promise<void> {
-    // Aquí implementarías la lógica para obtener las citas del usuario
-    const citasEjemplo = [
-      { fecha: "2024-01-20", hora: "10:00", doctor: "Dr. Smith" },
-      { fecha: "2024-01-25", hora: "15:30", doctor: "Dra. Johnson" },
-    ];
+  // private async mostrarCitas(chatId: number): Promise<void> {
+  //   // Aquí implementarías la lógica para obtener las citas del usuario
+  //   const citasEjemplo = [
+  //     { fecha: "2024-01-20", hora: "10:00", doctor: "Dr. Smith" },
+  //     { fecha: "2024-01-25", hora: "15:30", doctor: "Dra. Johnson" },
+  //   ];
 
-    if (citasEjemplo.length === 0) {
-      await this.bot.sendMessage(
-        chatId,
-        "No tienes citas programadas actualmente.",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "🔙 Volver", callback_data: "menu_principal" }],
-            ],
-          },
-        }
-      );
-      return;
-    }
+  //   if (citasEjemplo.length === 0) {
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       "No tienes citas programadas actualmente.",
+  //       {
+  //         reply_markup: {
+  //           inline_keyboard: [
+  //             [{ text: "🔙 Volver", callback_data: "menu_principal" }],
+  //           ],
+  //         },
+  //       }
+  //     );
+  //     return;
+  //   }
 
-    let mensaje = "📅 Tus citas programadas: (Demo)\n\n";
-    citasEjemplo.forEach((cita, index) => {
-      mensaje += `${index + 1}. Fecha: ${cita.fecha}\n⏰ Hora: ${
-        cita.hora
-      }\n👨‍⚕️ Doctor: ${cita.doctor}\n\n`;
-    });
+  //   let mensaje = "📅 Tus citas programadas: (Demo)\n\n";
+  //   citasEjemplo.forEach((cita, index) => {
+  //     mensaje += `${index + 1}. Fecha: ${cita.fecha}\n⏰ Hora: ${
+  //       cita.hora
+  //     }\n👨‍⚕️ Doctor: ${cita.doctor}\n\n`;
+  //   });
 
-    await this.bot.sendMessage(chatId, mensaje, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🔙 Volver", callback_data: "menu_principal" }],
-        ],
-      },
-    });
-  }
+  //   await this.bot.sendMessage(chatId, mensaje, {
+  //     reply_markup: {
+  //       inline_keyboard: [
+  //         [{ text: "🔙 Volver", callback_data: "menu_principal" }],
+  //       ],
+  //     },
+  //   });
+  // }
 
-  private async iniciarNuevaCita(chatId: number): Promise<void> {
-    const keyboard: TelegramKeyboard = {
-      inline_keyboard: [
-        [
-          {
-            text: "Medicina General (Prueba)",
-            callback_data: "especialidad_general",
-          },
-          { text: "Pediatría (Demo)", callback_data: "especialidad_pediatria" },
-        ],
-        [
-          {
-            text: "Cardiología (Prueba)",
-            callback_data: "especialidad_cardiologia",
-          },
-          {
-            text: "Dermatología (Prueba)",
-            callback_data: "especialidad_dermatologia",
-          },
-        ],
-        [{ text: "🔙 Volver al menú", callback_data: "menu_principal" }],
-      ],
-    };
+  // private async iniciarNuevaCita(chatId: number): Promise<void> {
+  //   const keyboard: TelegramKeyboard = {
+  //     inline_keyboard: [
+  //       [
+  //         {
+  //           text: "Medicina General (Prueba)",
+  //           callback_data: "especialidad_general",
+  //         },
+  //         { text: "Pediatría (Demo)", callback_data: "especialidad_pediatria" },
+  //       ],
+  //       [
+  //         {
+  //           text: "Cardiología (Prueba)",
+  //           callback_data: "especialidad_cardiologia",
+  //         },
+  //         {
+  //           text: "Dermatología (Prueba)",
+  //           callback_data: "especialidad_dermatologia",
+  //         },
+  //       ],
+  //       [{ text: "🔙 Volver al menú", callback_data: "menu_principal" }],
+  //     ],
+  //   };
 
-    await this.bot.sendMessage(
-      chatId,
-      "👨‍⚕️ Selecciona la especialidad para tu nueva cita:",
-      { reply_markup: keyboard }
-    );
-  }
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "👨‍⚕️ Selecciona la especialidad para tu nueva cita:",
+  //     { reply_markup: keyboard }
+  //   );
+  // }
 
-  private async seleccionarEspecialidad(
-    chatId: number,
-    especialidad: string
-  ): Promise<void> {
-    // Aquí implementarías la lógica para mostrar horarios disponibles
-    await this.bot.sendMessage(
-      chatId,
-      `Has seleccionado ${especialidad}. Esta función estará disponible próximamente.`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🔙 Volver", callback_data: "nueva_cita" }],
-          ],
-        },
-      }
-    );
-  }
+  // private async seleccionarEspecialidad(
+  //   chatId: number,
+  //   especialidad: string
+  // ): Promise<void> {
+  //   // Aquí implementarías la lógica para mostrar horarios disponibles
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     `Has seleccionado ${especialidad}. Esta función estará disponible próximamente.`,
+  //     {
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [{ text: "🔙 Volver", callback_data: "nueva_cita" }],
+  //         ],
+  //       },
+  //     }
+  //   );
+  // }
 
-  private async mostrarCitasParaCancelar(chatId: number): Promise<void> {
-    // Aquí implementarías la lógica para obtener las citas del usuario
-    const citasEjemplo = [
-      { id: "1", fecha: "2024-01-20", hora: "10:00", doctor: "Dr. Smith" },
-      { id: "2", fecha: "2024-01-25", hora: "15:30", doctor: "Dra. Johnson" },
-    ];
+  // private async mostrarCitasParaCancelar(chatId: number): Promise<void> {
+  //   // Aquí implementarías la lógica para obtener las citas del usuario
+  //   const citasEjemplo = [
+  //     { id: "1", fecha: "2024-01-20", hora: "10:00", doctor: "Dr. Smith" },
+  //     { id: "2", fecha: "2024-01-25", hora: "15:30", doctor: "Dra. Johnson" },
+  //   ];
 
-    if (citasEjemplo.length === 0) {
-      await this.bot.sendMessage(
-        chatId,
-        "No tienes citas que puedas cancelar.",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: "🔙 Volver", callback_data: "menu_principal" }],
-            ],
-          },
-        }
-      );
-      return;
-    }
+  //   if (citasEjemplo.length === 0) {
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       "No tienes citas que puedas cancelar.",
+  //       {
+  //         reply_markup: {
+  //           inline_keyboard: [
+  //             [{ text: "🔙 Volver", callback_data: "menu_principal" }],
+  //           ],
+  //         },
+  //       }
+  //     );
+  //     return;
+  //   }
 
-    const keyboard: TelegramKeyboard = {
-      inline_keyboard: [
-        ...citasEjemplo.map((cita) => [
-          {
-            text: `${cita.fecha} ${cita.hora} - ${cita.doctor}`,
-            callback_data: `cancelar_${cita.id}`,
-          },
-        ]),
-        [{ text: "🔙 Volver al menú", callback_data: "menu_principal" }],
-      ],
-    };
+  //   const keyboard: TelegramKeyboard = {
+  //     inline_keyboard: [
+  //       ...citasEjemplo.map((cita) => [
+  //         {
+  //           text: `${cita.fecha} ${cita.hora} - ${cita.doctor}`,
+  //           callback_data: `cancelar_${cita.id}`,
+  //         },
+  //       ]),
+  //       [{ text: "🔙 Volver al menú", callback_data: "menu_principal" }],
+  //     ],
+  //   };
 
-    await this.bot.sendMessage(
-      chatId,
-      "❌ Selecciona la cita que deseas cancelar (Prueba):",
-      { reply_markup: keyboard }
-    );
-  }
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "❌ Selecciona la cita que deseas cancelar (Prueba):",
+  //     { reply_markup: keyboard }
+  //   );
+  // }
 
-  private async confirmarCancelacion(
-    chatId: number,
-    citaId: string
-  ): Promise<void> {
-    // Aquí implementarías la lógica para cancelar la cita
-    await this.bot.sendMessage(chatId, `La cita ${citaId} ha sido cancelada.`, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🔙 Volver", callback_data: "menu_principal" }],
-        ],
-      },
-    });
-  }
+  // private async confirmarCancelacion(
+  //   chatId: number,
+  //   citaId: string
+  // ): Promise<void> {
+  //   // Aquí implementarías la lógica para cancelar la cita
+  //   await this.bot.sendMessage(chatId, `La cita ${citaId} ha sido cancelada.`, {
+  //     reply_markup: {
+  //       inline_keyboard: [
+  //         [{ text: "🔙 Volver", callback_data: "menu_principal" }],
+  //       ],
+  //     },
+  //   });
+  // }
 
-  private async mostrarContacto(chatId: number): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      "📞 Información de contacto:\n\n" +
-        "🏥 Centro Médico: Centro Médico XYZ\n" +
-        "📍 Dirección: [Tu dirección]\n" +
-        "☎️ Teléfono: +580416 0897020\n" +
-        "📧 Email: rudargeneira@gmail.com\n" +
-        "⏰ Horario: Lunes a Viernes 8:00 AM - 5:00 PM",
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🔙 Volver", callback_data: "menu_principal" }],
-          ],
-        },
-      }
-    );
-  }
+  // private async mostrarContacto(chatId: number): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "📞 Información de contacto:\n\n" +
+  //       "🏥 Centro Médico: Centro Médico XYZ\n" +
+  //       "📍 Dirección: [Tu dirección]\n" +
+  //       "☎️ Teléfono: +580416 0897020\n" +
+  //       "📧 Email: rudargeneira@gmail.com\n" +
+  //       "⏰ Horario: Lunes a Viernes 8:00 AM - 5:00 PM",
+  //     {
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [{ text: "🔙 Volver", callback_data: "menu_principal" }],
+  //         ],
+  //       },
+  //     }
+  //   );
+  // }
 
+  // mostrar ayuda
   private async mostrarAyuda(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
@@ -965,28 +974,29 @@ export class TelegramService {
   }
 
   // Métodos existentes para notificaciones
-  async sendAppointmentNotification(
-    chatId: number,
-    appointment: AppointmentNotification
-  ): Promise<boolean> {
-    const message = `
-🏥 Recordatorio de Cita Médica
+  //   async sendAppointmentNotification(
+  //     chatId: number,
+  //     appointment: AppointmentNotification
+  //   ): Promise<boolean> {
+  //     const message = `
+  // 🏥 Recordatorio de Cita Médica
 
-📅 Fecha: ${appointment.date}
-⏰ Hora: ${appointment.time}
-👨‍⚕️ Doctor: ${appointment.doctorName}
-🏢 Consultorio: ${appointment.location}
+  // 📅 Fecha: ${appointment.date}
+  // ⏰ Hora: ${appointment.time}
+  // 👨‍⚕️ Doctor: ${appointment.doctorName}
+  // 🏢 Consultorio: ${appointment.location}
 
-ℹ️ Por favor, llegue 10 minutos antes de su cita.
-🎫 Presente este mensaje en recepción.
+  // ℹ️ Por favor, llegue 10 minutos antes de su cita.
+  // 🎫 Presente este mensaje en recepción.
 
-¿Necesita cancelar o reprogramar?
-Use los botones del menú principal.
-    `;
+  // ¿Necesita cancelar o reprogramar?
+  // Use los botones del menú principal.
+  //     `;
 
-    return this.sendMessage(chatId, message);
-  }
+  //     return this.sendMessage(chatId, message);
+  //   }
 
+  // mensajes de error
   async sendMessage(chatId: number, message: string): Promise<boolean> {
     try {
       await this.bot.sendMessage(chatId, message);
@@ -997,10 +1007,11 @@ Use los botones del menú principal.
     }
   }
 
+  // iniciar consulta médica con ia cuando la pregunta es un texto
   private async iniciarConsultaMedica(chatId: number): Promise<void> {
     const sentMessage = await this.bot.sendMessage(
       chatId,
-      "Por favor, escribe tu pregunta médica,  Toma una foto de lo que deseas saber, ó Carga una foto desde tu galería:",
+      "Por favor, escribe tu pregunta médica, Toma una foto de lo que deseas saber, ó Carga una foto desde tu galería:",
       {
         reply_markup: {
           force_reply: true, // Forzar al usuario a responder
@@ -1032,6 +1043,7 @@ Use los botones del menú principal.
     });
   }
 
+  // procesar pregunta envaindosela a Gemini
   private async procesarPreguntaMedica(
     chatId: number,
     pregunta: string
@@ -1104,32 +1116,80 @@ Use los botones del menú principal.
       );
     }
   }
-  async obtenerRespuestaMedica(pregunta: string): Promise<string> {
-    const respuestaSimulada = await this.generarRespuesta(pregunta);
-    return respuestaSimulada;
-  }
 
-  async generarRespuesta(pregunta: string): Promise<string> {
-    const disclaimer =
-      "\n\n**Importante:** Esta información es solo para fines informativos y no sustituye el consejo médico profesional. Siempre consulta a un médico para obtener un diagnóstico y tratamiento adecuados.";
+  // borrar
+  // respuesta  medica simulada
+  // async obtenerRespuestaMedica(pregunta: string): Promise<string> {
+  //   const respuestaSimulada = await this.generarRespuesta(pregunta);
+  //   return respuestaSimulada;
+  // }
 
-    if (pregunta.toLowerCase().includes("fiebre")) {
-      return (
-        "La fiebre puede ser un síntoma de muchas enfermedades. Es importante medir tu temperatura y consultar a un médico si es alta o persistente. También debes buscar atención médica si tienes otros síntomas como dificultad para respirar, dolor de cabeza intenso o erupciones cutáneas." +
-        disclaimer
-      );
-    } else if (pregunta.toLowerCase().includes("dolor de cabeza")) {
-      return (
-        "El dolor de cabeza puede tener muchas causas, desde estrés hasta migrañas. Descansa, hidrátate y toma un analgésico de venta libre si es necesario. Si el dolor de cabeza es intenso, persistente o está acompañado de otros síntomas como visión borrosa o fiebre, consulta a un médico." +
-        disclaimer
-      );
-    } else {
-      return (
-        "Soy un modelo de lenguaje y no puedo proporcionar diagnósticos médicos. Por favor, consulta a un médico para obtener asesoramiento profesional sobre tu problema de salud." +
-        disclaimer
-      );
-    }
-  }
+  // async generarRespuesta(pregunta: string): Promise<string> {
+  //   const disclaimer =
+  //     "\n\n**Importante:** Esta información es solo para fines informativos y no sustituye el consejo médico profesional. Siempre consulta a un médico para obtener un diagnóstico y tratamiento adecuados.";
+
+  //   if (pregunta.toLowerCase().includes("fiebre")) {
+  //     return (
+  //       "La fiebre puede ser un síntoma de muchas enfermedades. Es importante medir tu temperatura y consultar a un médico si es alta o persistente. También debes buscar atención médica si tienes otros síntomas como dificultad para respirar, dolor de cabeza intenso o erupciones cutáneas." +
+  //       disclaimer
+  //     );
+  //   } else if (pregunta.toLowerCase().includes("dolor de cabeza")) {
+  //     return (
+  //       "El dolor de cabeza puede tener muchas causas, desde estrés hasta migrañas. Descansa, hidrátate y toma un analgésico de venta libre si es necesario. Si el dolor de cabeza es intenso, persistente o está acompañado de otros síntomas como visión borrosa o fiebre, consulta a un médico." +
+  //       disclaimer
+  //     );
+  //   } else {
+  //     return (
+  //       "Soy un modelo de lenguaje y no puedo proporcionar diagnósticos médicos. Por favor, consulta a un médico para obtener asesoramiento profesional sobre tu problema de salud." +
+  //       disclaimer
+  //     );
+  //   }
+  // }
+
+  //--------------------CENTROS MEDICOS Y HOSPITALES
+
+  // PENDIENTE
+  // private async mostrarCentrosCercanos(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   location: TelegramBot.Location
+  // ): Promise<void> {
+  //   try {
+  //     const clinica = await this.clinicasVenezuelaService.obtenerClinicaCercana(
+  //       location.latitude,
+  //       location.longitude
+  //     );
+
+  //     if (!clinica) {
+  //       await bot.sendMessage(
+  //         chatId,
+  //         "No se encontraron centros cercanos a tu ubicación.",
+  //         {
+  //           reply_markup: {
+  //             inline_keyboard: [
+  //               [
+  //                 {
+  //                   text: "🔙 Volver al menú principal",
+  //                   callback_data: "menu_principal",
+  //                 },
+  //               ],
+  //             ],
+  //           },
+  //         }
+  //       );
+  //       return;
+  //     }
+
+  //     await this.enviarInformacionClinica(bot, chatId, clinica);
+  //   } catch (error) {
+  //     this.logger.error(
+  //       "Error al obtener información de los centros cercanos:",
+  //       error
+  //     );
+  //     await this.handleLocationError(chatId);
+  //   }
+  // }
+  //-------------------NUEVO METODOS DE CLINICAS CERCANAS --------------------------------
 
   private async mostrarCentrosCercanos(
     bot: TelegramBot,
@@ -1137,18 +1197,33 @@ Use los botones del menú principal.
     location: TelegramBot.Location
   ): Promise<void> {
     try {
-      const clinica = await this.clinicasVenezuelaService.obtenerClinicaCercana(
+      // Mostrar mensaje de "buscando..."
+      const searchingMessage = await bot.sendMessage(
+        chatId,
+        "Buscando centros médicos cercanos... 🔍"
+      );
+
+      const clinica = await this.osmService.buscarClinicaCercana(
         location.latitude,
         location.longitude
       );
 
+      // Eliminar mensaje de "buscando..."
+      await bot.deleteMessage(chatId, searchingMessage.message_id);
+
       if (!clinica) {
         await bot.sendMessage(
           chatId,
-          "No se encontraron centros cercanos a tu ubicación.",
+          "No se encontraron centros médicos cercanos a tu ubicación en un radio de 1km.",
           {
             reply_markup: {
               inline_keyboard: [
+                [
+                  {
+                    text: "🔍 Ampliar búsqueda",
+                    callback_data: "ampliar_busqueda",
+                  },
+                ],
                 [
                   {
                     text: "🔙 Volver al menú principal",
@@ -1172,6 +1247,91 @@ Use los botones del menú principal.
     }
   }
 
+  private async enviarInformacionClinica(
+    bot: TelegramBot,
+    chatId: number,
+    clinica: Clinica
+  ): Promise<void> {
+    try {
+      if (clinica.coordenadas?.lat && clinica.coordenadas?.lng) {
+        await bot.sendLocation(
+          chatId,
+          clinica.coordenadas.lat,
+          clinica.coordenadas.lng
+        );
+      }
+
+      const message = this.messageFormatter.formatClinicMessage(clinica);
+      const phoneUrl = this.messageFormatter.formatPhoneNumber(
+        clinica.telefono || ""
+      );
+
+      await bot.sendMessage(chatId, message, {
+        parse_mode: "MarkdownV2",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📱 Contactar",
+                url: phoneUrl,
+              },
+              {
+                text: "🗺 Cómo llegar",
+                url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.coordenadas.lat},${clinica.coordenadas.lng}`,
+              },
+            ],
+            [
+              {
+                text: "🔍 Buscar otro centro",
+                callback_data: "buscar_otro_centro",
+              },
+            ],
+            [
+              {
+                text: "🔙 Volver al menú principal",
+                callback_data: "menu_principal",
+              },
+            ],
+          ],
+        },
+      });
+    } catch (error) {
+      this.logger.error("Error enviando información de la clínica:", error);
+      await this.handleClinicError(bot, chatId);
+    }
+  }
+
+  private async handleClinicError(
+    bot: TelegramBot,
+    chatId: number
+  ): Promise<void> {
+    const errorMessage = this.messageFormatter.formatErrorMessage(
+      "HAZ CLICK en la imagen, LUEGO de que abras la imagen del mapa EN LA PARTE SUPERIOR DEL MAPA," +
+        "UN BOTON DICE (ABRIR EN MAPS), te mostrara los Centros Médicos Cercanos a tu Ubicación ."
+    );
+
+    await bot.sendMessage(chatId, errorMessage, {
+      parse_mode: "MarkdownV2",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "🔄 Volver a Buscar Centros Médicos",
+              callback_data: "buscar_clinicas",
+            },
+          ],
+          [
+            {
+              text: "🔙 Volver al menú principal",
+              callback_data: "menu_principal",
+            },
+          ],
+        ],
+      },
+    });
+  }
+
+  // ---------------------------------------------------------------
   private async handleLocationError(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
@@ -1191,67 +1351,69 @@ Use los botones del menú principal.
     );
   }
 
+  // CLINICAS Ó CENTROS MEDICOS
   // MUESTRA LA INFORMACION DE LA CLINICA CON LA OPCION DE LLAMAR
-  private async enviarInformacionClinica(
-    bot: TelegramBot,
-    chatId: number,
-    clinica: Clinica
-  ): Promise<void> {
-    try {
-      // Enviar ubicación si hay coordenadas disponibles
-      if (clinica.coordenadas) {
-        await bot.sendLocation(
-          chatId,
-          clinica.coordenadas.lat,
-          clinica.coordenadas.lng
-        );
-      }
+  // private async enviarInformacionClinica(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   clinica: Clinica
+  // ): Promise<void> {
+  //   try {
+  //     // Enviar ubicación si hay coordenadas disponibles
+  //     if (clinica.coordenadas) {
+  //       await bot.sendLocation(
+  //         chatId,
+  //         clinica.coordenadas.lat,
+  //         clinica.coordenadas.lng
+  //       );
+  //     }
 
-      const message = await this.messageFormatter.formatClinicMessage(clinica);
-      const phoneUrl = await this.messageFormatter.formatPhoneNumber(
-        clinica.telefono
-      );
+  //     const message = await this.messageFormatter.formatClinicMessage(clinica);
+  //     const phoneUrl = await this.messageFormatter.formatPhoneNumber(
+  //       clinica.telefono
+  //     );
 
-      await bot.sendMessage(chatId, message, {
-        parse_mode: "MarkdownV2",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "📱 Contactar por Telegram",
-                url: phoneUrl,
-              },
-            ],
-            [
-              {
-                text: "🔙 Volver al menú principal",
-                callback_data: "menu_principal",
-              },
-            ],
-          ],
-        },
-      });
-    } catch (error) {
-      this.logger.error("Error sending clinic information:", error);
-      const errorMessage = this.messageFormatter.formatErrorMessage(
-        "Lo siento, ocurrió un error al mostrar la información. Por favor, intenta nuevamente."
-      );
-      await bot.sendMessage(chatId, errorMessage, {
-        parse_mode: "MarkdownV2",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🔙 Volver al menú principal",
-                callback_data: "menu_principal",
-              },
-            ],
-          ],
-        },
-      });
-    }
-  }
+  //     await bot.sendMessage(chatId, message, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "📱 Contactar por Telegram",
+  //               url: phoneUrl,
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error("Error sending clinic information:", error);
+  //     const errorMessage = this.messageFormatter.formatErrorMessage(
+  //       "Lo siento, ocurrió un error al mostrar la información. Por favor, intenta nuevamente."
+  //     );
+  //     await bot.sendMessage(chatId, errorMessage, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   }
+  // }
 
+  // SOLICITO UBICACION DEL USUARIO
   async agregarComandosClinica(bot: TelegramBot): Promise<void> {
     bot.onText(/\/clinicas/, async (msg) => {
       const chatId = msg.chat.id;

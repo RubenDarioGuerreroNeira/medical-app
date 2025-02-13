@@ -1,86 +1,125 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { Clinica } from "./intrfaces/interface-clinicas";
 
 @Injectable()
 export class TelegramMessageFormatter {
-  private escapeMarkdownV2(text: string): string {
-    return text.replace(/[_*[\]()~`>#+=|{}.!-]/g, "\\$&");
+  private readonly logger = new Logger(TelegramMessageFormatter.name);
+  private readonly specialChars = [
+    "_",
+    "*",
+    "[",
+    "]",
+    "(",
+    ")",
+    "~",
+    "`",
+    ">",
+    "#",
+    "+",
+    "-",
+    "=",
+    "|",
+    "{",
+    "}",
+    ".",
+    "!",
+  ];
+
+  private escapeMarkdownV2(text: string = ""): string {
+    if (!text) return "";
+
+    return this.specialChars.reduce(
+      (acc, char) => acc.replace(new RegExp("\\" + char, "g"), "\\" + char),
+      text
+    );
   }
 
-  formatPhoneNumber(telefono: string): string {
+  formatPhoneNumber(phone: string = ""): string {
     try {
-      // Limpia el número de teléfono de cualquier carácter no numérico
-      let cleanNumber = telefono.replace(/\D/g, "");
+      if (!phone) return "https://t.me";
 
-      // Eliminar cualquier prefijo existente
-      cleanNumber = cleanNumber.replace(/^0+/, ""); // Eliminar ceros iniciales
-      cleanNumber = cleanNumber.replace(/^58/, ""); // Eliminar 58 si existe
+      // Clean the phone number
+      let cleanNumber = phone.replace(/\D/g, "");
 
-      // Si el número comienza con 416, 426, etc. (códigos de operadoras móviles)
-      // o 276 (código de área), asumimos que es un número venezolano
+      // Remove leading zeros and country code if present
+      cleanNumber = cleanNumber.replace(/^0+/, "");
+      cleanNumber = cleanNumber.replace(/^58/, "");
+
+      // Add country code for Venezuelan numbers
       if (cleanNumber.match(/^(416|426|414|424|412|276)/)) {
-        // Agregar el código de país de Venezuela (+58)
         cleanNumber = `58${cleanNumber}`;
       }
 
-      // Asegurarse de que el número tenga el formato correcto para Telegram
-      const formattedNumber = `+${cleanNumber}`;
-
-      // Validar que el número tenga una longitud razonable (ejemplo: +58 + 10 dígitos)
+      // Validate length
       if (cleanNumber.length < 10 || cleanNumber.length > 12) {
-        throw new Error("Número de teléfono inválido");
+        this.logger.warn(`Invalid phone number length: ${cleanNumber}`);
+        return "https://t.me";
       }
 
-      return `https://t.me/${formattedNumber}`;
+      // return `https://t.me/+${cleanNumber}`;
+      return `https://t.me/\\+${cleanNumber}`;
     } catch (error) {
-      console.error("Error formatting phone number:", error);
-      return "https://t.me"; // URL de fallback
+      this.logger.error("Error formatting phone number:", error);
+      return "https://t.me";
     }
   }
 
   formatClinicMessage(clinica: Clinica): string {
-    const formatField = (text: string) => this.escapeMarkdownV2(text);
+    try {
+      if (!clinica) {
+        throw new Error("No clinic data provided");
+      }
 
-    const nombre = formatField(clinica.nombre);
-    const direccion = formatField(clinica.direccion);
-    const ciudad = formatField(clinica.ciudad);
-    // Formatear el teléfono para mostrarlo con el código de país
-    const telefonoFormateado = formatField(
-      this.formatDisplayPhoneNumber(clinica.telefono)
-    );
-    const horario = formatField(clinica.horario);
+      const formatField = (text: string = "") =>
+        this.escapeMarkdownV2(text || "");
 
-    const especialidades = clinica.especialidades
-      .filter((esp) => esp.trim() !== "")
-      .map((esp) => `• ${formatField(esp)}`)
-      .join("\n");
+      const nombre = formatField(clinica.nombre);
+      const direccion = formatField(clinica.direccion);
+      const ciudad = formatField(clinica.ciudad);
+      const telefono = formatField(
+        this.formatDisplayPhoneNumber(clinica.telefono)
+      );
+      const horario = formatField(clinica.horario);
 
-    return `
+      const especialidades = (clinica.especialidades || [])
+        .filter((esp) => esp && esp.trim())
+        .map((esp) => `• ${formatField(esp)}`)
+        .join("\n");
+
+      return `
 🏥 *${nombre}*
 
 📍 *Dirección:* ${direccion}
 🏙 *Ciudad:* ${ciudad}
-📞 *Teléfono:* ${telefonoFormateado}
+📞 *Teléfono:* ${telefono}
 ⏰ *Horario:* ${horario}
 ${clinica.emergencia24h ? "🚨 *Servicio de Emergencia 24h*\n" : ""}
 👨‍⚕️ *Especialidades:*
-${especialidades}
-        `.trim();
+${especialidades || "No hay especialidades disponibles"}
+      `.trim();
+    } catch (error) {
+      this.logger.error("Error formatting clinic message:", error);
+      return this.escapeMarkdownV2(
+        "Error al formatear la información de la clínica"
+      );
+    }
   }
 
-  // Nuevo método para formatear el número de teléfono para mostrar
-  private formatDisplayPhoneNumber(telefono: string): string {
+  private formatDisplayPhoneNumber(phone: string = ""): string {
     try {
-      let cleanNumber = telefono.replace(/\D/g, "");
+      if (!phone) return "No disponible";
+
+      let cleanNumber = phone.replace(/\D/g, "");
       cleanNumber = cleanNumber.replace(/^0+/, "");
       cleanNumber = cleanNumber.replace(/^58/, "");
 
       if (cleanNumber.match(/^(416|426|414|424|412|276)/)) {
-        return `\+58${cleanNumber}`;
+        return `\\+58${cleanNumber}`;
       }
-      return `\+58${cleanNumber}`;
+      return `\\+58${cleanNumber}`;
     } catch (error) {
-      return telefono; // Devolver el número original si hay algún error
+      this.logger.error("Error formatting display phone number:", error);
+      return "No disponible";
     }
   }
 
