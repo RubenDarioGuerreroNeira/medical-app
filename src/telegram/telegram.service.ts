@@ -91,6 +91,7 @@ export class TelegramService {
     await this.bot.sendMessage(chatId, mensaje, opciones);
   }
 
+  // manejador de solicitudes
   private async handleCallbackQuery(
     callbackQuery: TelegramBot.CallbackQuery
   ): Promise<void> {
