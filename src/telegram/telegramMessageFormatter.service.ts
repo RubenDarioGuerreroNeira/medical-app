@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Clinica } from "./intrfaces/interface-clinicas";
-
+import { Farmacia } from "./intrfaces/osm.interface";
 @Injectable()
 export class TelegramMessageFormatter {
   private readonly logger = new Logger(TelegramMessageFormatter.name);
@@ -125,5 +125,46 @@ ${especialidades || "No hay especialidades disponibles"}
 
   formatErrorMessage(message: string): string {
     return this.escapeMarkdownV2(message);
+  }
+
+  formatFarmaMessage(farmacia: Farmacia): string {
+    try {
+      if (!farmacia) {
+        throw new Error("No pharmacy data provided");
+      }
+
+      const formatField = (text: string = "") =>
+        this.escapeMarkdownV2(text || "");
+
+      const nombre = formatField(farmacia.nombre);
+      const direccion = formatField(farmacia.direccion);
+      const ciudad = formatField(farmacia.ciudad);
+      const telefono = formatField(
+        this.formatDisplayPhoneNumber(farmacia.telefono)
+      );
+      const horario = formatField(farmacia. horario || "");
+
+      const servicios = (farmacia.servicios || [])
+        .filter((serv) => serv && serv.trim())
+        .map((serv) => `• ${formatField(serv)}`)
+        .join("\n");
+
+      return `
+💊 *${nombre}*
+
+📍 *Dirección:* ${direccion}
+🏙 *Ciudad:* ${ciudad}
+📞 *Teléfono:* ${telefono}
+⏰ *Horario:* ${horario}
+${farmacia.servicio24h ? "🚨 *Servicio 24 horas*\n" : ""}
+🏪 *Servicios:*
+${servicios || "No hay servicios disponibles"}
+      `.trim();
+    } catch (error) {
+      this.logger.error("Error formatting pharmacy message:", error);
+      return this.escapeMarkdownV2(
+        "Error al formatear la información de la farmacia"
+      );
+    }
   }
 }

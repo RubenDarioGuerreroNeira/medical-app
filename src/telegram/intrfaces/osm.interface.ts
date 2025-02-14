@@ -99,5 +99,22 @@ export interface PharmacyResponse {
   location: Location;
   address: string;
   isOpen: boolean;
+  horario?: string;
+  horario24h?: boolean;
   rating: number | null;
+}
+
+export interface Farmacia {
+  id?: string;
+  nombre?: string;
+  direccion?: string;
+  ciudad?: string;
+  telefono?: string;
+  coordenadas?: {
+    lat: number;
+    lng: number;
+  };
+  servicio24h?: boolean;
+  servicios?: string[];
+  horario: string;
 }
