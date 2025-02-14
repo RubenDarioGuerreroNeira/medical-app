@@ -86,12 +86,6 @@ export class TelegramService {
     const opciones = {
       reply_markup: {
         inline_keyboard: [
-          // [
-          //   {
-          //     text: "🏥 Buscar farmacias en Táchira",
-          //     callback_data: "buscar_farmacias_tachira",
-          //   },
-          // ],
           [
             {
               text: "📍 Buscar farmacias cercanas a mi ubicación",
@@ -109,43 +103,6 @@ export class TelegramService {
     };
 
     await this.bot.sendMessage(chatId, mensaje, opciones);
-  }
-
-  // manejador de solicitudes
-
-  private async solicitarUbicacionFarmacia(chatId: number): Promise<void> {
-    try {
-      const mensaje =
-        "Por favor, comparte tu ubicación actual para buscar farmacias cercanas.";
-      this.locationRequestType[chatId] = "farmacia";
-
-      await this.bot.sendMessage(chatId, mensaje, {
-        reply_markup: {
-          keyboard: [
-            [
-              {
-                text: "📍 Compartir mi ubicación",
-                request_location: true,
-              },
-            ],
-            [
-              {
-                text: "❌ Cancelar",
-              },
-            ],
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      });
-    } catch (error) {
-      await this.errorHandler.handleServiceError(
-        this.bot,
-        error,
-        "solicitarUbicacionFarmacia",
-        chatId
-      );
-    }
   }
 
   // Método para cancelar la búsqueda y volver al menú principal
@@ -818,19 +775,12 @@ export class TelegramService {
             callback_data: "consulta_medica",
           },
         ],
-        // [
-        //   {
-        //     text: "⛺ Farmacias en Táchira*",
-        //     callback_data: "buscar_farmacias_tachira",
-        //   },
-        // ],
-        // [
-        //   { text: "📅 Ver mis citas(Prueba)", callback_data: "ver_citas" },
-        //   { text: "➕ Nueva cita", callback_data: "nueva_cita" },
-        // ],
         [
           //   { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
-          { text: "📞 Contacto", callback_data: "contacto" },
+          {
+            text: "📞 Contacto con el Desarrollador",
+            callback_data: "contacto",
+          },
         ],
       ],
     };
@@ -1116,22 +1066,16 @@ export class TelegramService {
         }
       );
     });
-
-    //   bot.on("location", async (msg) => {
-    //     if (msg.location) {
-    //       await this.mostrarCentrosCercanos(bot, msg.chat.id, msg.location);
-    //     }
-    //   });
   }
 
   async mostrarContacto(chatId: number): Promise<void> {
     try {
-      const phoneNumber = "+584160897020";
+      const phoneNumber = "584160897020"; // Removido el "+" del inicio
       const mensaje =
         "👨‍💻 *Desarrollador*\n\n" +
         "🧑‍💻 *Nombre:* Rubén Guerrero\n" +
         "📧 *Email:* rudargeneira@gmail.com\n" +
-        "📱 *Telegram:* " +
+        "📱 *Telegram:* +" +
         phoneNumber;
 
       await this.bot.sendMessage(chatId, mensaje, {
@@ -1140,20 +1084,8 @@ export class TelegramService {
           inline_keyboard: [
             [
               {
-                text: "📞 Llamar por Telegram",
-                url: `tg://call?number=${phoneNumber.replace("+", "")}`,
-              },
-            ],
-            [
-              {
                 text: "💬 Mensaje por Telegram",
-                url: `tg://msg?to=${phoneNumber.replace("+", "")}`,
-              },
-            ],
-            [
-              {
-                text: "📱 Llamar al teléfono",
-                url: `tel:${phoneNumber}`,
+                url: `https://t.me/${phoneNumber}`,
               },
             ],
             [
@@ -1172,7 +1104,19 @@ export class TelegramService {
       );
       await this.bot.sendMessage(
         chatId,
-        "Lo siento, hubo un error al mostrar la información del desarrollador."
+        "Lo siento, hubo un error al mostrar la información del desarrollador. Por favor, intenta nuevamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
       );
     }
   }
