@@ -9,6 +9,8 @@ import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 import { OSMService } from "./farmacias-maps.service";
 import { TelegramErrorHandler } from "./telegramErrorHandler.service";
+import { TelegramWebhookController } from "./telegramWebhook.controller";
+import { TelegramBotService } from "./telegramBotService.service";
 
 @Module({
   imports: [
@@ -22,8 +24,9 @@ import { TelegramErrorHandler } from "./telegramErrorHandler.service";
     TelegramMessageFormatter,
     OSMService,
     TelegramErrorHandler,
+    TelegramBotService,
   ],
-  controllers: [TelegramController],
-  exports: [TelegramService],
+  controllers: [TelegramController, TelegramWebhookController],
+  exports: [TelegramService, TelegramBotService],
 })
 export class TelegramModule {}
