@@ -11,6 +11,7 @@ import { OSMService } from "./farmacias-maps.service";
 import { TelegramErrorHandler } from "./telegramErrorHandler.service";
 import { TelegramWebhookController } from "./telegramWebhook.controller";
 import { TelegramBotService } from "./telegramBotService.service";
+import { TelegramDiagnosticService } from "./telegramDiagnosticService.service";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TelegramBotService } from "./telegramBotService.service";
     OSMService,
     TelegramErrorHandler,
     TelegramBotService,
+    TelegramDiagnosticService,
   ],
   controllers: [TelegramController, TelegramWebhookController],
   exports: [TelegramService, TelegramBotService],

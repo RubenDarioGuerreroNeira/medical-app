@@ -11,6 +11,7 @@ import {
   AppointmentNotification,
   TelegramKeyboard,
 } from "./telegram.interfaces";
+import { TelegramDiagnosticService } from "./telegramDiagnosticService.service";
 import {
   Location,
   OSMPlace,
@@ -36,7 +37,8 @@ export class TelegramService {
     private osmService: OSMService,
     private locationHandler: TelegramLocationHandler,
     private messageFormatter: TelegramMessageFormatter,
-    private errorHandler: TelegramErrorHandler
+    private errorHandler: TelegramErrorHandler,
+    private diagnosticService: TelegramDiagnosticService
   ) {
     const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.bot = new TelegramBot(token, { polling: true });
@@ -48,11 +50,31 @@ export class TelegramService {
       await this.handleCallbackQuery(callbackQuery);
     });
   }
-  private initializeBot(): void {
-    this.setupCommands();
-    this.setupCallbackHandler();
-    this.setupMessageHandler();
-    this.setupErrorHandler();
+  // private initializeBot(): void {
+  //   this.setupCommands();
+  //   this.setupCallbackHandler();
+  //   this.setupMessageHandler();
+  //   this.setupErrorHandler();
+  // }
+
+  private async initializeBot(): Promise<void> {
+    try {
+      // Ejecutar diagnóstico
+      const diagnostic = await this.diagnosticService.diagnoseBot(this.bot);
+
+      if (diagnostic.status === "ERROR") {
+        this.logger.error("Bot diagnostic issues:", diagnostic.issues);
+        this.logger.log("Attempting to fix issues...");
+        await this.diagnosticService.fixCommonIssues(this.bot);
+      }
+
+      this.setupCommands();
+      this.setupCallbackHandler();
+      this.setupMessageHandler();
+      this.setupErrorHandler();
+    } catch (error) {
+      this.logger.error("Failed to initialize bot:", error);
+    }
   }
 
   //-------------------------------------------------- CALLBACKS-----------------------------------------
@@ -524,18 +546,49 @@ export class TelegramService {
   }
 
   // capturo el nombre del usuario y el chatId , luego le muestro ek el menú principal
-  private setupCommands(): void {
-    this.bot.onText(/\/start/, async (msg) => {
-      const chatId = msg.chat.id;
-      const userName = msg.from.first_name;
-      this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
-      await this.mostrarMenuPrincipal(chatId, userName);
-    });
+  // private setupCommands(): void {
+  //   this.bot.onText(/\/start/, async (msg) => {
+  //     const chatId = msg.chat.id;
+  //     const userName = msg.from.first_name;
+  //     this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
+  //     await this.mostrarMenuPrincipal(chatId, userName);
+  //   });
 
-    this.bot.onText(/\/help/, (msg) => {
-      const chatId = msg.chat.id;
-      this.mostrarAyuda(chatId);
-    });
+  //   this.bot.onText(/\/help/, (msg) => {
+  //     const chatId = msg.chat.id;
+  //     this.mostrarAyuda(chatId);
+  //   });
+  // }
+
+  private setupCommands(): void {
+    try {
+      // Registrar comandos con Telegram
+      this.bot.setMyCommands([
+        { command: "/start", description: "Iniciar el bot" },
+        { command: "/help", description: "Ver comandos disponibles" },
+      ]);
+
+      this.bot.onText(/\/start/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userName = msg.from.first_name;
+        this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
+
+        // Agregar retry logic
+        let retries = 3;
+        while (retries > 0) {
+          try {
+            await this.mostrarMenuPrincipal(chatId, userName);
+            break;
+          } catch (error) {
+            retries--;
+            if (retries === 0) throw error;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        }
+      });
+    } catch (error) {
+      this.logger.error("Error setting up commands:", error);
+    }
   }
 
   // --------------------IA------------------------
