@@ -22,6 +22,7 @@ import { NotaMedicaModule } from "./nota_medica/nota_medica.module";
 import { RecetaMedicaModule } from "./receta-medica/receta-medica.module";
 import { CacheModule } from "@nestjs/cache-manager";
 import { TelegramModule } from "./telegram/telegram.module";
+import { MedicationReminder } from "./entities/reminder.entity";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { TelegramModule } from "./telegram/telegram.module";
         RecetaMedica,
         DocumentoConsulta,
         NotaMedica,
+        MedicationReminder,
       ],
       synchronize: process.env.NODE_ENV !== "production",
     }),

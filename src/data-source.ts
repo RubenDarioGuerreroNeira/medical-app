@@ -5,6 +5,7 @@ import { HistorialMedico } from "./Entities/HistorialMedico.entity";
 import { RecetaMedica } from "./Entities/RecetaMedica";
 import { DocumentoConsulta } from "./Entities/DocumentoConsulta";
 import { NotaMedica } from "./Entities/NotaMedica";
+import {MedicationReminder} from "./Entities/reminder.entity";
 
 import { DataSource } from "typeorm";
 import { join } from "path";
@@ -28,6 +29,7 @@ export const AppDataSource = new DataSource({
     RecetaMedica,
     DocumentoConsulta,
     NotaMedica,
+    MedicationReminder,
   ],
   migrations: [join(__dirname, "migrations", "*.{ts,js}")],
   synchronize: false,

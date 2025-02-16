@@ -1,5 +1,11 @@
 // telegram.service.ts
-import { HttpException, HttpStatus, Injectable, Logger } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as TelegramBot from "node-telegram-bot-api";
 import { GeminiAIService } from "../Gemini/gemini.service";
@@ -22,23 +28,28 @@ import {
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 import { TelegramErrorHandler } from "./telegramErrorHandler.service";
+import { ReminderService } from "./reminder.service";
 
 @Injectable()
 export class TelegramService {
   private bot: TelegramBot;
   private readonly logger = new Logger(TelegramService.name);
+
   private readonly nominatimBaseUrl = "https://nominatim.openstreetmap.org";
   private locationRequestType: { [key: number]: "farmacia" | "clinica" } = {};
 
   constructor(
     private configService: ConfigService,
+    @Inject("USER_STATES_MAP") private userStates: Map<number, any>, // Inyectar el Map
+    // private userStates: Map<number, any> = new Map(),
     private geminiService: GeminiAIService,
     private clinicasVenezuelaService: ClinicasVenezuelaService,
     private osmService: OSMService,
     private locationHandler: TelegramLocationHandler,
     private messageFormatter: TelegramMessageFormatter,
     private errorHandler: TelegramErrorHandler,
-    private diagnosticService: TelegramDiagnosticService
+    private diagnosticService: TelegramDiagnosticService,
+    private reminderService: ReminderService
   ) {
     const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.bot = new TelegramBot(token, { polling: true });
@@ -87,12 +98,14 @@ export class TelegramService {
     const actionHandlers = {
       // solicitar_ubicacion_farmacia: () =>
       //   this.solicitarUbicacionFarmacia(chatId),
+      // buscar_farmacias_tachira: () => this.enviarMenuPrincipal(chatId),
+
+      menu_principal: () => this.mostrarMenuPrincipal(chatId),
       consulta_medica: () => this.iniciarConsultaMedica(chatId),
       solicitar_ubicacion_farmacia: () => this.solicitarUbicacionFarma(chatId),
-      buscar_farmacias_tachira: () => this.enviarMenuPrincipal(chatId),
       mostrarCentrosCercanos: () => this.solicitarUbicacion(chatId),
       contacto: () => this.mostrarContacto(chatId),
-      menu_principal: () => this.mostrarMenuPrincipal(chatId),
+      recordatorios: () => this.setupReminderCommands(),
     };
 
     if (data in actionHandlers) {
@@ -560,9 +573,39 @@ export class TelegramService {
   //   });
   // }
 
+  // private setupCommands(): void {
+  //   try {
+  //     // Registrar comandos con Telegram
+  //     this.bot.setMyCommands([
+  //       { command: "/start", description: "Iniciar el bot" },
+  //       { command: "/help", description: "Ver comandos disponibles" },
+  //     ]);
+
+  //     this.bot.onText(/\/start/, async (msg) => {
+  //       const chatId = msg.chat.id;
+  //       const userName = msg.from.first_name;
+  //       this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
+
+  //       // Agregar retry logic
+  //       let retries = 3;
+  //       while (retries > 0) {
+  //         try {
+  //           await this.mostrarMenuPrincipal(chatId, userName);
+  //           break;
+  //         } catch (error) {
+  //           retries--;
+  //           if (retries === 0) throw error;
+  //           await new Promise((resolve) => setTimeout(resolve, 1000));
+  //         }
+  //       }
+  //     });
+  //   } catch (error) {
+  //     this.logger.error("Error setting up commands:", error);
+  //   }
+  // }
+
   private setupCommands(): void {
     try {
-      // Registrar comandos con Telegram
       this.bot.setMyCommands([
         { command: "/start", description: "Iniciar el bot" },
         { command: "/help", description: "Ver comandos disponibles" },
@@ -570,14 +613,14 @@ export class TelegramService {
 
       this.bot.onText(/\/start/, async (msg) => {
         const chatId = msg.chat.id;
-        const userName = msg.from.first_name;
+        const userName = msg.from?.first_name;
         this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
 
-        // Agregar retry logic
         let retries = 3;
         while (retries > 0) {
           try {
-            await this.mostrarMenuPrincipal(chatId, userName);
+            // Usar la versión con nombre de usuario opcional
+            await this.mostrarMenuPrincipal(chatId);
             break;
           } catch (error) {
             retries--;
@@ -829,6 +872,12 @@ export class TelegramService {
           },
         ],
         [
+          {
+            text: "🙋‍♂️ Programar Recordatorio de Medicamentos",
+            callback_data: "recordatorios",
+          },
+        ],
+        [
           //   { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
           {
             text: "📞 Contacto con el Desarrollador",
@@ -839,14 +888,24 @@ export class TelegramService {
     };
   }
 
-  //*** mensaje de bienvenida al usuario
-  private async mostrarMenuPrincipal(
-    chatId: number,
-    userName?: string
-  ): Promise<void> {
-    const welcomeMessage = userName
-      ? `¡Hola ${userName}! 👋\n\n`
-      : "¡Bienvenido! 👋\n\n";
+  //  private async mostrarMenuPrincipal(
+  //   chatId: number,
+  //   userName?: string
+  // ): Promise<void> {
+  //   const welcomeMessage = userName
+  //     ? `¡Hola ${userName}! 👋\n\n`
+  //     : "¡Bienvenido! 👋\n\n";
+
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     welcomeMessage + "Por favor, selecciona una opción:",
+  //     { reply_markup: this.getMainMenuKeyboard() }
+  //   );
+  // }
+
+  // Método que acepta nombre de usuario opcional
+  private async mostrarMenuPrincipal(chatId: number): Promise<void> {
+    const welcomeMessage = "¡Bienvenido! 👋\n\n";
 
     await this.bot.sendMessage(
       chatId,
@@ -854,8 +913,6 @@ export class TelegramService {
       { reply_markup: this.getMainMenuKeyboard() }
     );
   }
-
-  // pr
 
   // mostrar ayuda
   private async mostrarAyuda(chatId: number): Promise<void> {
@@ -1173,4 +1230,327 @@ export class TelegramService {
       );
     }
   }
-}
+  //-------------------Reminder Medical-------------------
+
+  // Agregar estos métodos dentro de la clase TelegramService
+
+  private setupReminderCommands(): void {
+    this.bot.onText(/\/recordatorio/, (msg) => this.handleReminderCommand(msg));
+    this.bot.onText(/\/misrecordatorios/, (msg) =>
+      this.showUserReminders(msg.chat.id)
+    );
+  }
+
+  private async handleReminderCommand(msg: TelegramBot.Message): Promise<void> {
+    const chatId = msg.chat.id;
+    await this.bot.sendMessage(
+      chatId,
+      "🕒 Configuración de recordatorio de medicamentos\n\n" +
+        "Por favor, sigue los pasos para configurar tu recordatorio:",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "➕ Crear nuevo recordatorio",
+                callback_data: "create_reminder",
+              },
+            ],
+            [
+              {
+                text: "📋 Ver mis recordatorios",
+                callback_data: "list_reminders",
+              },
+            ],
+            [{ text: "❌ Cancelar", callback_data: "cancel_reminder" }],
+          ],
+        },
+      }
+    );
+  }
+
+  private async createNewReminder(chatId: number): Promise<void> {
+    const userState = {
+      step: 1,
+      medicationName: "",
+      dosage: "",
+      reminderTime: "",
+      daysOfWeek: [],
+    };
+
+    // Guardamos el estado del usuario
+    this.userStates.set(chatId, userState);
+
+    await this.bot.sendMessage(
+      chatId,
+      "💊 Por favor, escribe el nombre del medicamento:"
+    );
+
+    // Configuramos el manejador para las respuestas
+    this.setupReminderResponseHandler(chatId);
+  }
+
+  private setupReminderResponseHandler(chatId: number): void {
+    const messageHandler = async (msg: TelegramBot.Message) => {
+      if (msg.chat.id !== chatId) return;
+
+      const userState = this.userStates.get(chatId);
+      if (!userState) return;
+
+      try {
+        switch (userState.step) {
+          case 1:
+            userState.medicationName = msg.text;
+            userState.step = 2;
+            await this.bot.sendMessage(
+              chatId,
+              "📊 Indica la dosis del medicamento:"
+            );
+            break;
+
+          case 2:
+            userState.dosage = msg.text;
+            userState.step = 3;
+            await this.bot.sendMessage(
+              chatId,
+              "⏰ ¿A qué hora necesitas el recordatorio? (Formato 24h, ejemplo: 14:30)"
+            );
+            break;
+
+          case 3:
+            if (!this.isValidTimeFormat(msg.text)) {
+              await this.bot.sendMessage(
+                chatId,
+                "❌ Formato de hora inválido. Por favor, usa el formato HH:mm (ejemplo: 14:30)"
+              );
+              return;
+            }
+            userState.reminderTime = msg.text;
+            userState.step = 4;
+            await this.showDaySelector(chatId);
+            break;
+
+          case 4:
+            // Procesamiento final y creación del recordatorio
+            await this.finalizeReminderCreation(chatId, userState);
+            this.bot.removeListener("message", messageHandler);
+            break;
+        }
+      } catch (error) {
+        this.logger.error("Error en el manejador de recordatorios:", error);
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Ocurrió un error al procesar tu solicitud. Por favor, intenta nuevamente."
+        );
+        this.bot.removeListener("message", messageHandler);
+      }
+    };
+
+    this.bot.on("message", messageHandler);
+  }
+
+  private async showDaySelector(chatId: number): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "📅 Selecciona los días para el recordatorio:",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "Lun", callback_data: "day_1" },
+              { text: "Mar", callback_data: "day_2" },
+              { text: "Mié", callback_data: "day_3" },
+            ],
+            [
+              { text: "Jue", callback_data: "day_4" },
+              { text: "Vie", callback_data: "day_5" },
+              { text: "Sáb", callback_data: "day_6" },
+            ],
+            [
+              { text: "Dom", callback_data: "day_0" },
+              { text: "Todos los días", callback_data: "all_days" },
+            ],
+            [{ text: "✅ Confirmar", callback_data: "confirm_days" }],
+          ],
+        },
+      }
+    );
+  }
+
+  private async finalizeReminderCreation(
+    chatId: number,
+    userState: any
+  ): Promise<void> {
+    try {
+      const reminder = await this.reminderService.createReminder(chatId, {
+        medicationName: userState.medicationName,
+        dosage: userState.dosage,
+        reminderTime: userState.reminderTime,
+        daysOfWeek: userState.daysOfWeek.length
+          ? userState.daysOfWeek
+          : [0, 1, 2, 3, 4, 5, 6],
+      });
+
+      await this.bot.sendMessage(
+        chatId,
+        `✅ Recordatorio configurado exitosamente:\n\n` +
+          `💊 Medicamento: ${reminder.medicationName}\n` +
+          `📊 Dosis: ${reminder.dosage}\n` +
+          `⏰ Hora: ${reminder.reminderTime}\n` +
+          `📅 Días: ${this.formatDaysOfWeek(reminder.daysOfWeek)}`
+      );
+    } catch (error) {
+      this.logger.error("Error al crear el recordatorio:", error);
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Error al crear el recordatorio. Por favor, intenta nuevamente."
+      );
+    } finally {
+      this.userStates.delete(chatId);
+    }
+  }
+
+  private isValidTimeFormat(time: string): boolean {
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(time);
+  }
+
+  private formatDaysOfWeek(days: number[]): string {
+    const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    return days.map((day) => dayNames[day]).join(", ");
+  }
+
+  //---
+  private async showUserReminders(chatId: number): Promise<void> {
+    try {
+      const reminders = await this.reminderService.getUserReminders(chatId);
+
+      if (!reminders || reminders.length === 0) {
+        await this.bot.sendMessage(
+          chatId,
+          "📝 No tienes recordatorios configurados actualmente.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "➕ Crear nuevo recordatorio",
+                    callback_data: "create_reminder",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+        return;
+      }
+
+      const remindersList = reminders
+        .map(
+          (reminder, index) => `
+📌 Recordatorio ${index + 1}:
+💊 Medicamento: ${reminder.medicationName}
+📊 Dosis: ${reminder.dosage}
+⏰ Hora: ${reminder.reminderTime}
+📅 Días: ${this.formatDaysOfWeek(reminder.daysOfWeek)}
+🆔 ID: ${reminder.id}
+`
+        )
+        .join("\n");
+
+      await this.bot.sendMessage(
+        chatId,
+        `📋 Tus recordatorios:\n${remindersList}`,
+        {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "➕ Crear nuevo recordatorio",
+                  callback_data: "create_reminder",
+                },
+              ],
+              [
+                {
+                  text: "❌ Eliminar recordatorio",
+                  callback_data: "delete_reminder",
+                },
+              ],
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error al mostrar los recordatorios:", error);
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error al obtener tus recordatorios. Por favor, intenta nuevamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    }
+  }
+
+  // Método auxiliar para manejar la eliminación de recordatorios
+  private async handleDeleteReminder(
+    chatId: number,
+    reminderId: string
+  ): Promise<void> {
+    try {
+      await this.reminderService.deleteReminder(chatId);
+      await this.bot.sendMessage(
+        chatId,
+        "✅ Recordatorio eliminado exitosamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "📋 Ver mis recordatorios",
+                  callback_data: "list_reminders",
+                },
+              ],
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error("Error al eliminar el recordatorio:", error);
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error al eliminar el recordatorio. Por favor, intenta nuevamente."
+      );
+    }
+  }
+
+  //--
+} // fin absoluto
