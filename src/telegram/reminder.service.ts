@@ -1,4 +1,10 @@
-import { Injectable, Inject, forwardRef, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  Inject,
+  forwardRef,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { MedicationReminder } from "../entities/reminder.entity";
@@ -128,11 +134,40 @@ export class ReminderService {
   }
 
   async deleteReminder(id: number): Promise<void> {
-    const jobName = `reminder_${id}`;
-    if (this.schedulerRegistry.doesExist("cron", jobName)) {
-      this.schedulerRegistry.deleteCronJob(jobName);
+    try {
+      // Primero verificamos si el recordatorio existe
+      const reminder = await this.reminderRepository.findOne({ where: { id } });
+      if (!reminder) {
+        throw new NotFoundException(`Recordatorio con ID ${id} no encontrado`);
+      }
+
+      // Construimos el nombre del job
+      const jobName = `reminder_${id}`;
+
+      // Intentamos eliminar el job programado si existe
+      try {
+        if (this.schedulerRegistry.doesExist("cron", jobName)) {
+          this.schedulerRegistry.deleteCronJob(jobName);
+          this.logger.debug(
+            `Trabajo programado ${jobName} eliminado exitosamente`
+          );
+        }
+      } catch (schedulerError) {
+        this.logger.warn(
+          `Error al eliminar el trabajo programado ${jobName}: ${schedulerError.message}`
+        );
+        // Continuamos con la eliminación del recordatorio aunque falle la eliminación del job
+      }
+
+      // Eliminamos el recordatorio de la base de datos
+      await this.reminderRepository.delete(id);
+      this.logger.log(`Recordatorio ${id} eliminado exitosamente`);
+    } catch (error) {
+      this.logger.error(
+        `Error al eliminar el recordatorio ${id}: ${error.message}`
+      );
+      throw error;
     }
-    await this.reminderRepository.delete(id);
   }
 
   async getUserReminders(chatId: number): Promise<MedicationReminder[]> {
