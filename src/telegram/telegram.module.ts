@@ -15,11 +15,12 @@ import { ReminderService } from "./reminder.service";
 import { ReminderCommands } from "./reminder.commnads";
 import { ScheduleModule } from "@nestjs/schedule";
 import { SchedulerRegistry } from "@nestjs/schedule";
-import { MedicationReminder } from "src/entities/reminder.entity";
+import { MedicationReminder } from "../entities/reminder.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TelegramNotificationService } from "./telegramNotificationService.service";
 import { ReminderService as ServiceReminder } from "./reminder.service";
 import * as TelegramBot from "node-telegram-bot-api";
+// import {MedicationReminder} from "../Entities/reminder.entity";
 
 @Module({
   imports: [
@@ -66,4 +67,3 @@ import * as TelegramBot from "node-telegram-bot-api";
   exports: [TelegramService, TelegramBotService],
 })
 export class TelegramModule {}
-
