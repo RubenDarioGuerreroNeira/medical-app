@@ -30,6 +30,7 @@ import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 import { TelegramErrorHandler } from "./telegramErrorHandler.service";
 import { ReminderService } from "./reminder.service";
+import { TelegramMessageOptions } from "./intrfaces/telegram_MessageOptions";
 
 @Injectable()
 export class TelegramService {
@@ -62,12 +63,6 @@ export class TelegramService {
       await this.handleCallbackQuery(callbackQuery);
     });
   }
-  // private initializeBot(): void {
-  //   this.setupCommands();
-  //   this.setupCallbackHandler();
-  //   this.setupMessageHandler();
-  //   this.setupErrorHandler();
-  // }
 
   private async initializeBot(): Promise<void> {
     try {
@@ -114,6 +109,7 @@ export class TelegramService {
       list_reminders: () => this.mostrarRecordatoriosUsuario(chatId),
       cancel_reminder: () => this.handleDeleteReminder(chatId, reminderId),
       confirm_days: () => this.finalizarCreacionRecordatorio(chatId),
+      play_sound: () => this.playSound(chatId), // Agregar manejador para reproducir sonido
     };
 
     if (data in actionHandlers) {
@@ -1512,43 +1508,6 @@ export class TelegramService {
     }
   }
 
-  // Método auxiliar para manejar la eliminación de recordatorios
-  // private async handleDeleteReminder(
-  //   chatId: number,
-  //   reminderId: string
-  // ): Promise<void> {
-  //   try {
-  //     await this.reminderService.deleteReminder(chatId);
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       "✅ Recordatorio eliminado exitosamente.",
-  //       {
-  //         reply_markup: {
-  //           inline_keyboard: [
-  //             [
-  //               {
-  //                 text: "📋 Ver mis recordatorios",
-  //                 callback_data: "list_reminders",
-  //               },
-  //             ],
-  //             [
-  //               {
-  //                 text: "🔙 Volver al menú principal",
-  //                 callback_data: "menu_principal",
-  //               },
-  //             ],
-  //           ],
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     this.logger.error("Error al eliminar el recordatorio:", error);
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       "❌ Ocurrió un error al eliminar el recordatorio. Por favor, intenta nuevamente."
-  //     );
-  //   }
-  // }
   async handleDeleteReminder(
     chatId: number,
     reminderId: number
@@ -1701,7 +1660,6 @@ export class TelegramService {
     );
   }
 
-  
   private async finalizarCreacionRecordatorio(chatId: number): Promise<void> {
     const state = this.userStates.get(chatId);
     if (!state || !state.reminderData) return;
@@ -1831,5 +1789,43 @@ export class TelegramService {
         },
       }
     );
+  }
+
+  // Método para reproducir sonido
+  private async playSound(chatId: number): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "🔔 Reproduciendo sonido de recordatorio..."
+    );
+    // Aquí puedes agregar la lógica para reproducir un sonido
+  }
+
+  async sendMessageWithOptions(
+    chatId: number,
+    options: TelegramMessageOptions
+  ): Promise<boolean> {
+    try {
+      await this.bot.sendMessage(chatId, options.text, {
+        parse_mode: options.parse_mode,
+        reply_markup: options.reply_markup,
+      });
+      return true;
+    } catch (error) {
+      this.logger.error("Error sending message with options:", error);
+      return false;
+    }
+  }
+
+  async sendVoiceMessage(
+    chatId: number,
+    voiceUrl: string,
+    caption?: string
+  ): Promise<void> {
+    try {
+      await this.bot.sendVoice(chatId, voiceUrl, { caption });
+    } catch (error) {
+      this.logger.error(`Error al enviar mensaje de voz: ${error.message}`);
+      throw error;
+    }
   }
 } // fin absoluto

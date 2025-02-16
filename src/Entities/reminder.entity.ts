@@ -29,6 +29,12 @@ export class MedicationReminder {
   @Column()
   timezone: string;
 
+  @Column()
+  type: string;
+
   @Column({ type: "timestamp" })
   createdAt: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  updatedAt: Date;
 }

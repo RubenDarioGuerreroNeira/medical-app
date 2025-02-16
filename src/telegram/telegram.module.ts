@@ -1,7 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { TelegramService } from "./telegram.service";
 import { TelegramController } from "./telegram.controller";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { GeminiAIService } from "src/Gemini/gemini.service";
 import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
@@ -17,6 +17,10 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { SchedulerRegistry } from "@nestjs/schedule";
 import { MedicationReminder } from "src/entities/reminder.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { TelegramNotificationService } from "./telegramNotificationService.service";
+import { ReminderService as ServiceReminder } from "./reminder.service";
+// import TelegramBot from "node-telegram-bot-api";
+import * as TelegramBot from "node-telegram-bot-api";
 
 @Module({
   imports: [
@@ -35,6 +39,17 @@ import { TypeOrmModule } from "@nestjs/typeorm";
     TelegramDiagnosticService,
     ReminderCommands,
     SchedulerRegistry,
+    TelegramNotificationService,
+    ServiceReminder,
+    {
+      provide: "TELEGRAM_BOT",
+      useFactory: async (configService: ConfigService) => {
+        const token = configService.get<string>("TELEGRAM_BOT_TOKEN");
+        return new TelegramBot(token, { polling: true });
+      },
+      inject: [ConfigService],
+    },
+
     {
       provide: "USER_STATES_MAP", // Proveer el Map como un valor
       useValue: new Map<number, any>(),
