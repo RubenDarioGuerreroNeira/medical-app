@@ -1,9 +1,9 @@
 import { HttpException, Injectable } from "@nestjs/common";
 import { CreateMedicoDto } from "./dto/create-medico.dto";
 import { UpdateMedicoDto } from "./dto/update-medico.dto";
-import { Medico } from "src/entities/Medico.entity";
-import { Usuario, Roles } from "src/entities/Usuarios.entity";
-import { CreateUsuarioDto } from "src/usuarios/dto/create-usuario.dto";
+import { Medico } from "../entities/Medico.entity";
+import { Usuario, Roles } from "../entities/Usuarios.entity";
+import { CreateUsuarioDto } from "../usuarios/dto/create-usuario.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Cache } from "cache-manager";

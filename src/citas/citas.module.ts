@@ -9,7 +9,7 @@ import { Usuario } from "../entities/Usuarios.entity";
 import { Medico } from "../entities/Medico.entity";
 import { HistorialMedico } from "../entities/HistorialMedico.entity";
 import { JwtStrategy } from "../auth/strategies/jwt.strategy";
-import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
 import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({

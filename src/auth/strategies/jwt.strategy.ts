@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
-import { Roles } from "src/entities/Usuarios.entity";
+// import { Roles } from "../entities/Usuarios.entity";
+import { Roles } from "../../entities/Usuarios.entity";
 
 export interface JwtPayload {
   // id?: number;
