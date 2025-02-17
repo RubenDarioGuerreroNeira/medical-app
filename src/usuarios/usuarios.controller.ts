@@ -15,10 +15,10 @@ import { UsuariosService } from "./usuarios.service";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { LoginDto } from "./dto/login-dto";
-import { Roles, Usuario } from "src/entities/Usuarios.entity";
-import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
+import { Roles, Usuario } from "../entities/Usuarios.entity";
+import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
 import { UseGuards } from "@nestjs/common";
-import { RequireRoles } from "src/Guard/Decorator";
+import { RequireRoles } from "../Guard/Decorator";
 
 @ApiTags("Usuarios")
 @Controller("usuarios")

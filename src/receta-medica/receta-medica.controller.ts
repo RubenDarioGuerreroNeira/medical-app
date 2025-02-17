@@ -19,8 +19,8 @@ import { CreateRecetaMedicaDto } from "./dto/create-receta-medica.dto";
 import { UpdateRecetaMedicaDto } from "./dto/update-receta-medica.dto";
 import { NotFoundError } from "rxjs";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { CloudinaryService } from "src/cloudinary/cloudinary.service";
-import { RecetaMedica } from "src/entities/RecetaMedica";
+import { CloudinaryService } from "../cloudinary/cloudinary.service";
+import { RecetaMedica } from "../entities/RecetaMedica";
 
 interface RecetaMedicaResponse {
   status: number;

@@ -7,7 +7,7 @@ import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { LoginDto } from "./dto/login-dto";
 import { Usuario } from "../entities/Usuarios.entity";
-import { Medico } from "src/entities/Medico.entity";
+import { Medico } from "../entities/Medico.entity";
 import { Roles } from "../entities/Usuarios.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
