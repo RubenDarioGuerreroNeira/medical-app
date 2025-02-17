@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
 import { HistorialMedicoService } from "./historial-medico.service";
 import { HistorialMedicoController } from "./historial-medico.controller";
-import { Usuario } from "src/Entities/Usuarios.entity";
-import { Medico } from "src/Entities/Medico.entity";
-import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
+import { Usuario } from "src/entities/Usuarios.entity";
+import { Medico } from "src/entities/Medico.entity";
+import { HistorialMedico } from "src/entities/HistorialMedico.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CacheModule } from "@nestjs/cache-manager";
 

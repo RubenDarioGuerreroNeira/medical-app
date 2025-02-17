@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { Usuario } from "../Entities/Usuarios.entity";
-import { Medico } from "../Entities/Medico.entity";
+import { Usuario } from "../entities/Usuarios.entity";
+import { Medico } from "../entities/Medico.entity";
 import { UsuariosService } from "./usuarios.service";
 import { MailerModule, MailerService } from "@nestjs-modules/mailer";
 import { UsuariosController } from "./usuarios.controller";

@@ -4,13 +4,13 @@ import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { CitasController } from "./citas.controller";
 import { CitasService } from "./citas.service";
-import { Cita } from "../Entities/Cita.entity";
-import { Usuario } from "../Entities/Usuarios.entity";
-import { Medico } from "../Entities/Medico.entity";
-import { HistorialMedico } from "../Entities/HistorialMedico.entity";
+import { Cita } from "../entities/Cita.entity";
+import { Usuario } from "../entities/Usuarios.entity";
+import { Medico } from "../entities/Medico.entity";
+import { HistorialMedico } from "../entities/HistorialMedico.entity";
 import { JwtStrategy } from "../auth/strategies/jwt.strategy";
 import { JwtAuthGuard } from "src/auth/Jwt-auth.guard";
-import { CacheModule } from '@nestjs/cache-manager';
+import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({
   imports: [
