@@ -5,7 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
-import { Cita } from "./Cita.entity";
+import { Cita } from "./cita.entity";
 
 @Entity()
 export class DocumentoConsulta {

@@ -6,9 +6,9 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
-import { Usuario } from "./Usuarios.entity"; // Asegúrate de importar la entidad Usuario
-import { Cita } from "./Cita.entity"; // Asegúrate de importar la entidad Cita
-import { HistorialMedico } from "./HistorialMedico.entity";
+import { Usuario } from "./usuarios.entity"; // Asegúrate de importar la entidad Usuario
+import { Cita } from "./cita.entity"; // Asegúrate de importar la entidad Cita
+import { HistorialMedico } from "./historialmedico.entity";
 
 @Entity()
 export class Medico {

@@ -1,10 +1,10 @@
-import { Usuario } from "./entities/Usuarios.entity";
-import { Medico } from "./entities/Medico.entity";
-import { Cita } from "./entities/Cita.entity";
-import { HistorialMedico } from "./entities/HistorialMedico.entity";
-import { RecetaMedica } from "./entities/RecetaMedica";
-import { DocumentoConsulta } from "./entities/DocumentoConsulta";
-import { NotaMedica } from "./entities/NotaMedica";
+import { Usuario } from "./entities/usuarios.entity";
+import { Medico } from "./entities/medico.entity";
+import { Cita } from "./entities/cita.entity";
+import { HistorialMedico } from "./entities/historialmedico.entity";
+import { RecetaMedica } from "./entities/recetamedica";
+import { DocumentoConsulta } from "./entities/documentoconsulta";
+import { NotaMedica } from "./entities/notamedica";
 import { MedicationReminder } from "./entities/reminder.entity";
 
 import { DataSource } from "typeorm";

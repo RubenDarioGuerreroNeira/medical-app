@@ -6,8 +6,8 @@ import {
   JoinColumn,
   CreateDateColumn,
 } from "typeorm";
-import { Usuario } from "./Usuarios.entity";
-import { Medico } from "./Medico.entity";
+import { Usuario } from "./usuarios.entity";
+import { Medico } from "./medico.entity";
 
 @Entity()
 export class HistorialMedico {

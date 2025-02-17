@@ -6,14 +6,13 @@ import {
   JoinColumn,
   Unique,
 } from "typeorm";
-import { Cita } from "./Cita.entity";
-import { HistorialMedico } from "./HistorialMedico.entity";
-
+import { Cita } from "./cita.entity";
+import { HistorialMedico } from "./historialmedico.entity";
 
 export enum Roles {
-  ADMIN = 'admin',
-  MEDICO = 'medico',
-  PACIENTE = 'paciente',
+  ADMIN = "admin",
+  MEDICO = "medico",
+  PACIENTE = "paciente",
 }
 @Entity()
 export class Usuario {
@@ -48,15 +47,15 @@ export class Usuario {
   contrasena: string; // Recuerda hashear la contraseña antes de guardarla
 
   @Column({
-    type:'enum',
-    enum:Roles,
-    default:Roles.PACIENTE
-})
-   rol: Roles; 
+    type: "enum",
+    enum: Roles,
+    default: Roles.PACIENTE,
+  })
+  rol: Roles;
 
   @OneToMany(() => Cita, (cita) => cita.paciente)
   citas: Cita[];
-  
+
   @OneToMany(
     () => HistorialMedico,
     (historialMedico) => historialMedico.paciente

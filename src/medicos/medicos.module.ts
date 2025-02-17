@@ -2,8 +2,8 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { MedicosService } from "./medicos.service";
 import { MedicosController } from "./medicos.controller";
-import { Medico } from "../entities/Medico.entity";
-import { Usuario } from "../entities/Usuarios.entity";
+import { Medico } from "../entities/medico.entity";
+import { Usuario } from "../entities/usuarios.entity";
 import { CacheModule } from "@nestjs/cache-manager";
 
 @Module({

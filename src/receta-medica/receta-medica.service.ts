@@ -6,8 +6,8 @@ import {
 
 import { CreateRecetaMedicaDto } from "./dto/create-receta-medica.dto";
 import { UpdateRecetaMedicaDto } from "./dto/update-receta-medica.dto";
-import { RecetaMedica } from "../entities/RecetaMedica";
-import { Cita } from "../entities/Cita.entity";
+import { RecetaMedica } from "../entities/recetamedica";
+import { Cita } from "../entities/cita.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 

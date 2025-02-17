@@ -6,10 +6,10 @@ import {
   JoinColumn,
   OneToMany,
 } from "typeorm";
-import { Usuario } from "./Usuarios.entity"; // Importa la entidad Usuario
-import { Medico } from "./Medico.entity"; // Importa la entidad Medico
-import { RecetaMedica } from "./RecetaMedica";
-import { NotaMedica } from "./NotaMedica";
+import { Usuario } from "./usuarios.entity"; // Importa la entidad Usuario
+import { Medico } from "./medico.entity"; // Importa la entidad Medico
+import { RecetaMedica } from "./recetamedica";
+import { NotaMedica } from "./notamedica";
 
 export enum EstadoCita {
   CONFIRMADA = "confirmada",

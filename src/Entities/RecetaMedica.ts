@@ -1,4 +1,4 @@
-import { Cita } from "./Cita.entity";
+import { Cita } from "./cita.entity";
 import {
   Column,
   Entity,
