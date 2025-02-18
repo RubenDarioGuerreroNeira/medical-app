@@ -9,7 +9,7 @@ import {
 import { Usuario } from "./usuarios.entity";
 import { Medico } from "./medico.entity";
 
-@Entity()
+@Entity("historial_medicos")
 export class HistorialMedico {
   @PrimaryGeneratedColumn("uuid")
   id: string;

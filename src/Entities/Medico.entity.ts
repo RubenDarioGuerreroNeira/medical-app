@@ -10,7 +10,7 @@ import { Usuario } from "./usuarios.entity"; // Asegúrate de importar la entida
 import { Cita } from "./cita.entity"; // Asegúrate de importar la entidad Cita
 import { HistorialMedico } from "./historialmedico.entity";
 
-@Entity()
+@Entity("medico")
 export class Medico {
   @PrimaryGeneratedColumn("uuid")
   id: string;

@@ -17,7 +17,7 @@ export enum EstadoCita {
   COMPLETADA = "completada",
 }
 
-@Entity()
+@Entity("cita")
 export class Cita {
   @PrimaryGeneratedColumn("uuid")
   id: string;

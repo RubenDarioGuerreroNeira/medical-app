@@ -7,7 +7,7 @@ import {
 } from "typeorm";
 import { Cita } from "./cita.entity";
 
-@Entity()
+@Entity("nota_medica")
 export class NotaMedica {
   @PrimaryGeneratedColumn("uuid")
   id: string;

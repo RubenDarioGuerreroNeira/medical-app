@@ -14,7 +14,7 @@ export enum Roles {
   MEDICO = "medico",
   PACIENTE = "paciente",
 }
-@Entity()
+@Entity("usuario")
 export class Usuario {
   @PrimaryGeneratedColumn("uuid") // Columna ID con tipo UUID
   id: string;
