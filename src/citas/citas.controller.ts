@@ -463,4 +463,49 @@ export class CitasController {
       }
     }
   }
-}
+
+  @ApiOperation({
+    summary: "Buscar citas por fecha, nombre del paciente y estado",
+  })
+  @ApiQuery({ name: "nombrePaciente", required: true, type: String })
+  @ApiQuery({ name: "statusCita", required: true, type: String })
+  @ApiQuery({ name: "fecha", required: true, type: Date })
+  @ApiQuery({ name: "medicoId", required: true, type: String })
+  @ApiQuery({ name: "page", required: false, type: Number })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @Get("buscarCitasPorFecha")
+  async buscarCitasPorFecha(
+    @Query("nombrePaciente") nombrePaciente: string,
+    @Query("statusCita") statusCita: string,
+    @Query("fecha") fecha: Date,
+    @Query("medicoId") medicoId: string,
+    @Query() paginationDto?: PaginationDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      return await this.citasService.buscarCitasPorFecha(
+        nombrePaciente,
+        statusCita,
+        fecha,
+        medicoId,
+        paginationDto
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw new HttpException(
+          {
+            status: HttpStatus.BAD_REQUEST,
+            message: error.message,
+          },
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      throw new HttpException(
+        {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: "Error interno del servidor",
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+} // fin de la clase

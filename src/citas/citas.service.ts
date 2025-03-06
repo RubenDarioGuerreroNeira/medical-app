@@ -17,6 +17,7 @@ import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
 import { Cache } from "cache-manager";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject } from "@nestjs/common";
+import { log } from "console";
 
 @Injectable()
 export class CitasService {
@@ -425,6 +426,83 @@ export class CitasService {
         throw error;
       }
       throw new BadRequestException("Error al Reprogramar Cita con el médico");
+    }
+  }
+  //----------------- BUSQUEDA AVANZADAS
+
+  async buscarCitasPorFecha(
+    nombrePaciente: string,
+    statusCita: string,
+    fecha: Date,
+    medicoId: string,
+    paginationDto?: PaginationDto
+  ): Promise<PaginatedResult<Cita>> {
+    try {
+      if (!nombrePaciente || !statusCita || !fecha || !medicoId) {
+        throw new BadRequestException("Todos los campos son requeridos");
+      }
+
+      const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
+      if (!bMedico) {
+        throw new BadRequestException("Medico no existe");
+      }
+
+      const paciente = await this.usuarioRepository.findOne({
+        where: { nombre: nombrePaciente, rol: Roles.PACIENTE },
+      });
+
+      if (!paciente) {
+        throw new BadRequestException("El paciente no existe");
+      }
+
+      console.log("datos recibidos", paciente, bMedico, fecha);
+
+      const query = this.citasRepository
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .andWhere("cita.paciente_id = :pacienteId", { pacienteId: paciente.id })
+        .andWhere("cita.estado = :statusCita", {
+          statusCita: statusCita.toLowerCase(),
+        }) // Conversión a minúsculas
+        .andWhere("cita.fecha_hora >= :fecha", { fecha })
+        .orderBy("cita.fecha_hora", "DESC");
+
+      const { page = 1, limit = 10 } = paginationDto || {};
+      const skip = (page - 1) * limit;
+      const [citas, total] = await query
+        .skip(skip)
+        .take(limit)
+        .getManyAndCount();
+      const totalPages = Math.ceil(total / limit);
+      console.log("citas encontradas", citas);
+
+      console.log("Consulta generada:", query.getSql());
+      console.log("Parámetros:", {
+        medicoId,
+        pacienteId: paciente.id,
+        statusCita: statusCita.toLowerCase(),
+        fecha,
+      });
+
+      return {
+        data: citas,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPAge: page < totalPages,
+          hasPreviousPage: page > 1,
+        },
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error("Error al obtener citas de un medico", error);
+      throw new BadRequestException("Error al obtener citas de un medico");
     }
   }
 } // fin
