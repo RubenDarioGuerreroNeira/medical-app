@@ -3,12 +3,12 @@ import { CreateCitaDto } from './dto/create-cita.dto';
 import { UpdateCitaDto } from './dto/update-cita.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-import { Cita } from '../Entities/cita.entity';
-import { EstadoCita } from '../Entities/cita.entity';
-import { Usuario } from '../Entities/usuarios.entity';
-import { Roles } from '../Entities/usuarios.entity';
-import { Medico } from '../Entities/medico.entity';
-import { HistorialMedico } from 'src/Entities/historialMedico.entity';
+import { Cita } from '../Entities/Cita.entity';
+import { EstadoCita } from '../Entities/Cita.entity';
+import { Usuario } from '../Entities/Usuarios.entity';
+import { Roles } from '../Entities/Usuarios.entity';
+import { Medico } from '../Entities/Medico.entity';
+import { HistorialMedico } from 'src/Entities/HistorialMedico.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PaginationDto, PaginatedResult } from 'src/Dto Pagination/Pagination';

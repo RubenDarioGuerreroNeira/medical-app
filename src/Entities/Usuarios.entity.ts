@@ -6,8 +6,8 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import { Cita } from './cita.entity';
-import { HistorialMedico } from './historialMedico.entity';
+import { Cita } from './Cita.entity';
+import { HistorialMedico } from './HistorialMedico.entity';
 
 export enum Roles {
   ADMIN = 'admin',

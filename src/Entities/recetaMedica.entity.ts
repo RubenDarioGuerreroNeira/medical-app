@@ -1,28 +1,28 @@
-import { Cita } from "./cita.entity";
+import { Cita } from './Cita.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from "typeorm";
+} from 'typeorm';
 
-@Entity("receta_medica")
+@Entity('receta_medica')
 export class RecetaMedica {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => Cita)
-  @JoinColumn({ name: "cita_id" })
+  @JoinColumn({ name: 'cita_id' })
   cita: Cita;
 
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   medicamentos: string;
 
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   indicaciones: string;
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   fecha_emision: Date;
 
   @Column({ nullable: true })

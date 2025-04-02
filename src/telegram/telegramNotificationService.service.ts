@@ -1,7 +1,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as TelegramBot from 'node-telegram-bot-api';
-import { MedicationReminder } from '../Entities/reminder.entity';
+import { MedicationReminder } from '../Entities/Reminder.entity';
 
 @Injectable()
 export class TelegramNotificationService {

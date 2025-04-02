@@ -4,22 +4,22 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { Cita } from "./cita.entity";
+} from 'typeorm';
+import { Cita } from './Cita.entity';
 
-@Entity("nota_medica")
+@Entity('nota_medica')
 export class NotaMedica {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => Cita)
-  @JoinColumn({ name: "cita_id" })
+  @JoinColumn({ name: 'cita_id' })
   cita: Cita;
 
-  @Column({ type: "text" })
+  @Column({ type: 'text' })
   contenido: string;
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   fecha_creacion: Date;
 
   @Column({ default: true })

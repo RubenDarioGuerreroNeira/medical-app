@@ -15,7 +15,7 @@ import { ReminderService } from './reminder.service';
 import { ReminderCommands } from './reminder.commnads';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { MedicationReminder } from '../Entities/reminder.entity';
+import { MedicationReminder } from '../Entities/Reminder.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TelegramNotificationService } from './telegramNotificationService.service';
 import { ReminderService as ServiceReminder } from './reminder.service';

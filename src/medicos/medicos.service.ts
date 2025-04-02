@@ -1,8 +1,8 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { CreateMedicoDto } from './dto/create-medico.dto';
 import { UpdateMedicoDto } from './dto/update-medico.dto';
-import { Medico } from '../Entities/medico.entity';
-import { Usuario, Roles } from '../Entities/usuarios.entity';
+import { Medico } from '../Entities/Medico.entity';
+import { Usuario, Roles } from '../Entities/Usuarios.entity';
 import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

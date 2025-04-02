@@ -22,7 +22,7 @@ import { MedicosService } from './medicos.service';
 import { CreateMedicoDto } from './dto/create-medico.dto';
 import { CreateUsuarioDto } from 'src/usuarios/dto/create-usuario.dto';
 import { UpdateMedicoDto } from './dto/update-medico.dto';
-import { Medico } from '../Entities/medico.entity';
+import { Medico } from '../Entities/Medico.entity';
 
 interface MedicoInterface {
   status: number;

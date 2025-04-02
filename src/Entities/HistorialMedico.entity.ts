@@ -5,27 +5,27 @@ import {
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
-} from "typeorm";
-import { Usuario } from "./usuarios.entity";
-import { Medico } from "./medico.entity";
+} from 'typeorm';
+import { Usuario } from './Usuarios.entity';
+import { Medico } from './Medico.entity';
 
-@Entity("historial_medicos")
+@Entity('historial_medicos')
 export class HistorialMedico {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => Usuario, (usuario) => usuario.historialMedico)
-  @JoinColumn({ name: "paciente_id" })
+  @JoinColumn({ name: 'paciente_id' })
   paciente: Usuario;
 
   @ManyToOne(() => Medico, (medico) => medico.historialesMedicos)
-  @JoinColumn({ name: "medico_id" })
+  @JoinColumn({ name: 'medico_id' })
   medico: Medico;
 
-  @Column({ type: "text" }) // Permite textos largos
+  @Column({ type: 'text' }) // Permite textos largos
   descripcion: string;
 
-  @CreateDateColumn({ type: "timestamptz" }) // Automatiza la fecha y hora de creación
+  @CreateDateColumn({ type: 'timestamptz' }) // Automatiza la fecha y hora de creación
   fecha_creacion: Date;
 
   //  Posibles mejoras adicionales:
@@ -35,6 +35,6 @@ export class HistorialMedico {
   @Column({ nullable: true })
   tratamiento: string;
 
-  @Column({ nullable: true, type: "jsonb" }) // Para guardar datos médicos complejos como resultados de laboratorio.
+  @Column({ nullable: true, type: 'jsonb' }) // Para guardar datos médicos complejos como resultados de laboratorio.
   datos_medicos: any;
 }

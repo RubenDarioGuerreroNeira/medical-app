@@ -4,16 +4,16 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { Cita } from "./cita.entity";
+} from 'typeorm';
+import { Cita } from './Cita.entity';
 
-@Entity("documento_consultas")
+@Entity('documento_consultas')
 export class DocumentoConsulta {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @ManyToOne(() => Cita)
-  @JoinColumn({ name: "cita_id" })
+  @JoinColumn({ name: 'cita_id' })
   cita: Cita;
 
   @Column()
@@ -25,6 +25,6 @@ export class DocumentoConsulta {
   @Column()
   url_archivo: string;
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   fecha_subida: Date;
 }

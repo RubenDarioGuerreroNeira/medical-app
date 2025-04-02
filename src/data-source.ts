@@ -1,11 +1,11 @@
-import { Usuario } from './Entities/usuarios.entity';
-import { Medico } from './Entities/medico.entity';
-import { Cita } from './Entities/cita.entity';
-import { HistorialMedico } from './Entities/historialMedico.entity';
-import { RecetaMedica } from './Entities/recetaMedica.entity';
-import { DocumentoConsulta } from './Entities/documentoConsulta.entity.';
-import { NotaMedica } from './Entities/notaMedica.entity';
-import { MedicationReminder } from './Entities/reminder.entity';
+import { Usuario } from './Entities/Usuarios.entity';
+import { Medico } from './Entities/Medico.entity';
+import { Cita } from './Entities/Cita.entity';
+import { HistorialMedico } from './Entities/HistorialMedico.entity';
+import { RecetaMedica } from './Entities/RecetaMedica.entity';
+import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity.';
+import { NotaMedica } from './Entities/NotaMedica.entity';
+import { MedicationReminder } from './Entities/Reminder.entity';
 
 import { DataSource } from 'typeorm';
 import { join } from 'path';

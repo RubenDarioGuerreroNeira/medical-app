@@ -22,13 +22,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { Cita } from '../Entities/cita.entity';
+import { Cita } from '../Entities/Cita.entity';
 import { CitasService } from './citas.service';
 import { CreateCitaDto } from './dto/create-cita.dto';
 import { UpdateCitaDto } from './dto/update-cita.dto';
 import { RolesGuard } from 'src/Guard/Guard';
 import { UseGuards } from '@nestjs/common';
-import { Roles } from '../Entities/usuarios.entity';
+import { Roles } from '../Entities/Usuarios.entity';
 import { RequireRoles } from 'src/Guard/Decorator';
 import { GetUser } from 'src/Guard/Get-User-Decorator';
 import { PaginatedResult } from 'src/Dto Pagination/Pagination';
