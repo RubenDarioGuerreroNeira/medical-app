@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MedicationReminder } from '../Entities/Reminder.entity';
+import { MedicationReminder } from '../Entities/MedicationReminder.entity';
 import { TelegramService } from './telegram.service';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import * as moment from 'moment-timezone';

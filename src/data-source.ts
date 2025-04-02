@@ -5,7 +5,7 @@ import { HistorialMedico } from './Entities/HistorialMedico.entity';
 import { RecetaMedica } from './Entities/RecetaMedica.entity';
 import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity';
 import { NotaMedica } from './Entities/NotaMedica.entity';
-import { MedicationReminder } from './Entities/Reminder.entity';
+import { MedicationReminder } from './Entities/MedicationReminder.entity';
 
 import { DataSource } from 'typeorm';
 import { join } from 'path';

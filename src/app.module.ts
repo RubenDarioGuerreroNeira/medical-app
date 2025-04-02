@@ -22,7 +22,7 @@ import { NotaMedicaModule } from './nota_medica/nota_medica.module';
 import { RecetaMedicaModule } from './receta-medica/receta-medica.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { TelegramModule } from './telegram/telegram.module';
-import { MedicationReminder } from './Entities/Reminder.entity';
+import { MedicationReminder } from './Entities/MedicationReminder.entity';
 
 @Module({
   imports: [
