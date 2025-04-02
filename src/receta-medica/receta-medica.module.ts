@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { RecetaMedica } from '../entities/recetaMedica.entity';
-import { Cita } from '../entities/cita.entity';
+import { RecetaMedica } from '../Entities/recetaMedica.entity';
+import { Cita } from '../Entities/cita.entity';
 import { RecetaMedicaService } from './receta-medica.service';
 import { RecetaMedicaController } from './receta-medica.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';

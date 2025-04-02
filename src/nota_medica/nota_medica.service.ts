@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateNotaMedicaDto } from './dto/create-nota_medica.dto';
 import { UpdateNotaMedicaDto } from './dto/update-nota_medica.dto';
-import { NotaMedica } from '../entities/notaMedica.entity';
+import { NotaMedica } from '../Entities/notaMedica.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { NotFoundException } from '@nestjs/common';
 import { Type } from 'class-transformer';

@@ -2,21 +2,21 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-} from "@nestjs/common";
-import { CreateUsuarioDto } from "./dto/create-usuario.dto";
-import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
-import { LoginDto } from "./dto/login-dto";
-import { Usuario } from "../entities/usuarios.entity";
-import { Medico } from "../entities/medico.entity";
-import { Roles } from "../entities/usuarios.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as bcrypt from "bcrypt";
-import * as crypto from "crypto";
-import { JwtService } from "@nestjs/jwt";
-import { MailerService } from "@nestjs-modules/mailer";
-import { MailerService as MailServicio } from "../Mail/mailService";
-import { AuthService } from "../auth/auth.service";
+} from '@nestjs/common';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { LoginDto } from './dto/login-dto';
+import { Usuario } from '../Entities/usuarios.entity';
+import { Medico } from '../Entities/medico.entity';
+import { Roles } from '../Entities/usuarios.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
+import { MailerService as MailServicio } from '../Mail/mailService';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UsuariosService {
@@ -29,12 +29,12 @@ export class UsuariosService {
     private readonly mailerService: MailerService,
     private readonly servicioMail: MailServicio,
     private readonly jwtService: JwtService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   async validatePassword(
     plainPassword: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
@@ -49,7 +49,7 @@ export class UsuariosService {
       });
 
       if (!usuario) {
-        throw new NotFoundException("Usuario no Encontrado");
+        throw new NotFoundException('Usuario no Encontrado');
       }
       return usuario;
     } catch (error) {
@@ -64,7 +64,7 @@ export class UsuariosService {
       });
 
       if (bUsuario) {
-        throw new Error("Usuario ya existente");
+        throw new Error('Usuario ya existente');
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -127,7 +127,7 @@ export class UsuariosService {
     try {
       const bUsuario = this.usuarioRepository.findOneBy({ id: usuarioId });
       if (!bUsuario) {
-        throw new Error("Usuario no encontrado");
+        throw new Error('Usuario no encontrado');
       }
       return bUsuario;
     } catch (error) {
@@ -137,11 +137,11 @@ export class UsuariosService {
 
   async update(
     usuarioId: string,
-    updateUsuarioDto: UpdateUsuarioDto
+    updateUsuarioDto: UpdateUsuarioDto,
   ): Promise<Usuario> {
     const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
     if (!usuario) {
-      throw new Error("Usuario no encontrado");
+      throw new Error('Usuario no encontrado');
     }
 
     try {
@@ -169,7 +169,7 @@ export class UsuariosService {
         const salt = await bcrypt.genSalt(10);
         datosActualizados.contrasena = await bcrypt.hash(
           updateUsuarioDto.contrasena,
-          salt
+          salt,
         );
       }
 
@@ -179,7 +179,7 @@ export class UsuariosService {
           email: updateUsuarioDto.email,
         });
         if (emailExistente) {
-          throw new BadRequestException("El email ya está registrado");
+          throw new BadRequestException('El email ya está registrado');
         }
       }
 
@@ -198,9 +198,9 @@ export class UsuariosService {
         throw error;
       }
       throw new BadRequestException(
-        error.code === "23505"
-          ? "Error de duplicación en datos únicos"
-          : "Error al actualizar usuario"
+        error.code === '23505'
+          ? 'Error de duplicación en datos únicos'
+          : 'Error al actualizar usuario',
       );
     }
   }
@@ -208,16 +208,16 @@ export class UsuariosService {
   async remove(usuarioId: string) {
     const bUsuario = this.usuarioRepository.findOneBy({ id: usuarioId });
     if (!bUsuario) {
-      throw new Error("Usuario no encontrado");
+      throw new Error('Usuario no encontrado');
     }
     try {
       await this.usuarioRepository.delete(usuarioId);
       return {
-        message: "Usuario eliminado correctamente",
+        message: 'Usuario eliminado correctamente',
         status: 200,
       };
     } catch (error) {
-      throw new Error("Usuario no encontrado");
+      throw new Error('Usuario no encontrado');
     }
   }
   async login(logindto: LoginDto): Promise<any> {
@@ -226,22 +226,22 @@ export class UsuariosService {
 
       const usuario = await this.usuarioRepository.findOneBy({ email: email });
       if (!usuario) {
-        throw new BadRequestException("Usuario no encontrado");
+        throw new BadRequestException('Usuario no encontrado');
       }
 
       const passValid = await bcrypt.compare(
         logindto.password,
-        usuario.contrasena
+        usuario.contrasena,
       );
       if (!passValid) {
-        throw new BadRequestException("Error en Password");
+        throw new BadRequestException('Error en Password');
       }
       return this.jwtService.sign({
         email: usuario.email,
         rol: usuario.rol,
       });
     } catch {
-      throw new BadRequestException("Error en Login");
+      throw new BadRequestException('Error en Login');
     }
   }
 

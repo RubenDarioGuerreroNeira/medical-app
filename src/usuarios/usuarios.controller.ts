@@ -8,131 +8,131 @@ import {
   Delete,
   HttpException,
   HttpStatus,
-} from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
-import { ApiQuery, ApiParam } from "@nestjs/swagger";
-import { UsuariosService } from "./usuarios.service";
-import { CreateUsuarioDto } from "./dto/create-usuario.dto";
-import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
-import { LoginDto } from "./dto/login-dto";
-import { Roles, Usuario } from "../entities/usuarios.entity";
-import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
-import { UseGuards } from "@nestjs/common";
-import { RequireRoles } from "../Guard/Decorator";
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiQuery, ApiParam } from '@nestjs/swagger';
+import { UsuariosService } from './usuarios.service';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { LoginDto } from './dto/login-dto';
+import { Roles, Usuario } from '../Entities/usuarios.entity';
+import { JwtAuthGuard } from '../auth/Jwt-auth.guard';
+import { UseGuards } from '@nestjs/common';
+import { RequireRoles } from '../Guard/Decorator';
 
-@ApiTags("Usuarios")
-@Controller("usuarios")
+@ApiTags('Usuarios')
+@Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  @ApiOperation({ summary: "Crear Usuario" })
+  @ApiOperation({ summary: 'Crear Usuario' })
   @ApiResponse({
     status: 200,
-    description: "Usuario creado correctamente",
+    description: 'Usuario creado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no creado",
+    description: 'Usuario no creado',
   })
   @Post()
   create(@Body() createUsuarioDto: CreateUsuarioDto) {
     return this.usuariosService.create(createUsuarioDto);
   }
-  @ApiOperation({ summary: "Obtener todos los Usuarios" })
+  @ApiOperation({ summary: 'Obtener todos los Usuarios' })
   @ApiResponse({
     status: 200,
-    description: "Usuarios obtenidos correctamente",
+    description: 'Usuarios obtenidos correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuarios no obtenidos",
+    description: 'Usuarios no obtenidos',
   })
   @Get()
   findAll() {
     return this.usuariosService.findAll();
   }
 
-  @ApiOperation({ summary: "Obtener un Usuario" })
+  @ApiOperation({ summary: 'Obtener un Usuario' })
   @ApiResponse({
     status: 200,
-    description: "Usuario obtenido correctamente",
+    description: 'Usuario obtenido correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no obtenido",
+    description: 'Usuario no obtenido',
   })
-  @Get("usuarioId/:usuarioId")
-  findOne(@Param("usuarioId") usuarioId: string) {
+  @Get('usuarioId/:usuarioId')
+  findOne(@Param('usuarioId') usuarioId: string) {
     return this.usuariosService.findOne(usuarioId);
   }
 
-  @ApiOperation({ summary: "Actualizar Usuario" })
+  @ApiOperation({ summary: 'Actualizar Usuario' })
   @ApiResponse({
     status: 200,
-    description: "Usuario actualizado correctamente",
+    description: 'Usuario actualizado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no actualizado",
+    description: 'Usuario no actualizado',
   })
   @UseGuards(JwtAuthGuard)
   @RequireRoles(Roles.PACIENTE)
-  @Patch("update/:usuarioId")
+  @Patch('update/:usuarioId')
   update(
-    @Param("usuarioId") usuarioId: string,
-    @Body() updateUsuarioDto: UpdateUsuarioDto
+    @Param('usuarioId') usuarioId: string,
+    @Body() updateUsuarioDto: UpdateUsuarioDto,
   ) {
     return this.usuariosService.update(usuarioId, updateUsuarioDto);
   }
-  @ApiOperation({ summary: "Eliminar Usuario" })
+  @ApiOperation({ summary: 'Eliminar Usuario' })
   @ApiResponse({
     status: 200,
-    description: "Usuario eliminado correctamente",
+    description: 'Usuario eliminado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no eliminado",
+    description: 'Usuario no eliminado',
   })
   @UseGuards(JwtAuthGuard)
   @RequireRoles(Roles.ADMIN)
-  @Delete("delete/:usuarioId")
-  remove(@Param("usuarioId") usuarioId: string) {
+  @Delete('delete/:usuarioId')
+  remove(@Param('usuarioId') usuarioId: string) {
     return this.usuariosService.remove(usuarioId);
   }
 
-  @ApiOperation({ summary: "Login" })
+  @ApiOperation({ summary: 'Login' })
   @ApiResponse({
     status: 200,
-    description: "Usuario logueado correctamente",
+    description: 'Usuario logueado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no logueado",
+    description: 'Usuario no logueado',
   })
-  @Post("login")
+  @Post('login')
   login(@Body() loginDto: LoginDto) {
     try {
       return this.usuariosService.login(loginDto);
     } catch (error) {}
   }
 
-  @ApiOperation({ summary: "Recuperar contraseña" })
+  @ApiOperation({ summary: 'Recuperar contraseña' })
   @ApiResponse({
     status: 200,
-    description: "Usuario recuperado correctamente",
+    description: 'Usuario recuperado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no recuperado",
+    description: 'Usuario no recuperado',
   })
-  @Post("recovery")
+  @Post('recovery')
   async recovery(@Body() datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
     try {
       const email = await this.usuariosService.recoveryUser(datos);
@@ -143,23 +143,23 @@ export class UsuariosController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+      throw new HttpException('Error message', HttpStatus.BAD_REQUEST);
     }
   }
 
-  @ApiOperation({ summary: "Restaurar contraseña" })
+  @ApiOperation({ summary: 'Restaurar contraseña' })
   @ApiResponse({
     status: 200,
-    description: "Usuario restaurado correctamente",
+    description: 'Usuario restaurado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Usuario no restaurado",
+    description: 'Usuario no restaurado',
   })
-  @Post("restorePassword")
+  @Post('restorePassword')
   async restorePassword(
-    @Body() datos: CreateUsuarioDto
+    @Body() datos: CreateUsuarioDto,
   ): Promise<Partial<Usuario>> {
     try {
       const email = await this.usuariosService.restorePassword(datos);
@@ -171,49 +171,49 @@ export class UsuariosController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+      throw new HttpException('Error message', HttpStatus.BAD_REQUEST);
     }
   }
 
-  @ApiOperation({ summary: "Generar token" })
+  @ApiOperation({ summary: 'Generar token' })
   @ApiResponse({
     status: 200,
-    description: "Token generado correctamente",
+    description: 'Token generado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Token no generado",
+    description: 'Token no generado',
   })
-  @Post("token")
+  @Post('token')
   async generateToken(@Body() email: string, rol: Roles): Promise<any> {
     try {
       const token = await this.usuariosService.generateToken(email, rol);
       return token;
     } catch (error) {
-      throw new HttpException("Error message", HttpStatus.BAD_REQUEST);
+      throw new HttpException('Error message', HttpStatus.BAD_REQUEST);
     }
   }
 
-  @ApiOperation({ summary: "Decodificar token" })
+  @ApiOperation({ summary: 'Decodificar token' })
   @ApiResponse({
     status: 200,
-    description: "Token decodificado correctamente",
+    description: 'Token decodificado correctamente',
     type: Usuario,
   })
   @ApiResponse({
     status: 400,
-    description: "Token no decodificado",
+    description: 'Token no decodificado',
   })
-  @Post("decodeToken")
+  @Post('decodeToken')
   async decodeToken(@Body() body: { token: string }): Promise<any> {
     try {
       const decodedToken = await this.usuariosService.decodeToken(body.token);
       return decodedToken;
     } catch (error) {
       throw new HttpException(
-        error.message || "Error message",
-        HttpStatus.BAD_REQUEST
+        error.message || 'Error message',
+        HttpStatus.BAD_REQUEST,
       );
     }
   }

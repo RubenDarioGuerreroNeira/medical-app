@@ -4,22 +4,22 @@ import {
   forwardRef,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { MedicationReminder } from "../entities/reminder.entity";
-import { TelegramService } from "./telegram.service";
-import { SchedulerRegistry } from "@nestjs/schedule";
-import * as moment from "moment-timezone";
-import { CronJob } from "cron";
-import { TelegramNotificationService } from "./telegramNotificationService.service";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { MedicationReminder } from '../Entities/reminder.entity';
+import { TelegramService } from './telegram.service';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import * as moment from 'moment-timezone';
+import { CronJob } from 'cron';
+import { TelegramNotificationService } from './telegramNotificationService.service';
 
 @Injectable()
 export class ReminderService {
   private readonly logger = new Logger(ReminderService.name);
   private readonly soundEffects = {
-    reminder: "https://example.com/sounds/medical-alert.mp3",
-    success: "https://example.com/sounds/success.mp3",
+    reminder: 'https://example.com/sounds/medical-alert.mp3',
+    success: 'https://example.com/sounds/success.mp3',
   };
 
   constructor(
@@ -28,7 +28,7 @@ export class ReminderService {
     @Inject(forwardRef(() => TelegramService))
     private telegramService: TelegramService,
     private schedulerRegistry: SchedulerRegistry,
-    private notificationService: TelegramNotificationService
+    private notificationService: TelegramNotificationService,
   ) {
     this.initializeReminders();
   }
@@ -48,14 +48,14 @@ export class ReminderService {
       reminderTime: string;
       daysOfWeek?: number[];
       timezone?: string;
-    }
+    },
   ): Promise<MedicationReminder> {
     const {
       medicationName,
       dosage,
       reminderTime,
       daysOfWeek = [0, 1, 2, 3, 4, 5, 6],
-      timezone = "America/Caracas",
+      timezone = 'America/Caracas',
     } = reminderData;
 
     const reminder = this.reminderRepository.create({
@@ -78,7 +78,7 @@ export class ReminderService {
   private async scheduleReminder(reminder: MedicationReminder) {
     const cronExpression = this.createCronExpression(
       reminder.reminderTime,
-      reminder.daysOfWeek
+      reminder.daysOfWeek,
     );
     const jobName = `reminder_${reminder.id}`;
 
@@ -87,10 +87,10 @@ export class ReminderService {
       () => this.sendReminderNotification(reminder),
       null,
       true,
-      reminder.timezone
+      reminder.timezone,
     );
 
-    if (this.schedulerRegistry.doesExist("cron", jobName)) {
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
       this.schedulerRegistry.deleteCronJob(jobName);
     }
 
@@ -98,13 +98,13 @@ export class ReminderService {
     job.start();
 
     this.logger.log(
-      `Recordatorio programado ${jobName} con cron: ${cronExpression}`
+      `Recordatorio programado ${jobName} con cron: ${cronExpression}`,
     );
   }
 
   private createCronExpression(time: string, daysOfWeek: number[]): string {
-    const [hours, minutes] = time.split(":");
-    const daysExpression = daysOfWeek.join(",");
+    const [hours, minutes] = time.split(':');
+    const daysExpression = daysOfWeek.join(',');
     return `${minutes} ${hours} * * ${daysExpression}`;
   }
 
@@ -113,12 +113,12 @@ export class ReminderService {
       // Enviar sonido de alerta
       await this.notificationService.sendReminderNotification(reminder);
       this.logger.log(
-        `Notificación enviada exitosamente para el medicamento: ${reminder.medicationName}`
+        `Notificación enviada exitosamente para el medicamento: ${reminder.medicationName}`,
       );
     } catch (error) {
       this.logger.error(
         `Error al enviar la notificación: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       try {
@@ -126,11 +126,11 @@ export class ReminderService {
         const message = this.formatReminderMessage(reminder);
         await this.telegramService.sendMessage(
           Number(reminder.chatId),
-          message
+          message,
         );
       } catch (fallbackError) {
         this.logger.error(
-          `Error al enviar la notificación de respaldo: ${fallbackError.message}`
+          `Error al enviar la notificación de respaldo: ${fallbackError.message}`,
         );
       }
     }
@@ -176,13 +176,13 @@ export class ReminderService {
     });
 
     if (!reminder) {
-      throw new NotFoundException("Recordatorio no encontrado");
+      throw new NotFoundException('Recordatorio no encontrado');
     }
 
     try {
       await this.notificationService.sendReminderNotification({
         ...reminder,
-        type: "confirmation", // Esto indica que es una confirmación
+        type: 'confirmation', // Esto indica que es una confirmación
       });
     } catch (error) {
       this.logger.error(`Error al enviar confirmación: ${error.message}`);
@@ -191,11 +191,11 @@ export class ReminderService {
       try {
         await this.telegramService.sendMessage(
           Number(reminder.chatId),
-          "✅ ¡Medicamento registrado como tomado!"
+          '✅ ¡Medicamento registrado como tomado!',
         );
       } catch (fallbackError) {
         this.logger.error(
-          `Error en mensaje de respaldo: ${fallbackError.message}`
+          `Error en mensaje de respaldo: ${fallbackError.message}`,
         );
       }
     }
@@ -203,7 +203,7 @@ export class ReminderService {
 
   async updateReminder(
     id: number,
-    updateData: Partial<MedicationReminder>
+    updateData: Partial<MedicationReminder>,
   ): Promise<MedicationReminder> {
     await this.reminderRepository.update(id, updateData);
     const updatedReminder = await this.reminderRepository.findOne({
@@ -218,7 +218,7 @@ export class ReminderService {
       await this.scheduleReminder(updatedReminder);
     } else {
       const jobName = `reminder_${id}`;
-      if (this.schedulerRegistry.doesExist("cron", jobName)) {
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
         this.schedulerRegistry.deleteCronJob(jobName);
       }
     }
@@ -236,15 +236,15 @@ export class ReminderService {
       const jobName = `reminder_${id}`;
 
       try {
-        if (this.schedulerRegistry.doesExist("cron", jobName)) {
+        if (this.schedulerRegistry.doesExist('cron', jobName)) {
           this.schedulerRegistry.deleteCronJob(jobName);
           this.logger.debug(
-            `Trabajo programado ${jobName} eliminado exitosamente`
+            `Trabajo programado ${jobName} eliminado exitosamente`,
           );
         }
       } catch (schedulerError) {
         this.logger.warn(
-          `Error al eliminar el trabajo programado ${jobName}: ${schedulerError.message}`
+          `Error al eliminar el trabajo programado ${jobName}: ${schedulerError.message}`,
         );
       }
 
@@ -252,7 +252,7 @@ export class ReminderService {
       this.logger.log(`Recordatorio ${id} eliminado exitosamente`);
     } catch (error) {
       this.logger.error(
-        `Error al eliminar el recordatorio ${id}: ${error.message}`
+        `Error al eliminar el recordatorio ${id}: ${error.message}`,
       );
       throw error;
     }
@@ -261,7 +261,7 @@ export class ReminderService {
   async getUserReminders(chatId: number): Promise<MedicationReminder[]> {
     return this.reminderRepository.find({
       where: { chatId: chatId.toString() },
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
   }
 }

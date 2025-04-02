@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { NotaMedicaService } from './nota_medica.service';
 import { NotaMedicaController } from './nota_medica.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { NotaMedica } from '../entities/notaMedica.entity';
+import { NotaMedica } from '../Entities/notaMedica.entity';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 @Module({

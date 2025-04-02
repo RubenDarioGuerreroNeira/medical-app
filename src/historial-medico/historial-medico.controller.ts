@@ -12,7 +12,7 @@ import {
 import { HistorialMedicoService } from './historial-medico.service';
 import { CreateHistorialMedicoDto } from './dto/create-historial-medico.dto';
 import { UpdateHistorialMedicoDto } from './dto/update-historial-medico.dto';
-import { HistorialMedico } from '../entities/historialMedico.entity';
+import { HistorialMedico } from '../Entities/historialMedico.entity';
 
 interface respuestaInterface {
   status: number;

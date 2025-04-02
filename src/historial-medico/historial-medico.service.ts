@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HistorialMedico } from '../entities/historialMedico.entity';
-import { Usuario } from '../entities/usuarios.entity';
-import { Medico } from '../entities/medico.entity';
-import { Roles } from '../entities/usuarios.entity';
+import { HistorialMedico } from '../Entities/historialMedico.entity';
+import { Usuario } from '../Entities/usuarios.entity';
+import { Medico } from '../Entities/medico.entity';
+import { Roles } from '../Entities/usuarios.entity';
 import { DataSource } from 'typeorm';
 import { CreateHistorialMedicoDto } from './dto/create-historial-medico.dto';
 import { UpdateHistorialMedicoDto } from './dto/update-historial-medico.dto';

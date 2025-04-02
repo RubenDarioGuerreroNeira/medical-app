@@ -1,15 +1,15 @@
-import { HttpException, Injectable } from "@nestjs/common";
-import { CreateMedicoDto } from "./dto/create-medico.dto";
-import { UpdateMedicoDto } from "./dto/update-medico.dto";
-import { Medico } from "../entities/medico.entity";
-import { Usuario, Roles } from "../entities/usuarios.entity";
-import { CreateUsuarioDto } from "../usuarios/dto/create-usuario.dto";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { Cache } from "cache-manager";
-import { Inject } from "@nestjs/common";
-import * as bcrypt from "bcrypt";
-import { PaginatedResult, PaginationDto } from "src/Dto Pagination/Pagination";
+import { HttpException, Injectable } from '@nestjs/common';
+import { CreateMedicoDto } from './dto/create-medico.dto';
+import { UpdateMedicoDto } from './dto/update-medico.dto';
+import { Medico } from '../Entities/medico.entity';
+import { Usuario, Roles } from '../Entities/usuarios.entity';
+import { CreateUsuarioDto } from '../usuarios/dto/create-usuario.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Cache } from 'cache-manager';
+import { Inject } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { PaginatedResult, PaginationDto } from 'src/Dto Pagination/Pagination';
 
 @Injectable()
 export class MedicosService {
@@ -18,21 +18,21 @@ export class MedicosService {
     private readonly medicoRepository: Repository<Medico>,
     @InjectRepository(Usuario)
     private readonly usuarioRepository: Repository<Usuario>,
-    @Inject("CACHE_MANAGER") private cacheManager: Cache
+    @Inject('CACHE_MANAGER') private cacheManager: Cache,
   ) {}
 
   async verificaUsuario(CreateUsuarioDto: CreateUsuarioDto) {
     try {
       const medicoCahce = await this.cacheManager.get<Usuario>(
-        CreateUsuarioDto.email
+        CreateUsuarioDto.email,
       );
       if (medicoCahce) {
         throw new HttpException(
           {
             status: 400,
-            message: "El usuario ya existe",
+            message: 'El usuario ya existe',
           },
-          400
+          400,
         );
       }
 
@@ -48,9 +48,9 @@ export class MedicosService {
         throw new HttpException(
           {
             status: 400,
-            message: "El usuario ya existe",
+            message: 'El usuario ya existe',
           },
-          400
+          400,
         );
       }
     } catch (error) {
@@ -62,14 +62,14 @@ export class MedicosService {
           status: 400,
           message: error.message,
         },
-        400
+        400,
       );
     }
   }
 
   async create(
     CreateUsuarioDto: CreateUsuarioDto,
-    createMedicoDto: CreateMedicoDto
+    createMedicoDto: CreateMedicoDto,
   ): Promise<Medico> {
     try {
       await this.verificaUsuario(CreateUsuarioDto);
@@ -77,9 +77,9 @@ export class MedicosService {
         throw new HttpException(
           {
             status: 400,
-            message: "El usuario no es un medico",
+            message: 'El usuario no es un medico',
           },
-          400
+          400,
         );
       }
 
@@ -104,7 +104,7 @@ export class MedicosService {
       medico.usuario = usuario;
       medico.horario_disponible = createMedicoDto.horario_disponible;
       medico.especialidad = createMedicoDto.especialidad;
-      medico.fotoPerfil = "url_foto_perfil";
+      medico.fotoPerfil = 'url_foto_perfil';
       medico.fechaContratacion = new Date();
       medico.activo = true;
       medico.certificaciones = createMedicoDto.certificaciones;
@@ -118,7 +118,7 @@ export class MedicosService {
           status: 400,
           message: error.message,
         },
-        400
+        400,
       );
     }
   }
@@ -128,7 +128,7 @@ export class MedicosService {
       const [medicos, total] = await this.usuarioRepository.findAndCount({
         where: { rol: Roles.MEDICO },
         take: 10,
-        order: { nombre: "ASC" },
+        order: { nombre: 'ASC' },
       });
       const totalPages = Math.ceil(total / 10);
       return {
@@ -151,14 +151,14 @@ export class MedicosService {
           status: 400,
           message: error.message,
         },
-        400
+        400,
       );
     }
   }
 
   async update(
     medicoID: string,
-    updateMedicoDto: UpdateMedicoDto
+    updateMedicoDto: UpdateMedicoDto,
   ): Promise<any> {
     try {
       // Si no está en cache, verificamos directamente con preload
@@ -171,9 +171,9 @@ export class MedicosService {
         throw new HttpException(
           {
             status: 404,
-            message: "El medico no existe",
+            message: 'El medico no existe',
           },
-          404
+          404,
         );
       }
       // guardo los cambios en la bd
@@ -195,7 +195,7 @@ export class MedicosService {
           status: 400,
           message: error.message,
         },
-        400
+        400,
       );
     }
   }
@@ -212,15 +212,15 @@ export class MedicosService {
         throw new HttpException(
           {
             status: 404,
-            message: "El medico no existe",
+            message: 'El medico no existe',
           },
-          404
+          404,
         );
       }
       await this.medicoRepository.delete(medicoId);
       return {
         status: 200,
-        mesagge: "Médico eliminado correctamente",
+        mesagge: 'Médico eliminado correctamente',
         data: medicoCache,
       };
     } catch (error) {
@@ -232,7 +232,7 @@ export class MedicosService {
           status: 400,
           message: error.message,
         },
-        400
+        400,
       );
     }
   }

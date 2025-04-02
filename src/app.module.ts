@@ -2,10 +2,10 @@ import { Inject, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Usuario } from './entities/usuarios.entity';
-import { Medico } from './entities/medico.entity';
-import { Cita } from './entities/cita.entity';
-import { HistorialMedico } from './entities/historialMedico.entity';
+import { Usuario } from './Entities/usuarios.entity';
+import { Medico } from './Entities/medico.entity';
+import { Cita } from './Entities/cita.entity';
+import { HistorialMedico } from './Entities/historialMedico.entity';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { MedicosModule } from './medicos/medicos.module';
 import { CitasModule } from './citas/citas.module';
@@ -15,14 +15,14 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { ConfigService } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { NotaMedica } from './entities/notaMedica.entity';
-import { RecetaMedica } from './entities/recetaMedica.entity';
-import { DocumentoConsulta } from './entities/documentoConsulta.entity.';
+import { NotaMedica } from './Entities/notaMedica.entity';
+import { RecetaMedica } from './Entities/recetaMedica.entity';
+import { DocumentoConsulta } from './Entities/documentoConsulta.entity.';
 import { NotaMedicaModule } from './nota_medica/nota_medica.module';
 import { RecetaMedicaModule } from './receta-medica/receta-medica.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { TelegramModule } from './telegram/telegram.module';
-import { MedicationReminder } from './entities/reminder.entity';
+import { MedicationReminder } from './Entities/reminder.entity';
 
 @Module({
   imports: [

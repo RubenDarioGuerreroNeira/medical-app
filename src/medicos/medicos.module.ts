@@ -1,10 +1,10 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { MedicosService } from "./medicos.service";
-import { MedicosController } from "./medicos.controller";
-import { Medico } from "../entities/medico.entity";
-import { Usuario } from "../entities/usuarios.entity";
-import { CacheModule } from "@nestjs/cache-manager";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MedicosService } from './medicos.service';
+import { MedicosController } from './medicos.controller';
+import { Medico } from '../Entities/medico.entity';
+import { Usuario } from '../Entities/usuarios.entity';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
