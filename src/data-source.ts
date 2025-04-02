@@ -3,7 +3,7 @@ import { Medico } from './Entities/Medico.entity';
 import { Cita } from './Entities/Cita.entity';
 import { HistorialMedico } from './Entities/HistorialMedico.entity';
 import { RecetaMedica } from './Entities/RecetaMedica.entity';
-import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity.';
+import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity';
 import { NotaMedica } from './Entities/NotaMedica.entity';
 import { MedicationReminder } from './Entities/Reminder.entity';
 

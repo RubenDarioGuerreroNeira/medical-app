@@ -17,7 +17,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { NotaMedica } from './Entities/NotaMedica.entity';
 import { RecetaMedica } from './Entities/RecetaMedica.entity';
-import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity.';
+import { DocumentoConsulta } from './Entities/DocumentoConsulta.entity';
 import { NotaMedicaModule } from './nota_medica/nota_medica.module';
 import { RecetaMedicaModule } from './receta-medica/receta-medica.module';
 import { CacheModule } from '@nestjs/cache-manager';
