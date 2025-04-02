@@ -5,18 +5,18 @@ import {
   OneToMany,
   JoinColumn,
   Unique,
-} from "typeorm";
-import { Cita } from "./cita.entity";
-import { HistorialMedico } from "./historialmedico.entity";
+} from 'typeorm';
+import { Cita } from './cita.entity';
+import { HistorialMedico } from './historialMedico.entity';
 
 export enum Roles {
-  ADMIN = "admin",
-  MEDICO = "medico",
-  PACIENTE = "paciente",
+  ADMIN = 'admin',
+  MEDICO = 'medico',
+  PACIENTE = 'paciente',
 }
-@Entity("usuario")
+@Entity('usuario')
 export class Usuario {
-  @PrimaryGeneratedColumn("uuid") // Columna ID con tipo UUID
+  @PrimaryGeneratedColumn('uuid') // Columna ID con tipo UUID
   id: string;
 
   @Column()
@@ -25,7 +25,7 @@ export class Usuario {
   @Column()
   apellido: string;
 
-  @Column({ type: "date" })
+  @Column({ type: 'date' })
   fecha_nacimiento: Date;
 
   @Column()
@@ -47,7 +47,7 @@ export class Usuario {
   contrasena: string; // Recuerda hashear la contraseña antes de guardarla
 
   @Column({
-    type: "enum",
+    type: 'enum',
     enum: Roles,
     default: Roles.PACIENTE,
   })
@@ -58,7 +58,7 @@ export class Usuario {
 
   @OneToMany(
     () => HistorialMedico,
-    (historialMedico) => historialMedico.paciente
+    (historialMedico) => historialMedico.paciente,
   )
   historialMedico: HistorialMedico[];
 }

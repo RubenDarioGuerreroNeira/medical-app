@@ -2,14 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from "@nestjs/common";
+} from '@nestjs/common';
 
-import { CreateRecetaMedicaDto } from "./dto/create-receta-medica.dto";
-import { UpdateRecetaMedicaDto } from "./dto/update-receta-medica.dto";
-import { RecetaMedica } from "../entities/recetamedica";
-import { Cita } from "../entities/cita.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { CreateRecetaMedicaDto } from './dto/create-receta-medica.dto';
+import { UpdateRecetaMedicaDto } from './dto/update-receta-medica.dto';
+import { RecetaMedica } from '../entities/recetaMedica.entity';
+import { Cita } from '../entities/cita.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RecetaMedicaService {
@@ -17,7 +17,7 @@ export class RecetaMedicaService {
     @InjectRepository(RecetaMedica)
     private recetaMedicaRepository: Repository<RecetaMedica>,
     @InjectRepository(Cita)
-    private citaRepository: Repository<Cita>
+    private citaRepository: Repository<Cita>,
   ) {}
 
   private async verificaRecetaMedica(datos: CreateRecetaMedicaDto) {
@@ -27,7 +27,7 @@ export class RecetaMedicaService {
           fecha_emision: datos.fecha_emision,
           cita: { id: datos.cita_id },
         },
-        relations: ["cita"],
+        relations: ['cita'],
       });
       if (recetaMedica) {
         return recetaMedica;
@@ -41,17 +41,17 @@ export class RecetaMedicaService {
   async create(datos: CreateRecetaMedicaDto): Promise<RecetaMedica> {
     try {
       if (!datos.cita_id) {
-        throw new Error("Cita ID no proporcionada");
+        throw new Error('Cita ID no proporcionada');
       }
 
       const fecha_actual = new Date();
       if (datos.fecha_emision === null || datos.fecha_emision < fecha_actual) {
-        throw new Error("Fecha de emisión no válida");
+        throw new Error('Fecha de emisión no válida');
       }
 
       const cita = await this.verificaRecetaMedica(datos);
       if (cita !== null) {
-        throw new Error("La receta médica ya existe");
+        throw new Error('La receta médica ya existe');
       }
       const nuevaRecetaMedica = this.recetaMedicaRepository.create({
         medicamentos: datos.medicamentos,
@@ -71,7 +71,7 @@ export class RecetaMedicaService {
       id: id,
     });
     if (!recetaMedica) {
-      throw new Error("La receta médica No existe");
+      throw new Error('La receta médica No existe');
     }
     recetaMedica.archivo_url = imageUrl;
     return await this.recetaMedicaRepository.save(recetaMedica);
@@ -81,14 +81,14 @@ export class RecetaMedicaService {
       const skip = (page - 1) * limit;
 
       const [recetas, total] = await this.recetaMedicaRepository.findAndCount({
-        order: { fecha_emision: "DESC" },
+        order: { fecha_emision: 'DESC' },
         skip: skip,
         take: limit,
-        relations: ["cita"], // Agrega aquí las relaciones que necesites
+        relations: ['cita'], // Agrega aquí las relaciones que necesites
       });
 
       if (!recetas.length && page > 1) {
-        throw new NotFoundException("No se encontraron más recetas médicas");
+        throw new NotFoundException('No se encontraron más recetas médicas');
       }
 
       return {
@@ -97,7 +97,7 @@ export class RecetaMedicaService {
       };
     } catch (error) {
       throw new BadRequestException(
-        error.message || "Error al obtener las recetas médicas"
+        error.message || 'Error al obtener las recetas médicas',
       );
     }
   }
@@ -108,7 +108,7 @@ export class RecetaMedicaService {
     });
 
     if (!receta) {
-      throw new NotFoundException("No se encontró la receta médica");
+      throw new NotFoundException('No se encontró la receta médica');
     }
     return receta;
   }
@@ -116,24 +116,23 @@ export class RecetaMedicaService {
   async update(id: string, updateRecetaMedicaDto: UpdateRecetaMedicaDto) {
     try {
       if (id === undefined || id === null) {
-        throw new BadRequestException("ID no proporcionado");
+        throw new BadRequestException('ID no proporcionado');
       }
 
       const receta = await this.recetaMedicaRepository.findOne({
         where: { id },
       });
       if (!receta) {
-        throw new NotFoundException("No se encontró la receta médica");
+        throw new NotFoundException('No se encontró la receta médica');
       }
       const nuevaRecetaMedica = this.recetaMedicaRepository.merge(
         receta,
-        updateRecetaMedicaDto
+        updateRecetaMedicaDto,
       );
-      const actualizado = await this.recetaMedicaRepository.save(
-        nuevaRecetaMedica
-      );
+      const actualizado =
+        await this.recetaMedicaRepository.save(nuevaRecetaMedica);
       return {
-        message: "Receta médica actualizada exitosamente",
+        message: 'Receta médica actualizada exitosamente',
         data: actualizado,
       };
     } catch (error) {
@@ -150,13 +149,13 @@ export class RecetaMedicaService {
   async remove(id: string) {
     try {
       if (!id || id === undefined || id === null) {
-        throw new BadRequestException("Id Invalido o no proporcionado");
+        throw new BadRequestException('Id Invalido o no proporcionado');
       }
 
       const receta = await this.recetaMedicaRepository.findOneBy({ id });
       if (!receta) {
         throw new NotFoundException(
-          `No se encuentra la receta médica con id ${id}`
+          `No se encuentra la receta médica con id ${id}`,
         );
       }
       await this.recetaMedicaRepository.delete(id);

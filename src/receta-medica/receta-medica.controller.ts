@@ -13,14 +13,14 @@ import {
   BadRequestException,
   NotFoundException,
   Query,
-} from "@nestjs/common";
-import { RecetaMedicaService } from "./receta-medica.service";
-import { CreateRecetaMedicaDto } from "./dto/create-receta-medica.dto";
-import { UpdateRecetaMedicaDto } from "./dto/update-receta-medica.dto";
-import { NotFoundError } from "rxjs";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { CloudinaryService } from "../cloudinary/cloudinary.service";
-import { RecetaMedica } from "../entities/recetamedica";
+} from '@nestjs/common';
+import { RecetaMedicaService } from './receta-medica.service';
+import { CreateRecetaMedicaDto } from './dto/create-receta-medica.dto';
+import { UpdateRecetaMedicaDto } from './dto/update-receta-medica.dto';
+import { NotFoundError } from 'rxjs';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { RecetaMedica } from '../entities/recetaMedica.entity';
 
 interface RecetaMedicaResponse {
   status: number;
@@ -28,11 +28,11 @@ interface RecetaMedicaResponse {
   data: RecetaMedica;
 }
 
-@Controller("receta-medica")
+@Controller('receta-medica')
 export class RecetaMedicaController {
   constructor(
     private readonly recetaMedicaService: RecetaMedicaService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   @Post()
@@ -40,11 +40,11 @@ export class RecetaMedicaController {
     try {
       // return this.recetaMedicaService.create(createRecetaMedicaDto);
       const receta = await this.recetaMedicaService.create(
-        createRecetaMedicaDto
+        createRecetaMedicaDto,
       );
       return {
         status: HttpStatus.CREATED,
-        message: "Receta médica creada exitosamente",
+        message: 'Receta médica creada exitosamente',
         data: receta,
       };
     } catch (error) {
@@ -52,28 +52,28 @@ export class RecetaMedicaController {
     }
   }
 
-  @Post("upload-imagen/:id")
-  @UseInterceptors(FileInterceptor("file"))
+  @Post('upload-imagen/:id')
+  @UseInterceptors(FileInterceptor('file'))
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
-    @Param("id") id: string
+    @Param('id') id: string,
   ) {
     try {
       // 1. Primero subimos la imagen a Cloudinary
       const uploadResult = await this.cloudinaryService.uploadImage(
         file,
-        "recetas-medicas" // carpeta en Cloudinary
+        'recetas-medicas', // carpeta en Cloudinary
       );
       // 2. Luego actualizamos la receta médica con la URL
       const recetaActualizada = await this.recetaMedicaService.updateImageUrl(
         id,
-        uploadResult.secure_url
+        uploadResult.secure_url,
       );
       // return recetaActualizada;
 
       return {
         status: HttpStatus.OK,
-        message: "Imagen subida y receta médica actualizada exitosamente",
+        message: 'Imagen subida y receta médica actualizada exitosamente',
         recetaMedica: recetaActualizada,
       };
     } catch (error) {
@@ -82,7 +82,7 @@ export class RecetaMedicaController {
   }
 
   @Get()
-  async findAll(@Query("page") page = 1, @Query("limit") limit = 5) {
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 5) {
     try {
       // Convertir page y limit a números
       const pageNumber = parseInt(page.toString());
@@ -91,7 +91,7 @@ export class RecetaMedicaController {
       // Obtener los datos del servicio
       const { recetas, total } = await this.recetaMedicaService.findAll(
         pageNumber,
-        limitNumber
+        limitNumber,
       );
 
       return {
@@ -109,18 +109,18 @@ export class RecetaMedicaController {
     } catch (error) {
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,
-        message: error.message || "Error al obtener las recetas médicas",
+        message: error.message || 'Error al obtener las recetas médicas',
       });
     }
   }
 
-  @Get("findone/:id")
-  async findOne(@Param("id") id: string): Promise<RecetaMedicaResponse> {
+  @Get('findone/:id')
+  async findOne(@Param('id') id: string): Promise<RecetaMedicaResponse> {
     try {
       const receta = await this.recetaMedicaService.findOne(id);
       return {
         status: HttpStatus.OK,
-        message: "Receta médica obtenida exitosamente",
+        message: 'Receta médica obtenida exitosamente',
         data: receta,
       };
     } catch (error) {
@@ -129,24 +129,24 @@ export class RecetaMedicaController {
       }
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,
-        message: error.message || "Error al obtener la receta médica",
+        message: error.message || 'Error al obtener la receta médica',
       });
     }
   }
 
-  @Patch("update/:id")
+  @Patch('update/:id')
   async update(
-    @Param("id") id: string,
-    @Body() updateRecetaMedicaDto: UpdateRecetaMedicaDto
+    @Param('id') id: string,
+    @Body() updateRecetaMedicaDto: UpdateRecetaMedicaDto,
   ) {
     try {
       const receta = await this.recetaMedicaService.update(
         id,
-        updateRecetaMedicaDto
+        updateRecetaMedicaDto,
       );
       return {
         status: HttpStatus.OK,
-        message: "Receta médica actualizada exitosamente",
+        message: 'Receta médica actualizada exitosamente',
         data: receta,
       };
     } catch (error) {
@@ -155,18 +155,18 @@ export class RecetaMedicaController {
       }
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,
-        message: error.message || "Error al actualizar la receta médica",
+        message: error.message || 'Error al actualizar la receta médica',
       });
     }
   }
 
-  @Delete("delete/:id")
-  async remove(@Param("id") id: string) {
+  @Delete('delete/:id')
+  async remove(@Param('id') id: string) {
     try {
       const receta = await this.recetaMedicaService.remove(id);
       return {
         status: HttpStatus.OK,
-        message: "Receta Médica eliminada",
+        message: 'Receta Médica eliminada',
         data: receta,
       };
     } catch (error) {
@@ -175,7 +175,7 @@ export class RecetaMedicaController {
       }
       throw new BadRequestException({
         status: HttpStatus.BAD_REQUEST,
-        message: error.message || "Error al eliminar la receta médica",
+        message: error.message || 'Error al eliminar la receta médica',
       });
     }
   }

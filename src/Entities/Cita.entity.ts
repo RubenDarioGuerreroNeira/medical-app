@@ -5,35 +5,35 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-} from "typeorm";
-import { Usuario } from "./usuarios.entity"; // Importa la entidad Usuario
-import { Medico } from "./medico.entity"; // Importa la entidad Medico
-import { RecetaMedica } from "./recetamedica";
-import { NotaMedica } from "./notamedica";
+} from 'typeorm';
+import { Usuario } from './usuarios.entity'; // Importa la entidad Usuario
+import { Medico } from './medico.entity'; // Importa la entidad Medico
+import { RecetaMedica } from './recetaMedica.entity';
+import { NotaMedica } from './notaMedica.entity';
 
 export enum EstadoCita {
-  CONFIRMADA = "confirmada",
-  CANCELADA = "cancelada",
-  COMPLETADA = "completada",
+  CONFIRMADA = 'confirmada',
+  CANCELADA = 'cancelada',
+  COMPLETADA = 'completada',
 }
 
-@Entity("cita")
+@Entity('cita')
 export class Cita {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: "timestamp" }) //  timestamp para almacenar fecha y hora
+  @Column({ type: 'timestamp' }) //  timestamp para almacenar fecha y hora
   fecha_hora: Date;
 
-  @Column({ type: "enum", enum: EstadoCita }) // Usamos un enum para el estado
+  @Column({ type: 'enum', enum: EstadoCita }) // Usamos un enum para el estado
   estado: EstadoCita;
 
   @ManyToOne(() => Usuario, (usuario) => usuario.citas) // Relación muchos a uno con Usuario
-  @JoinColumn({ name: "paciente_id" }) // Nombre de la columna en la base de datos
+  @JoinColumn({ name: 'paciente_id' }) // Nombre de la columna en la base de datos
   paciente: Usuario;
 
   @ManyToOne(() => Medico, (medico) => medico.citas) // Relación muchos a uno con Medico
-  @JoinColumn({ name: "medico_id" }) // Nombre de la columna en la base de datos
+  @JoinColumn({ name: 'medico_id' }) // Nombre de la columna en la base de datos
   medico: Medico;
 
   @OneToMany(() => RecetaMedica, (receta) => receta.cita)

@@ -5,18 +5,18 @@ import {
   OneToOne,
   JoinColumn,
   OneToMany,
-} from "typeorm";
-import { Usuario } from "./usuarios.entity"; // Asegúrate de importar la entidad Usuario
-import { Cita } from "./cita.entity"; // Asegúrate de importar la entidad Cita
-import { HistorialMedico } from "./historialmedico.entity";
+} from 'typeorm';
+import { Usuario } from './usuarios.entity'; // Asegúrate de importar la entidad Usuario
+import { Cita } from './cita.entity'; // Asegúrate de importar la entidad Cita
+import { HistorialMedico } from './historialMedico.entity';
 
-@Entity("medico")
+@Entity('medico')
 export class Medico {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @OneToOne(() => Usuario) // Relación uno a uno con Usuario
-  @JoinColumn({ name: "usuario_id" }) // Nombre de la columna en la base de datos
+  @JoinColumn({ name: 'usuario_id' }) // Nombre de la columna en la base de datos
   usuario: Usuario;
 
   @OneToMany(() => HistorialMedico, (historialMedico) => historialMedico.medico)
@@ -28,10 +28,10 @@ export class Medico {
   @Column({ unique: true, nullable: true })
   numeroColegiado: string;
 
-  @Column({ unique: true, default: "Indique la Especialidad" })
+  @Column({ unique: true, default: 'Indique la Especialidad' })
   especialidad: string;
 
-  @Column({ type: "date", default: () => "CURRENT_DATE" })
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   fechaContratacion: Date;
 
   @Column({ default: true })
@@ -40,13 +40,13 @@ export class Medico {
   @Column({ nullable: true })
   fotoPerfil: string;
 
-  @Column("simple-array", { nullable: true })
+  @Column('simple-array', { nullable: true })
   certificaciones: string[];
 
-  @Column("simple-array", { nullable: true })
+  @Column('simple-array', { nullable: true })
   idiomas: string[];
 
-  @Column({ type: "jsonb" }) // Recomendado para horarios complejos
+  @Column({ type: 'jsonb' }) // Recomendado para horarios complejos
   horario_disponible: any; // Define el tipo adecuado para tu horario
 }
 

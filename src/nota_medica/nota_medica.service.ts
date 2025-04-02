@@ -1,18 +1,18 @@
-import { Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { CreateNotaMedicaDto } from "./dto/create-nota_medica.dto";
-import { UpdateNotaMedicaDto } from "./dto/update-nota_medica.dto";
-import { NotaMedica } from "../entities/notamedica";
-import { CloudinaryService } from "../cloudinary/cloudinary.service";
-import { NotFoundException } from "@nestjs/common";
-import { Type } from "class-transformer";
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CreateNotaMedicaDto } from './dto/create-nota_medica.dto';
+import { UpdateNotaMedicaDto } from './dto/update-nota_medica.dto';
+import { NotaMedica } from '../entities/notaMedica.entity';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { NotFoundException } from '@nestjs/common';
+import { Type } from 'class-transformer';
 @Injectable()
 export class NotaMedicaService {
   constructor(
     @InjectRepository(NotaMedica)
     private readonly notaMedicaRepository: Repository<NotaMedica>,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async verificaNotaMedica(datos: CreateNotaMedicaDto) {
@@ -22,7 +22,7 @@ export class NotaMedicaService {
           fecha_creacion: datos.fecha_creacion,
           cita: { id: datos.cita_id },
         },
-        relations: ["cita"],
+        relations: ['cita'],
       });
       if (notaMedica) {
         return notaMedica;
@@ -37,11 +37,11 @@ export class NotaMedicaService {
     try {
       const notaMedica = await this.verificaNotaMedica(datos);
       if (notaMedica !== null) {
-        throw new Error("La nota médica ya existe");
+        throw new Error('La nota médica ya existe');
       }
 
       const nuevaNotaMedica = this.notaMedicaRepository.create({
-        contenido: "Image Example",
+        contenido: 'Image Example',
         fecha_creacion: datos.fecha_creacion,
         es_privada: datos.es_privada,
         cita: { id: datos.cita_id },
@@ -57,11 +57,11 @@ export class NotaMedicaService {
     try {
       if (!id) {
         throw new Error(
-          "ID de la nota médica no proporcionado ó no es un string"
+          'ID de la nota médica no proporcionado ó no es un string',
         );
       }
       if (!imageUrl) {
-        throw new Error("URL es inválida o no proporcionada");
+        throw new Error('URL es inválida o no proporcionada');
       }
 
       // 1. Buscamos la nota médica
@@ -90,7 +90,7 @@ export class NotaMedicaService {
   async findOne(id: string) {
     try {
       if (!id) {
-        throw new Error("Id de la nota medica no proporcionado");
+        throw new Error('Id de la nota medica no proporcionado');
       }
       console.log(`Buscando nota médica con ID: ${id}`);
       const nota_medica = await this.notaMedicaRepository.findOne({
@@ -106,20 +106,20 @@ export class NotaMedicaService {
 
   async update(
     id: string,
-    updateNotaMedicaDto: UpdateNotaMedicaDto
+    updateNotaMedicaDto: UpdateNotaMedicaDto,
   ): Promise<NotaMedica> {
     try {
       const notaMedica = await this.notaMedicaRepository.findOneBy({
         id: id,
       });
       if (notaMedica === null) {
-        throw new Error("La nota médica No existe");
+        throw new Error('La nota médica No existe');
       }
 
       // actualizo
       await this.notaMedicaRepository.update(
         { id: notaMedica.id },
-        updateNotaMedicaDto
+        updateNotaMedicaDto,
       );
 
       // Recupero y muestro la Actualizada
@@ -136,17 +136,17 @@ export class NotaMedicaService {
   async remove(id: string) {
     try {
       if (!id) {
-        throw new Error("Id de la nota medica no proporcionado");
+        throw new Error('Id de la nota medica no proporcionado');
       }
       const notaEliminada = await this.notaMedicaRepository.findOneBy({
         id: id,
       });
       if (!notaEliminada) {
-        throw new Error("La nota médica No existe");
+        throw new Error('La nota médica No existe');
       }
       await this.notaMedicaRepository.delete(id);
       return {
-        message: "Nota médica eliminada correctamente",
+        message: 'Nota médica eliminada correctamente',
         notaEliminada,
       };
     } catch (error) {

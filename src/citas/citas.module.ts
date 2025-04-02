@@ -1,16 +1,16 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { JwtModule } from "@nestjs/jwt";
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { CitasController } from "./citas.controller";
-import { CitasService } from "./citas.service";
-import { Cita } from "../entities/cita.entity";
-import { Usuario } from "../entities/usuarios.entity";
-import { Medico } from "../entities/medico.entity";
-import { HistorialMedico } from "../entities/historialmedico.entity";
-import { JwtStrategy } from "../auth/strategies/jwt.strategy";
-import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
-import { CacheModule } from "@nestjs/cache-manager";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CitasController } from './citas.controller';
+import { CitasService } from './citas.service';
+import { Cita } from '../entities/cita.entity';
+import { Usuario } from '../entities/usuarios.entity';
+import { Medico } from '../entities/medico.entity';
+import { HistorialMedico } from '../entities/historialMedico.entity';
+import { JwtStrategy } from '../auth/strategies/jwt.strategy';
+import { JwtAuthGuard } from '../auth/Jwt-auth.guard';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -24,9 +24,9 @@ import { CacheModule } from "@nestjs/cache-manager";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>("JWT_SECRET"),
+        secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string>("JWT_EXPIRATION") || "24h",
+          expiresIn: configService.get<string>('JWT_EXPIRATION') || '24h',
         },
       }),
     }),

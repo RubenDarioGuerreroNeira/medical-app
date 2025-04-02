@@ -1,17 +1,17 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { HistorialMedico } from "../entities/historialmedico.entity";
-import { Usuario } from "../entities/usuarios.entity";
-import { Medico } from "../entities/medico.entity";
-import { Roles } from "../entities/usuarios.entity";
-import { DataSource } from "typeorm";
-import { CreateHistorialMedicoDto } from "./dto/create-historial-medico.dto";
-import { UpdateHistorialMedicoDto } from "./dto/update-historial-medico.dto";
-import { BadRequestException } from "@nestjs/common";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from "cache-manager";
-import { Inject } from "@nestjs/common";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { HistorialMedico } from '../entities/historialMedico.entity';
+import { Usuario } from '../entities/usuarios.entity';
+import { Medico } from '../entities/medico.entity';
+import { Roles } from '../entities/usuarios.entity';
+import { DataSource } from 'typeorm';
+import { CreateHistorialMedicoDto } from './dto/create-historial-medico.dto';
+import { UpdateHistorialMedicoDto } from './dto/update-historial-medico.dto';
+import { BadRequestException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class HistorialMedicoService {
@@ -25,7 +25,7 @@ export class HistorialMedicoService {
     @InjectRepository(Medico)
     private medicoRepository: Repository<Medico>,
 
-    private dataSource: DataSource
+    private dataSource: DataSource,
   ) {}
 
   async validaFecha(fecha: CreateHistorialMedicoDto): Promise<Date> {
@@ -33,14 +33,14 @@ export class HistorialMedicoService {
     const fechaNueva = new Date(fecha.fecha_creacion);
     if (fechaNueva.getTime() < fechaActual.getTime()) {
       throw new BadRequestException(
-        "La fecha no puede ser menor a la fecha actual"
+        'La fecha no puede ser menor a la fecha actual',
       );
     }
     return fechaNueva;
   }
 
   async existenciaHistorial(
-    createHistorialMedicoDto: CreateHistorialMedicoDto
+    createHistorialMedicoDto: CreateHistorialMedicoDto,
   ): Promise<boolean> {
     const bHistorial = await this.historialMedicoRepository.findOneBy({
       diagnostico: createHistorialMedicoDto.diagnostico,
@@ -49,14 +49,14 @@ export class HistorialMedicoService {
     if (bHistorial) {
       throw new BadRequestException(
         `Ya existe este registro de Historial Médico para el diagnóstico: ${bHistorial.diagnostico} 
-        con el tratamiento: ${bHistorial.tratamiento}`
+        con el tratamiento: ${bHistorial.tratamiento}`,
       );
     }
     return;
   }
 
   async create(
-    createHistorialMedicoDto: CreateHistorialMedicoDto
+    createHistorialMedicoDto: CreateHistorialMedicoDto,
   ): Promise<HistorialMedico> {
     try {
       await this.validaFecha(createHistorialMedicoDto);
@@ -74,7 +74,7 @@ export class HistorialMedicoService {
 
       if (!paciente || !medico) {
         throw new NotFoundException(
-          "Paciente o Médico no Esta Registrado en nuestra Bd"
+          'Paciente o Médico no Esta Registrado en nuestra Bd',
         );
       }
 
@@ -83,9 +83,8 @@ export class HistorialMedicoService {
         paciente: paciente,
         medico: medico,
       });
-      const nuevoHistorialMedico = await this.historialMedicoRepository.save(
-        nHistorialMedico
-      );
+      const nuevoHistorialMedico =
+        await this.historialMedicoRepository.save(nHistorialMedico);
       return nuevoHistorialMedico;
     } catch (error) {
       throw error;
@@ -104,7 +103,7 @@ export class HistorialMedicoService {
     }
     const historial = await this.historialMedicoRepository.findOneBy({ id });
     if (!historial) {
-      throw new NotFoundException("Historial Médico no encontrado");
+      throw new NotFoundException('Historial Médico no encontrado');
     }
     await this.cacheManager.set(id, historial);
     return historial;

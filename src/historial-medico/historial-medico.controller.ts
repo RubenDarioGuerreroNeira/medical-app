@@ -8,11 +8,11 @@ import {
   Delete,
   HttpException,
   HttpStatus,
-} from "@nestjs/common";
-import { HistorialMedicoService } from "./historial-medico.service";
-import { CreateHistorialMedicoDto } from "./dto/create-historial-medico.dto";
-import { UpdateHistorialMedicoDto } from "./dto/update-historial-medico.dto";
-import { HistorialMedico } from "../entities/historialmedico.entity";
+} from '@nestjs/common';
+import { HistorialMedicoService } from './historial-medico.service';
+import { CreateHistorialMedicoDto } from './dto/create-historial-medico.dto';
+import { UpdateHistorialMedicoDto } from './dto/update-historial-medico.dto';
+import { HistorialMedico } from '../entities/historialMedico.entity';
 
 interface respuestaInterface {
   status: number;
@@ -20,19 +20,19 @@ interface respuestaInterface {
   data: any;
 }
 
-@Controller("historial-medico")
+@Controller('historial-medico')
 export class HistorialMedicoController {
   constructor(
-    private readonly historialMedicoService: HistorialMedicoService
+    private readonly historialMedicoService: HistorialMedicoService,
   ) {}
 
   @Post()
   async create(@Body() createHistorialMedicoDto: CreateHistorialMedicoDto) {
     const nuevoHistorialMedico = await this.historialMedicoService.create(
-      createHistorialMedicoDto
+      createHistorialMedicoDto,
     );
     return {
-      message: "Historial médico creado exitosamente",
+      message: 'Historial médico creado exitosamente',
       historialMedico: nuevoHistorialMedico,
     };
   }
@@ -42,13 +42,13 @@ export class HistorialMedicoController {
     return this.historialMedicoService.findAll();
   }
 
-  @Get("findOne/:id")
-  async findOne(@Param("id") id: string): Promise<respuestaInterface> {
+  @Get('findOne/:id')
+  async findOne(@Param('id') id: string): Promise<respuestaInterface> {
     try {
       const historialMedico = await this.historialMedicoService.findOne(id);
       return {
         status: 200,
-        message: "Historial médico encontrado exitosamente",
+        message: 'Historial médico encontrado exitosamente',
         data: historialMedico,
       };
     } catch (error) {
@@ -60,21 +60,21 @@ export class HistorialMedicoController {
           status: HttpStatus.BAD_REQUEST,
           message: error.message,
         },
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
     }
   }
 
-  @Patch(":id")
+  @Patch(':id')
   update(
-    @Param("id") id: string,
-    @Body() updateHistorialMedicoDto: UpdateHistorialMedicoDto
+    @Param('id') id: string,
+    @Body() updateHistorialMedicoDto: UpdateHistorialMedicoDto,
   ) {
     return this.historialMedicoService.update(+id, updateHistorialMedicoDto);
   }
 
-  @Delete(":id")
-  remove(@Param("id") id: string) {
+  @Delete(':id')
+  remove(@Param('id') id: string) {
     return this.historialMedicoService.remove(+id);
   }
 }
