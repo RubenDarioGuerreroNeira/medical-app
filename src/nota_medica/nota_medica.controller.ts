@@ -8,20 +8,21 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
-} from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { CloudinaryService } from "../cloudinary/cloudinary.service";
-import { NotaMedicaService } from "./nota_medica.service";
-import { CreateNotaMedicaDto } from "./dto/create-nota_medica.dto";
-import { UpdateNotaMedicaDto } from "./dto/update-nota_medica.dto";
-import { NotFoundError } from "rxjs";
-import { NotFoundException } from "@nestjs/common";
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { NotaMedicaService } from './nota_medica.service';
+import { CreateNotaMedicaDto } from './dto/create-nota_medica.dto';
+import { UpdateNotaMedicaDto } from './dto/update-nota_medica.dto';
 
-@Controller("nota-medica")
+import { NotFoundError } from 'rxjs';
+import { NotFoundException } from '@nestjs/common';
+
+@Controller('nota-medica')
 export class NotaMedicaController {
   constructor(
     private readonly notaMedicaService: NotaMedicaService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   @Post()
@@ -29,27 +30,27 @@ export class NotaMedicaController {
     return this.notaMedicaService.create(createNotaMedicaDto);
   }
 
-  @Post("upload-imagen/:id")
-  @UseInterceptors(FileInterceptor("file"))
+  @Post('upload-imagen/:id')
+  @UseInterceptors(FileInterceptor('file'))
   async uploadImage(
     @UploadedFile() file: Express.Multer.File,
-    @Param("id") id: string
+    @Param('id') id: string,
   ) {
     try {
       // 1. Primero subimos la imagen a Cloudinary
       const uploadResult = await this.cloudinaryService.uploadImage(
         file,
-        "notas-medicas"// carpeta en Cloudinary
+        'notas-medicas', // carpeta en Cloudinary
       );
 
       // 2. Luego actualizamos la nota médica con la URL
       const notaActualizada = await this.notaMedicaService.updateImageUrl(
         id,
-        uploadResult.secure_url
+        uploadResult.secure_url,
       );
 
       return {
-        message: "Imagen subida y nota médica actualizada exitosamente",
+        message: 'Imagen subida y nota médica actualizada exitosamente',
         notaMedica: notaActualizada,
       };
     } catch (error) {
@@ -62,8 +63,8 @@ export class NotaMedicaController {
     return this.notaMedicaService.findAll();
   }
 
-  @Get("nota-medica/:id")
-  async findOne(@Param("id") id: string) {
+  @Get('nota-medica/:id')
+  async findOne(@Param('id') id: string) {
     try {
       const notaMedica = await this.notaMedicaService.findOne(id);
       return notaMedica;
@@ -76,10 +77,10 @@ export class NotaMedicaController {
     }
   }
 
-  @Patch("update/:id")
+  @Patch('update/:id')
   update(
-    @Param("id") id: string,
-    @Body() updateNotaMedicaDto: UpdateNotaMedicaDto
+    @Param('id') id: string,
+    @Body() updateNotaMedicaDto: UpdateNotaMedicaDto,
   ) {
     try {
       return this.notaMedicaService.update(id, updateNotaMedicaDto);
@@ -92,8 +93,8 @@ export class NotaMedicaController {
     }
   }
 
-  @Delete(":id")
-  async remove(@Param("id") id: string) {
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
     try {
       return await this.notaMedicaService.remove(id);
     } catch (error) {
