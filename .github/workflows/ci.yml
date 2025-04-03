@@ -53,6 +53,9 @@ jobs:
           PGDATABASE: postgres
         run: |
           sudo apt-get install -y postgresql-client
+          # Check if the database exists and drop it if it does
+          psql -v ON_ERROR_STOP=1 --username "$PGUSER" --dbname "$PGDATABASE" -c "DROP DATABASE IF EXISTS test_db;"
+          # Create the database
           createdb test_db
 
       - name: Run migrations
