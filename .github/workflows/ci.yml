@@ -15,13 +15,13 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: test_user
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U test_user"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -47,14 +47,14 @@ jobs:
       - name: Create test database
         run: |
           sudo apt-get install -y postgresql-client
-          psql -h localhost -U postgres -c "CREATE DATABASE test_user;"
+          psql -h localhost -U postgres -c "CREATE DATABASE test_db;"
 
       - name: Run migrations
         env:
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
+          DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
         run: npm run migration:run
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_db
+          DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
         run: npm test
