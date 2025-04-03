@@ -44,12 +44,17 @@ jobs:
       - name: Build TypeScript
         run: npm run build
 
-      - name: Create test database
+            - name: Create test database
         env:
-          DATABASE_URL: postgres://postgres:test_password@localhost:5432/postgres
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: test_password
+          PGDATABASE: postgres
         run: |
           sudo apt-get install -y postgresql-client
-          createdb --url="$DATABASE_URL" test_db
+          createdb test_db
+          psql -h localhost -U postgres -p 5432 -c "CREATE DATABASE test_db;" postgres
 
       - name: Run migrations
         env:
