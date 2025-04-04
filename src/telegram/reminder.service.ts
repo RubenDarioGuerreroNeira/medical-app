@@ -68,6 +68,7 @@ export class ReminderService {
       timezone,
       createdAt: new Date(),
       isActive: true,
+      type: 'medication',
     });
 
     const savedReminder = await this.reminderRepository.save(reminder);
@@ -146,30 +147,6 @@ export class ReminderService {
     );
   }
 
-  // async confirmMedicationTaken(reminderId: number): Promise<void> {
-  //   const reminder = await this.reminderRepository.findOne({
-  //     where: { id: reminderId },
-  //   });
-
-  //   if (!reminder) {
-  //     throw new NotFoundException("Recordatorio no encontrado");
-  //   }
-
-  //   try {
-  //     // Enviar sonido de confirmación
-  //     await this.telegramService.bot.sendVoice(
-  //       Number(reminder.chatId),
-  //       this.soundEffects.success,
-  //       { caption: "✅ ¡Excelente! Medicamento registrado como tomado." }
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error al enviar sonido de confirmación: ${error.message}`
-  //     );
-  //     // Continuamos aunque falle el sonido
-  //   }
-  // }
-
   async confirmMedicationTaken(reminderId: number): Promise<void> {
     const reminder = await this.reminderRepository.findOne({
       where: { id: reminderId },
@@ -182,7 +159,7 @@ export class ReminderService {
     try {
       await this.notificationService.sendReminderNotification({
         ...reminder,
-        type: 'confirmation', // Esto indica que es una confirmación
+        type: reminder.type === 'medication' ? 'confirmation' : 'reminder', // Esto indica que es una confirmación
       });
     } catch (error) {
       this.logger.error(`Error al enviar confirmación: ${error.message}`);
