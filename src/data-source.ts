@@ -37,22 +37,3 @@ export const AppDataSource = new DataSource({
   synchronize: false,
   logging: true,
 });
-
-// // src/data-source.ts
-// import { DataSource } from "typeorm";
-// import { join } from "path";
-
-// export const AppDataSource = new DataSource({
-//   type: "postgres", // o el tipo de base de datos que uses
-//   host: "localhost",
-//   port: 5432,
-//   username: "postgres",
-//   password: "2980",
-//   database: "citas",
-//   entities: ["src/**/*.entity{.ts,.js}"],
-//   //   migrations: ["src/migrations/**/*{.ts,.js}"],
-//   //   entities: [join(__dirname, "**", "*.entity.{ts,js}")],
-//   migrations: [join(__dirname, "migrations", "*.{ts,js}")],
-//   synchronize: false,
-//   logging: true,
-// });

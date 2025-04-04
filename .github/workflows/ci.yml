@@ -62,7 +62,11 @@ jobs:
 
       - name: Run migrations
         env:
-          DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: postgres
+          DB_PASSWORD: test_password # Asegúrate que esta variable se define
+          DB_NAME: test_db
           # Añadir un pequeño retraso por si acaso la DB tarda en estar lista tras la creación
           # RUNNER_OS es 'Linux' en los runners de GitHub
         run: |
@@ -71,7 +75,11 @@ jobs:
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: postgres
+          DB_PASSWORD: test_password # Asegúrate que esta variable se define
+          DB_NAME: test_db
         run: npm test
 # name: CI Backend
 
