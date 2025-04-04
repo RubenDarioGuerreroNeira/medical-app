@@ -1,7 +1,10 @@
 -- creo la migracion:   
 npm run migration:generate
 
-de la menra 2 para generar la migracion
+-- Genera migracion especifica  ---
+npx typeorm-ts-node-commonjs migration:generate ./src/migrations/CreateMedicationReminderTable -d ./src/data-source.ts
+
+de las 3 maneras  para generar la migracion
 npx typeorm-ts-node-commonjs migration:generate ./src/migrations/RolToEnum -d ./src/data-source.ts
 
 -- ejecuto la migracion 
