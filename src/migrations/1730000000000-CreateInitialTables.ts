@@ -1,33 +1,76 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateInitialTables1743784190502 implements MigrationInterface {
+export class UpdateMedicationReminderTable1743784190503
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Comando SQL para crear la tabla medication_reminder
-    // Asegúrate de que los tipos de datos coincidan exactamente con tu entidad
-    // NOTA: La columna 'type' NO se incluye aquí porque la migración 1739677865391 la añade después.
+    // Primero, verificamos si la columna type existe
+    const hasTypeColumn = await queryRunner.hasColumn(
+      'medication_reminder',
+      'type',
+    );
+    if (!hasTypeColumn) {
+      await queryRunner.query(`
+                ALTER TABLE "medication_reminder"
+                ADD COLUMN "type" character varying NOT NULL DEFAULT 'medication'
+            `);
+    }
+
+    // Actualizamos los timestamps para usar timezone si no lo están usando
     await queryRunner.query(`
-            CREATE TABLE "medication_reminder" (
-                "id" SERIAL PRIMARY KEY,
-                "userId" BIGINT NOT NULL,
-                "chatId" BIGINT NOT NULL,
-                "medicationName" character varying NOT NULL,
-                "dosage" character varying NOT NULL,
-                "reminderTime" TIME NOT NULL,
-                "daysOfWeek" integer array NOT NULL,
-                "isActive" boolean NOT NULL DEFAULT true,
-                "timezone" character varying NOT NULL,
-                "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                "updatedAt" TIMESTAMP
-            )
+            ALTER TABLE "medication_reminder"
+            ALTER COLUMN "createdAt" TYPE TIMESTAMP WITH TIME ZONE,
+            ALTER COLUMN "updatedAt" TYPE TIMESTAMP WITH TIME ZONE
         `);
-    // Puedes añadir aquí otros comandos CREATE TABLE para otras tablas iniciales si es necesario
+
+    // Aseguramos que updatedAt tenga un valor por defecto
+    await queryRunner.query(`
+            ALTER TABLE "medication_reminder"
+            ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP
+        `);
+
+    // Crear el trigger para actualizar automáticamente updatedAt si no existe
+    await queryRunner.query(`
+            CREATE OR REPLACE FUNCTION update_updated_at_column()
+            RETURNS TRIGGER AS $$
+            BEGIN
+                NEW."updatedAt" = CURRENT_TIMESTAMP;
+                RETURN NEW;
+            END;
+            $$ language 'plpgsql';
+        `);
+
+    // Verificamos si el trigger ya existe antes de crearlo
+    const triggerExists = await queryRunner.query(`
+            SELECT 1 FROM pg_trigger 
+            WHERE tgname = 'update_medication_reminder_updated_at'
+        `);
+
+    if (!triggerExists.length) {
+      await queryRunner.query(`
+                CREATE TRIGGER update_medication_reminder_updated_at
+                    BEFORE UPDATE ON "medication_reminder"
+                    FOR EACH ROW
+                    EXECUTE FUNCTION update_updated_at_column();
+            `);
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Comando SQL para eliminar la tabla medication_reminder
-    await queryRunner.query(`
-            DROP TABLE "medication_reminder"
-        `);
-    // Añade aquí comandos DROP TABLE para otras tablas que hayas creado en 'up'
+    // Solo eliminamos lo que agregamos, manteniendo los datos existentes
+    const hasTypeColumn = await queryRunner.hasColumn(
+      'medication_reminder',
+      'type',
+    );
+    if (hasTypeColumn) {
+      await queryRunner.query(`
+                ALTER TABLE "medication_reminder" DROP COLUMN "type"
+            `);
+    }
+
+    await queryRunner.query(
+      `DROP TRIGGER IF EXISTS update_medication_reminder_updated_at ON "medication_reminder"`,
+    );
+    await queryRunner.query(`DROP FUNCTION IF EXISTS update_updated_at_column`);
   }
 }
