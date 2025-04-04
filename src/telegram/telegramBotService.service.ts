@@ -18,6 +18,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   private readonly MAX_RETRIES = 5;
   private readonly RETRY_DELAY = 5000;
   private readonly redis = new Redis(); // Instancia de Redis
+  private readonly lockKey = 'telegram_bot_service_lock';
+  private isLockHolder = false;
+  private lockInterval: NodeJS.Timeout;
 
   constructor(private configService: ConfigService) {
     this.isDevelopment = configService.get('NODE_ENV') === 'development';
@@ -58,58 +61,144 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       await this.redis.ping();
 
       const lockKey = 'telegram_bot_lock';
-      const lockAcquired = await this.acquireLock(lockKey, 60000);
+      const lockAcquired = await this.acquireLock(30000);
 
       if (!lockAcquired) {
         this.logger.warn('Otra instancia del bot ya está ejecutándose.');
         return;
       }
 
+      this.isLockHolder = true;
+      // Inicio el intervalo de renovacion del lock
+      this.startLockRenewal();
+
       await this.initializeBot();
     } catch (error) {
       this.logger.error('Error during initialization:', error);
+      //
+      await this.releaseLock();
       throw error;
     }
   }
 
+  // async onModuleDestroy() {
+  //   if (this.bot) {
+  //     try {
+  //       // Asegurarse de limpiar webhooks y detener polling antes de destruir
+  //       await this.bot.stopPolling();
+  //       await this.bot.deleteWebHook();
+  //     } catch (error) {
+  //       this.logger.error('Error during cleanup:', error);
+  //     }
+  //   }
+  // }
+
   async onModuleDestroy() {
-    if (this.bot) {
-      try {
-        // Asegurarse de limpiar webhooks y detener polling antes de destruir
+    try {
+      if (this.lockInterval) {
+        clearInterval(this.lockInterval);
+      }
+
+      if (this.isLockHolder) {
+        await this.releaseLock();
+      }
+
+      if (this.bot) {
         await this.bot.stopPolling();
         await this.bot.deleteWebHook();
-      } catch (error) {
-        this.logger.error('Error during cleanup:', error);
       }
+    } catch (error) {
+      this.logger.error('Error during cleanup:', error);
     }
   }
 
-  private async acquireLock(lockKey: string, ttl: number): Promise<boolean> {
-    const result = await this.redis.set(lockKey, 'locked', 'PX', ttl, 'NX');
-    return result === 'OK';
-  }
-
-  private async releaseLock(lockKey: string): Promise<void> {
-    await this.redis.del(lockKey);
-  }
-
-  // private async initializeBot() {
-  //   const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
-  //   if (!token) {
-  //     throw new Error('TELEGRAM_BOT_TOKEN no está configurado');
-  //   }
-
-  //   try {
-  //     if (this.isDevelopment) {
-  //       await this.initializePollingBot(token);
-  //     } else {
-  //       await this.initializeWebhookBot(token);
-  //     }
-  //   } catch (error) {
-  //     this.logger.error('Error initializing bot:', error);
-  //     throw error;
-  //   }
+  // private async acquireLock(lockKey: string, ttl: number): Promise<boolean> {
+  //   const result = await this.redis.set(lockKey, 'locked', 'PX', ttl, 'NX');
+  //   return result === 'OK';
   // }
+
+  private async acquireLock(ttl: number): Promise<boolean> {
+    try {
+      const result = await this.redis.set(
+        this.lockKey,
+        process.pid.toString(),
+        'PX',
+        ttl,
+        'NX',
+      );
+      return result === 'OK';
+    } catch (error) {
+      this.logger.error('Error acquiring lock:', error);
+      return false;
+    }
+  }
+
+  // private async releaseLock(lockKey: string): Promise<void> {
+  //   await this.redis.del(lockKey);
+  // }
+
+  private async releaseLock(): Promise<void> {
+    try {
+      // Solo liberar el lock si somos el propietario
+      const lockValue = await this.redis.get(this.lockKey);
+      if (lockValue === process.pid.toString()) {
+        await this.redis.del(this.lockKey);
+        this.isLockHolder = false;
+      }
+    } catch (error) {
+      this.logger.error('Error releasing lock:', error);
+    }
+  }
+
+  private startLockRenewal() {
+    // Renovar el lock cada 20 segundos
+    this.lockInterval = setInterval(async () => {
+      try {
+        const lockValue = await this.redis.get(this.lockKey);
+        if (lockValue === process.pid.toString()) {
+          await this.redis.pexpire(this.lockKey, 30000); // Renovar por 30 segundos
+        } else {
+          // Perdimos el lock
+          this.logger.warn('Lock perdido. Deteniendo el bot...');
+          clearInterval(this.lockInterval);
+          this.isLockHolder = false;
+          if (this.bot) {
+            await this.bot.stopPolling();
+          }
+        }
+      } catch (error) {
+        this.logger.error('Error renovando lock:', error);
+      }
+    }, 20000);
+  }
+
+  private async handleConflictError(): Promise<void> {
+    try {
+      if (!this.isLockHolder) {
+        this.logger.warn(
+          'No somos el holder del lock. Ignorando conflicto 409.',
+        );
+        return;
+      }
+
+      this.logger.warn('Conflicto detectado (409). Reiniciando bot...');
+      await this.bot.stopPolling();
+      await this.bot.deleteWebHook();
+      await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY));
+
+      // Verificar que aún tenemos el lock antes de reiniciar
+      const lockValue = await this.redis.get(this.lockKey);
+      if (lockValue === process.pid.toString()) {
+        await this.bot.startPolling();
+        this.logger.log('Bot reiniciado exitosamente después de conflicto 409');
+      } else {
+        this.logger.warn('Lock perdido durante el reinicio. Abortando.');
+        this.isLockHolder = false;
+      }
+    } catch (error) {
+      this.logger.error('Error al manejar conflicto 409:', error);
+    }
+  }
 
   private async initializeBot() {
     const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
@@ -132,31 +221,6 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       throw error;
     }
   }
-
-  // private async initializePollingBot(token: string) {
-  //   try {
-  //     // Primero, intentamos eliminar cualquier webhook existente
-  //     const tempBot = new TelegramBot(token, { polling: false });
-  //     await tempBot.deleteWebHook();
-
-  //     // Luego iniciamos el bot con polling
-  //     this.bot = new TelegramBot(token, {
-  //       polling: {
-  //         params: {
-  //           timeout: 30,
-  //         },
-  //         interval: 2000,
-  //         autoStart: true,
-  //       },
-  //     });
-
-  //     this.setupErrorHandlers();
-  //     this.logger.log('Bot iniciado en modo polling (desarrollo)');
-  //   } catch (error) {
-  //     this.logger.error('Error al inicializar bot en modo polling:', error);
-  //     throw error;
-  //   }
-  // }
 
   private async initializePollingBot(token: string) {
     try {
@@ -241,19 +305,19 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async handleConflictError(): Promise<void> {
-    try {
-      this.logger.warn('Conflicto detectado (409). Reiniciando bot...');
-      await this.bot.stopPolling();
-      await this.bot.deleteWebHook();
-      await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY)); // Espera antes de reiniciar
-      await this.bot.startPolling();
+  // private async handleConflictError(): Promise<void> {
+  //   try {
+  //     this.logger.warn('Conflicto detectado (409). Reiniciando bot...');
+  //     await this.bot.stopPolling();
+  //     await this.bot.deleteWebHook();
+  //     await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY)); // Espera antes de reiniciar
+  //     await this.bot.startPolling();
 
-      this.logger.log('Bot reiniciado exitosamente después de conflicto 409');
-    } catch (error) {
-      this.logger.error('Error al manejar conflicto 409:', error);
-    }
-  }
+  //     this.logger.log('Bot reiniciado exitosamente después de conflicto 409');
+  //   } catch (error) {
+  //     this.logger.error('Error al manejar conflicto 409:', error);
+  //   }
+  // }
 
   // Método público para enviar mensajes
   async sendMessage(
