@@ -50,20 +50,95 @@ jobs:
           PGPORT: 5432
           PGUSER: postgres
           PGPASSWORD: test_password
-          PGDATABASE: postgres
+          PGDATABASE: postgres # Conectarse a la DB por defecto para poder eliminar/crear la de test
         run: |
-          sudo apt-get install -y postgresql-client
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          # Asegurarse de que la conexión funciona antes de intentar operaciones
+          pg_isready -h $PGHOST -p $PGPORT -U $PGUSER
           # Check if the database exists and drop it if it does
-          psql -v ON_ERROR_STOP=1 --username "$PGUSER" --dbname "$PGDATABASE" -c "DROP DATABASE IF EXISTS test_db;"
-          # Create the database
-          createdb test_db
+          psql -v ON_ERROR_STOP=1 --username "$PGUSER" --dbname "$PGDATABASE" -c "DROP DATABASE IF EXISTS test_db WITH (FORCE);"
+          # Create the database especificando el usuario
+          createdb -U "$PGUSER" test_db
 
       - name: Run migrations
         env:
           DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
-        run: npm run migration:run
+          # Añadir un pequeño retraso por si acaso la DB tarda en estar lista tras la creación
+          # RUNNER_OS es 'Linux' en los runners de GitHub
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then sleep 5; fi
+          npm run migration:run
 
       - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
         run: npm test
+# name: CI Backend
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     services:
+#       postgres:
+#         image: postgres:15
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: test_password
+#           POSTGRES_DB: test_db
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd "pg_isready -U postgres"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 18
+
+#       - name: Install dependencies
+#         run: npm install
+
+#       - name: List directory contents
+#         run: ls -R
+
+#       - name: Build TypeScript
+#         run: npm run build
+
+#       - name: Create test database
+#         env:
+#           PGHOST: localhost
+#           PGPORT: 5432
+#           PGUSER: postgres
+#           PGPASSWORD: test_password
+#           PGDATABASE: postgres
+#         run: |
+#           sudo apt-get install -y postgresql-client
+#           # Check if the database exists and drop it if it does
+#           psql -v ON_ERROR_STOP=1 --username "$PGUSER" --dbname "$PGDATABASE" -c "DROP DATABASE IF EXISTS test_db;"
+#           # Create the database
+#           createdb test_db
+
+#       - name: Run migrations
+#         env:
+#           DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
+#         run: npm run migration:run
+
+#       - name: Run tests
+#         env:
+#           DATABASE_URL: postgres://postgres:test_password@localhost:5432/test_db
+#         run: npm test
