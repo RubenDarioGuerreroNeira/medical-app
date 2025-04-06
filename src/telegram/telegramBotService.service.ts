@@ -3,10 +3,10 @@ import {
   Logger,
   OnModuleInit,
   OnModuleDestroy,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as TelegramBot from 'node-telegram-bot-api';
-import Redis from 'ioredis';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as TelegramBot from "node-telegram-bot-api";
+import Redis from "ioredis";
 
 @Injectable()
 export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
@@ -17,82 +17,161 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   private retryCount = 0;
   private readonly MAX_RETRIES = 5;
   private readonly RETRY_DELAY = 5000;
-  private readonly redis = new Redis(); // Instancia de Redis
-  private readonly lockKey = 'telegram_bot_service_lock';
+  private redis: Redis | null = null; // Instancia de Redis
+  private readonly lockKey = "telegram_bot_service_lock";
   private isLockHolder = false;
   private lockInterval: NodeJS.Timeout;
 
   constructor(private configService: ConfigService) {
-    this.isDevelopment = configService.get('NODE_ENV') === 'development';
-    this.webhookUrl = configService.get('TELEGRAM_WEBHOOK_URL');
+    this.isDevelopment = configService.get("NODE_ENV") === "development";
+    this.webhookUrl = configService.get("TELEGRAM_WEBHOOK_URL");
 
-    // Mejorada la configuración de Redis
-    this.redis = new Redis({
-      host: this.configService.get<string>('REDIS_HOST') || 'localhost',
-      port: this.configService.get<number>('REDIS_PORT') || 6379,
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      maxRetriesPerRequest: 3,
-      enableReadyCheck: true,
-      reconnectOnError: (err) => {
-        const targetError = 'READONLY';
-        if (err.message.includes(targetError)) {
-          return true;
+    // inicializo como null por defecto
+    this.redis = null;
+
+    // Cambiar la lógica para que sea más explícita
+    const useRedis = this.configService.get<string>("USE_REDIS");
+    const shouldUseRedis =
+      useRedis !== "false" && useRedis !== undefined && useRedis !== "";
+
+    if (shouldUseRedis) {
+      try {
+        // Mejorada la configuración de Redis
+        this.redis = new Redis({
+          host: this.configService.get<string>("REDIS_HOST") || "localhost",
+          port: this.configService.get<number>("REDIS_PORT") || 6379,
+          retryStrategy: (times) => {
+            // Si estamos en desarrollo y Redis falla, deshabilitarlo después de algunos intentos
+            if (this.isDevelopment && times > 2) {
+              this.logger.warn(
+                "Redis connection failed multiple times in development. Disabling Redis."
+              );
+              return null; // Esto detiene los reintentos
+            }
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+          maxRetriesPerRequest: this.isDevelopment ? 1 : 3,
+          enableReadyCheck: true,
+          reconnectOnError: (err) => {
+            const targetError = "READONLY";
+            if (err.message.includes(targetError)) {
+              return true;
+            }
+            return false;
+          },
+        });
+
+        // Manejadores de eventos de Redis
+        this.redis.on("error", (error) => {
+          this.logger.error("Redis connection error:", error);
+          // En desarrollo, si hay error de conexión, deshabilitamos Redis
+          if (this.isDevelopment && error.message.includes("ECONNREFUSED")) {
+            this.logger.warn(
+              "Redis connection refused in development. Disabling Redis."
+            );
+            this.redis = null;
+          }
+        });
+
+        this.redis.on("connect", () => {
+          this.logger.log("Successfully connected to Redis");
+        });
+
+        // establezo un time out para la conexion inicial
+        setTimeout(() => {
+          if (!this.redis) {
+            this.logger.warn("Redis connection timeout. Disabling Redis.");
+          }
+        }, 5000);
+      } catch (error) {
+        this.logger.error("Error initializing Redis:", error);
+        if (this.isDevelopment) {
+          this.logger.warn(
+            "Disabling Redis in development due to initialization error"
+          );
+          this.redis = null;
         }
-        return false;
-      },
-    });
-
-    // Manejadores de eventos de Redis
-    this.redis.on('error', (error) => {
-      this.logger.error('Redis connection error:', error);
-    });
-
-    this.redis.on('connect', () => {
-      this.logger.log('Successfully connected to Redis');
-    });
+      }
+    } else {
+      this.logger.log("Redis explicitly disabled by configuration");
+      this.redis = null;
+    }
   }
 
+  
   async onModuleInit() {
     try {
-      // Verificar conexión a Redis antes de continuar
-      await this.redis.ping();
+      let canInitializeBot = true;
 
-      const lockKey = 'telegram_bot_lock';
-      const lockAcquired = await this.acquireLock(30000);
+      // Verificar si ya hay otra instancia del bot ejecutándose
+      // Si TelegramService ya inició una instancia, no iniciaremos otra
+      try {
+        const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+        const tempBot = new TelegramBot(token, { polling: false });
+        const updates = await tempBot.getUpdates({ limit: 1, timeout: 0 });
 
-      if (!lockAcquired) {
-        this.logger.warn('Otra instancia del bot ya está ejecutándose.');
-        return;
+        // Si hay actualizaciones pendientes, probablemente ya hay un bot activo
+        if (updates && updates.length > 0) {
+          this.logger.log(
+            "Se detectó otra instancia del bot activa. No se iniciará el polling en TelegramBotService."
+          );
+          canInitializeBot = false;
+        }
+      } catch (error) {
+        // Si hay un error al verificar, continuamos con la inicialización normal
+        this.logger.warn(
+          "Error al verificar instancias existentes del bot:",
+          error
+        );
       }
 
-      this.isLockHolder = true;
-      // Inicio el intervalo de renovacion del lock
-      this.startLockRenewal();
+      // Verificar conexión a Redis antes de continuar (si está habilitado)
+      if (this.redis && canInitializeBot) {
+        try {
+          await this.redis.ping();
 
-      await this.initializeBot();
+          const lockAcquired = await this.acquireLock(30000);
+          if (!lockAcquired) {
+            this.logger.warn("Otra instancia del bot ya está ejecutándose.");
+            canInitializeBot = false;
+          } else {
+            this.isLockHolder = true;
+            // Inicio el intervalo de renovacion del lock
+            this.startLockRenewal();
+          }
+        } catch (error) {
+          this.logger.error("Error connecting to Redis:", error);
+          // En desarrollo, continuamos sin Redis
+          if (this.isDevelopment) {
+            this.logger.warn("Continuing without Redis in development mode");
+          } else {
+            throw error;
+          }
+        }
+      } else if (!this.redis) {
+        // Redis está deshabilitado, continuamos sin verificar lock
+        this.logger.log("Initializing bot without Redis lock");
+      }
+
+      if (canInitializeBot) {
+        await this.initializeBot();
+      } else {
+        // Crear una instancia del bot sin polling para poder usarla en otros servicios
+        const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+        this.bot = new TelegramBot(token, { polling: false });
+        this.logger.log("Bot inicializado sin polling (modo pasivo)");
+      }
     } catch (error) {
-      this.logger.error('Error during initialization:', error);
-      //
-      await this.releaseLock();
+      this.logger.error("Error during initialization:", error);
+      if (this.redis && this.isLockHolder) {
+        await this.releaseLock();
+      }
       throw error;
     }
   }
 
-  // async onModuleDestroy() {
-  //   if (this.bot) {
-  //     try {
-  //       // Asegurarse de limpiar webhooks y detener polling antes de destruir
-  //       await this.bot.stopPolling();
-  //       await this.bot.deleteWebHook();
-  //     } catch (error) {
-  //       this.logger.error('Error during cleanup:', error);
-  //     }
-  //   }
-  // }
-
+  
   async onModuleDestroy() {
     try {
       if (this.lockInterval) {
@@ -108,36 +187,32 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         await this.bot.deleteWebHook();
       }
     } catch (error) {
-      this.logger.error('Error during cleanup:', error);
+      this.logger.error("Error during cleanup:", error);
     }
   }
 
-  // private async acquireLock(lockKey: string, ttl: number): Promise<boolean> {
-  //   const result = await this.redis.set(lockKey, 'locked', 'PX', ttl, 'NX');
-  //   return result === 'OK';
-  // }
-
+  
   private async acquireLock(ttl: number): Promise<boolean> {
+    if (!this.redis) return true; // Si no hay Redis, siempre devolvemos true
+
     try {
       const result = await this.redis.set(
         this.lockKey,
         process.pid.toString(),
-        'PX',
+        "PX",
         ttl,
-        'NX',
+        "NX"
       );
-      return result === 'OK';
+      return result === "OK";
     } catch (error) {
-      this.logger.error('Error acquiring lock:', error);
-      return false;
+      this.logger.error("Error acquiring lock:", error);
+      return this.isDevelopment; // En desarrollo, permitimos continuar
     }
   }
 
-  // private async releaseLock(lockKey: string): Promise<void> {
-  //   await this.redis.del(lockKey);
-  // }
-
   private async releaseLock(): Promise<void> {
+    if (!this.redis) return; // Si no hay Redis, no hacemos nada
+
     try {
       // Solo liberar el lock si somos el propietario
       const lockValue = await this.redis.get(this.lockKey);
@@ -146,11 +221,13 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         this.isLockHolder = false;
       }
     } catch (error) {
-      this.logger.error('Error releasing lock:', error);
+      this.logger.error("Error releasing lock:", error);
     }
   }
 
   private startLockRenewal() {
+    if (!this.redis) return; // Si no hay Redis, no hacemos nada
+
     // Renovar el lock cada 20 segundos
     this.lockInterval = setInterval(async () => {
       try {
@@ -159,7 +236,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
           await this.redis.pexpire(this.lockKey, 30000); // Renovar por 30 segundos
         } else {
           // Perdimos el lock
-          this.logger.warn('Lock perdido. Deteniendo el bot...');
+          this.logger.warn("Lock perdido. Deteniendo el bot...");
           clearInterval(this.lockInterval);
           this.isLockHolder = false;
           if (this.bot) {
@@ -167,43 +244,65 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
           }
         }
       } catch (error) {
-        this.logger.error('Error renovando lock:', error);
+        this.logger.error("Error renovando lock:", error);
       }
     }, 20000);
   }
+
 
   private async handleConflictError(): Promise<void> {
     try {
       if (!this.isLockHolder) {
         this.logger.warn(
-          'No somos el holder del lock. Ignorando conflicto 409.',
+          "No somos el holder del lock. Ignorando conflicto 409."
         );
+
+        // Si no somos el holder del lock, desactivamos el polling para evitar más conflictos
+        try {
+          await this.bot.stopPolling();
+          this.logger.log(
+            "Polling detenido para evitar conflictos adicionales"
+          );
+        } catch (stopError) {
+          this.logger.error("Error al detener polling:", stopError);
+        }
+
         return;
       }
 
-      this.logger.warn('Conflicto detectado (409). Reiniciando bot...');
+      this.logger.warn("Conflicto detectado (409). Reiniciando bot...");
       await this.bot.stopPolling();
       await this.bot.deleteWebHook();
       await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY));
 
-      // Verificar que aún tenemos el lock antes de reiniciar
-      const lockValue = await this.redis.get(this.lockKey);
-      if (lockValue === process.pid.toString()) {
-        await this.bot.startPolling();
-        this.logger.log('Bot reiniciado exitosamente después de conflicto 409');
+      // Verificar que aún tenemos el lock antes de reiniciar (solo si Redis está habilitado)
+      if (this.redis) {
+        const lockValue = await this.redis.get(this.lockKey);
+        if (lockValue === process.pid.toString()) {
+          await this.bot.startPolling();
+          this.logger.log(
+            "Bot reiniciado exitosamente después de conflicto 409"
+          );
+        } else {
+          this.logger.warn("Lock perdido durante el reinicio. Abortando.");
+          this.isLockHolder = false;
+        }
       } else {
-        this.logger.warn('Lock perdido durante el reinicio. Abortando.');
-        this.isLockHolder = false;
+        // Si Redis está deshabilitado, simplemente reiniciamos
+        await this.bot.startPolling();
+        this.logger.log(
+          "Bot reiniciado exitosamente después de conflicto 409 (sin Redis)"
+        );
       }
     } catch (error) {
-      this.logger.error('Error al manejar conflicto 409:', error);
+      this.logger.error("Error al manejar conflicto 409:", error);
     }
   }
 
   private async initializeBot() {
-    const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     if (!token) {
-      throw new Error('TELEGRAM_BOT_TOKEN no está configurado');
+      throw new Error("TELEGRAM_BOT_TOKEN no está configurado");
     }
 
     try {
@@ -217,7 +316,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         await this.initializeWebhookBot(token);
       }
     } catch (error) {
-      this.logger.error('Error initializing bot:', error);
+      this.logger.error("Error initializing bot:", error);
       throw error;
     }
   }
@@ -236,9 +335,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       // Mejorado el manejo de errores
       this.setupErrorHandlers();
-      this.logger.log('Bot iniciado en modo polling (desarrollo)');
+      this.logger.log("Bot iniciado en modo polling (desarrollo)");
     } catch (error) {
-      this.logger.error('Error al inicializar bot en modo polling:', error);
+      this.logger.error("Error al inicializar bot en modo polling:", error);
       throw error;
     }
   }
@@ -252,25 +351,25 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       await this.bot.setWebHook(`${this.webhookUrl}/telegram-webhook`);
 
       this.logger.log(
-        `Bot iniciado en modo webhook (producción) - ${this.webhookUrl}`,
+        `Bot iniciado en modo webhook (producción) - ${this.webhookUrl}`
       );
     } catch (error) {
-      this.logger.error('Error al inicializar bot en modo webhook:', error);
+      this.logger.error("Error al inicializar bot en modo webhook:", error);
       throw error;
     }
   }
 
   private setupErrorHandlers() {
-    this.bot.on('polling_error', async (error) => {
+    this.bot.on("polling_error", async (error) => {
       await this.handlePollingError(error);
     });
 
-    this.bot.on('error', async (error) => {
+    this.bot.on("error", async (error) => {
       await this.handlePollingError(error);
     });
 
-    this.bot.on('webhook_error', (error) => {
-      this.logger.error('Error de webhook:', error);
+    this.bot.on("webhook_error", (error) => {
+      this.logger.error("Error de webhook:", error);
     });
   }
 
@@ -278,13 +377,13 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     this.logger.error(`Error de polling: ${error.message}`);
 
     // Si es un error 409, intentamos reiniciar el polling
-    if (error.message.includes('409')) {
+    if (error.message.includes("409")) {
       await this.handleConflictError();
       return;
     }
 
     if (this.retryCount >= this.MAX_RETRIES) {
-      this.logger.error('Máximo número de reintentos alcanzado');
+      this.logger.error("Máximo número de reintentos alcanzado");
       this.retryCount = 0;
       return;
     }
@@ -294,35 +393,23 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY));
       await this.bot.startPolling();
 
-      this.logger.log('Polling reiniciado exitosamente');
+      this.logger.log("Polling reiniciado exitosamente");
       this.retryCount = 0;
     } catch (retryError) {
       this.retryCount++;
       this.logger.error(
         `Error al reiniciar polling (intento ${this.retryCount}/${this.MAX_RETRIES}):`,
-        retryError,
+        retryError
       );
     }
   }
 
-  // private async handleConflictError(): Promise<void> {
-  //   try {
-  //     this.logger.warn('Conflicto detectado (409). Reiniciando bot...');
-  //     await this.bot.stopPolling();
-  //     await this.bot.deleteWebHook();
-  //     await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY)); // Espera antes de reiniciar
-  //     await this.bot.startPolling();
 
-  //     this.logger.log('Bot reiniciado exitosamente después de conflicto 409');
-  //   } catch (error) {
-  //     this.logger.error('Error al manejar conflicto 409:', error);
-  //   }
-  // }
 
   // Método público para enviar mensajes
   async sendMessage(
     chatId: number,
-    text: string,
+    text: string
   ): Promise<TelegramBot.Message> {
     try {
       return await this.bot.sendMessage(chatId, text);

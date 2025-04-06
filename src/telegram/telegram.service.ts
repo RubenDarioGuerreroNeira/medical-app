@@ -57,7 +57,6 @@ export class TelegramService {
     this.bot = new TelegramBot(token, { polling: true });
     this.initializeBot();
     this.agregarComandosClinica(this.bot);
-
     // manejador para callbacks queries
     this.bot.on("callback_query", async (callbackQuery) => {
       await this.handleCallbackQuery(callbackQuery);

@@ -40,13 +40,17 @@ export class ReminderService {
     activeReminders.forEach((reminder) => this.scheduleReminder(reminder));
   }
 
+  private validateDaysOfWeek(daysOfWeek: number[]): boolean {
+    return daysOfWeek.every((day) => day >= 0 && day <= 6);
+  }
+
   async createReminder(
     chatId: number,
     reminderData: {
       medicationName: string;
       dosage: string;
       reminderTime: string;
-      daysOfWeek?: number[];
+      daysOfWeek: number[];
       timezone?: string;
     },
   ): Promise<MedicationReminder> {
@@ -54,9 +58,13 @@ export class ReminderService {
       medicationName,
       dosage,
       reminderTime,
-      daysOfWeek = [0, 1, 2, 3, 4, 5, 6],
+      daysOfWeek,
       timezone = 'America/Caracas',
     } = reminderData;
+
+    if (!this.validateDaysOfWeek(daysOfWeek) || daysOfWeek.length === 0) {
+      throw new Error('Los Días deben estar entre 0(Domingo y 6 (Sabado)');
+    }
 
     const reminder = this.reminderRepository.create({
       chatId: chatId.toString(),

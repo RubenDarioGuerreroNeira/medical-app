@@ -45,7 +45,7 @@ import * as TelegramBot from 'node-telegram-bot-api';
       provide: 'TELEGRAM_BOT',
       useFactory: async (configService: ConfigService) => {
         const token = configService.get<string>('TELEGRAM_BOT_TOKEN');
-        return new TelegramBot(token, { polling: true });
+        return new TelegramBot(token, { polling: false });
       },
       inject: [ConfigService],
     },
