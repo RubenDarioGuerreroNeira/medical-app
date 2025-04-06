@@ -29,7 +29,7 @@ export class OSMService {
 
   async buscarFarmaciasEnTachira(): Promise<Location[] | null> {
     try {
-      const query = "farmacias en Táchira, Venezuela";
+      const query = "Farmacias Cercanas";
       const url = `${this.nominatimBaseUrl}/search`;
       const params = new URLSearchParams({
         q: query,
@@ -59,44 +59,140 @@ export class OSMService {
     }
   }
 
+  // async buscarFarmaciaCercana(
+  //   latitude: number,
+  //   longitude: number
+  // ): Promise<PharmacyResponse | null> {
+  //   try {
+  //     this.validateCoordinates(latitude, longitude);
+  //     const url = `${this.nominatimBaseUrl}/reverse`;
+  //     const params = new URLSearchParams({
+  //       lat: latitude.toString(),
+  //       lon: longitude.toString(),
+  //       format: "json",
+  //       addressdetails: "1",
+  //       zoom: "18", // Nivel de detalle
+  //     });
+
+  //     const response = await this.fetchWithRetry(`${url}?${params}`);
+  //     const data = await this.validateResponse<NominatimResponse>(response);
+
+  //     if (!data || !data.address) {
+  //       throw new HttpException(
+  //         "No se encontraron farmacias cercanas",
+  //         HttpStatus.NOT_FOUND
+  //       );
+  //     }
+
+  //     return {
+  //       name: data.display_name,
+  //       location: {
+  //         lat: parseFloat(data.lat),
+  //         lng: parseFloat(data.lon),
+  //       },
+  //       address: data.address.road || "Dirección no disponible",
+  //       isOpen: false,
+  //       rating: null,
+  //     };
+  //   } catch (error) {
+  //     this.handleError("buscarFarmaciaCercana", error);
+  //     return null;
+  //   }
+  // }
+
   async buscarFarmaciaCercana(
     latitude: number,
     longitude: number
-  ): Promise<PharmacyResponse | null> {
+  ): Promise<PharmacyResponse[] | null> {
     try {
       this.validateCoordinates(latitude, longitude);
-      const url = `${this.nominatimBaseUrl}/reverse`;
-      const params = new URLSearchParams({
-        lat: latitude.toString(),
-        lon: longitude.toString(),
-        format: "json",
-        addressdetails: "1",
-        zoom: "18", // Nivel de detalle
-      });
-
-      const response = await this.fetchWithRetry(`${url}?${params}`);
-      const data = await this.validateResponse<NominatimResponse>(response);
-
-      if (!data || !data.address) {
-        throw new HttpException(
-          "No se encontraron farmacias cercanas",
-          HttpStatus.NOT_FOUND
+      
+      // Usar Overpass API para buscar farmacias cercanas
+      const overpassQuery = `
+        [out:json];
+        (
+          node["amenity"="pharmacy"](around:1000,${latitude},${longitude});
+          way["amenity"="pharmacy"](around:1000,${latitude},${longitude});
+          relation["amenity"="pharmacy"](around:1000,${latitude},${longitude});
         );
+        out body;
+        >;
+        out skel qt;
+      `;
+      
+      const url = this.OVERPASS_BASE_URL;
+      const params = new URLSearchParams({
+        data: overpassQuery
+      });
+  
+      const response = await axios.post(url, params.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'TelegramBot/1.0'
+        }
+      });
+  
+      if (!response.data || !response.data.elements || response.data.elements.length === 0) {
+        this.logger.warn("No se encontraron farmacias cercanas");
+        return null;
       }
-
-      return {
-        name: data.display_name,
-        location: {
-          lat: parseFloat(data.lat),
-          lng: parseFloat(data.lon),
-        },
-        address: data.address.road || "Dirección no disponible",
-        isOpen: false,
-        rating: null,
-      };
+  
+      // Procesar los resultados
+      const farmacias = response.data.elements
+        .filter(element => element.tags && element.tags.amenity === 'pharmacy')
+        .map(element => {
+          return {
+            name: element.tags.name || 'Farmacia',
+            location: {
+              lat: element.lat || (element.center ? element.center.lat : latitude),
+              lng: element.lon || (element.center ? element.center.lon : longitude)
+            },
+            address: [
+              element.tags['addr:street'],
+              element.tags['addr:housenumber']
+            ].filter(Boolean).join(' ') || 'Dirección no disponible',
+            isOpen: element.tags.opening_hours ? this.checkIfOpen(element.tags.opening_hours) : false,
+            rating: null,
+            telefono: element.tags.phone || element.tags['contact:phone'] || null,
+            horario: element.tags.opening_hours || 'Horario no disponible'
+          };
+        });
+  
+      return farmacias.length > 0 ? farmacias : null;
     } catch (error) {
       this.handleError("buscarFarmaciaCercana", error);
       return null;
+    }
+  }
+  
+  // Método auxiliar para verificar si está abierto según el horario
+  private checkIfOpen(openingHours: string): boolean {
+    try {
+      // Implementación básica, se puede mejorar
+      const now = new Date();
+      const day = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][now.getDay()];
+      const time = now.getHours() * 100 + now.getMinutes();
+      
+      // Buscar el día actual en el string de horarios
+      if (openingHours.includes(day)) {
+        const dayPattern = new RegExp(`${day}\\s+(\\d{2}:\\d{2})-(\\d{2}:\\d{2})`);
+        const match = openingHours.match(dayPattern);
+        
+        if (match) {
+          const [_, openTime, closeTime] = match;
+          const [openHour, openMin] = openTime.split(':').map(Number);
+          const [closeHour, closeMin] = closeTime.split(':').map(Number);
+          
+          const openTimeValue = openHour * 100 + openMin;
+          const closeTimeValue = closeHour * 100 + closeMin;
+          
+          return time >= openTimeValue && time <= closeTimeValue;
+        }
+      }
+      
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 

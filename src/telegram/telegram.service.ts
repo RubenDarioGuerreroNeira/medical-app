@@ -116,33 +116,6 @@ export class TelegramService {
     }
   }
 
-  //-----------farmacias-----------------
-
-  // Botones de Buscar Farmacias
-  private async enviarMenuPrincipal(chatId: number): Promise<void> {
-    const mensaje = "¿Qué deseas buscar?";
-    const opciones = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "📍 Buscar farmacias cercanas a mi ubicación",
-              callback_data: "solicitar_ubicacion_farmacia",
-            },
-          ],
-          [
-            {
-              text: "❓ Ayuda",
-              callback_data: "ayuda",
-            },
-          ],
-        ],
-      },
-    };
-
-    await this.bot.sendMessage(chatId, mensaje, opciones);
-  }
-
   // Método para cancelar la búsqueda y volver al menú principal
   private async cancelarBusqueda(chatId: number): Promise<void> {
     await this.bot.sendMessage(chatId, "Búsqueda cancelada", {
@@ -171,37 +144,6 @@ export class TelegramService {
       }
     }
     throw new Error("Max retries reached");
-  }
-
-  // Hacemos el método genérico para manejar diferentes tipos de respuesta
-  private async validateResponse<T>(response: Response): Promise<T> {
-    const data = (await response.json()) as T;
-
-    if (!data) {
-      throw new Error(
-        `Error en la respuesta de OpenStreetMap: ${JSON.stringify(data)}`
-      );
-    }
-
-    const status = this.determineStatus(data);
-    if (status !== OSMStatus.OK) {
-      switch (status) {
-        case OSMStatus.ZERO_RESULTS:
-          throw new HttpException(
-            "No se encontraron resultados",
-            HttpStatus.NOT_FOUND
-          );
-        case OSMStatus.REQUEST_DENIED:
-          throw new HttpException(
-            "Solicitud denegada por OpenStreetMap",
-            HttpStatus.FORBIDDEN
-          );
-        default:
-          throw new Error(`OpenStreetMap API Error: ${status}`);
-      }
-    }
-
-    return data;
   }
 
   // status de respuesta de osm map
@@ -374,6 +316,67 @@ export class TelegramService {
     }
   }
 
+  // private async mostrarFarmaCercanos(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   location: TelegramBot.Location
+  // ): Promise<void> {
+  //   try {
+  //     // Mostrar mensaje de "buscando..."
+  //     const searchingMessage = await bot.sendMessage(
+  //       chatId,
+  //       "Buscando Farmacias Cercanas a tu ubicación... 🔍"
+  //     );
+
+  //     const farmaciaResponse = await this.osmService.buscarFarmaciaCercana(
+  //       location.latitude,
+  //       location.longitude
+  //     );
+
+  //     // Eliminar mensaje de "buscando..."
+  //     await bot.deleteMessage(chatId, searchingMessage.message_id);
+
+  //     if (!farmaciaResponse) {
+  //       await bot.sendMessage(
+  //         chatId,
+  //         "No se encontraron centros médicos cercanos a tu ubicación en un radio de 1km.",
+  //         {
+  //           reply_markup: {
+  //             inline_keyboard: [
+  //               [
+  //                 {
+  //                   text: "🔍 Ampliar búsqueda",
+  //                   callback_data: "ampliar_busqueda",
+  //                 },
+  //               ],
+  //               [
+  //                 {
+  //                   text: "🔙 Volver al menú principal",
+  //                   callback_data: "menu_principal",
+  //                 },
+  //               ],
+  //             ],
+  //           },
+  //         }
+  //       );
+  //       return;
+  //     }
+  //     // Transformar PharmacyResponse a Farmacia
+  //     const farmacia: Farmacia = {
+  //       ...farmaciaResponse,
+  //       horario: farmaciaResponse.horario || "Horario no disponible",
+  //     };
+  //     await this.enviarInformacionFarma(bot, chatId, farmacia);
+  //   } catch (error) {
+  //     this.logger.error(
+  //       "Error al obtener información de los centros cercanos:",
+  //       error
+  //     );
+  //     await this.handleLocationError(chatId);
+  //   }
+  // }
+
+  // BUSCA FARMACIAS CERCANAS
   private async mostrarFarmaCercanos(
     bot: TelegramBot,
     chatId: number,
@@ -386,7 +389,7 @@ export class TelegramService {
         "Buscando Farmacias Cercanas a tu ubicación... 🔍"
       );
 
-      const farmaciaResponse = await this.osmService.buscarFarmaciaCercana(
+      const farmaciasResponse = await this.osmService.buscarFarmaciaCercana(
         location.latitude,
         location.longitude
       );
@@ -394,17 +397,17 @@ export class TelegramService {
       // Eliminar mensaje de "buscando..."
       await bot.deleteMessage(chatId, searchingMessage.message_id);
 
-      if (!farmaciaResponse) {
+      if (!farmaciasResponse || farmaciasResponse.length === 0) {
         await bot.sendMessage(
           chatId,
-          "No se encontraron centros médicos cercanos a tu ubicación en un radio de 1km.",
+          "No se encontraron farmacias cercanas a tu ubicación en un radio de 1km.",
           {
             reply_markup: {
               inline_keyboard: [
                 [
                   {
                     text: "🔍 Ampliar búsqueda",
-                    callback_data: "ampliar_busqueda",
+                    callback_data: "ampliar_busqueda_farmacias",
                   },
                 ],
                 [
@@ -419,20 +422,134 @@ export class TelegramService {
         );
         return;
       }
-      // Transformar PharmacyResponse a Farmacia
-      const farmacia: Farmacia = {
-        ...farmaciaResponse,
-        horario: farmaciaResponse.horario || "Horario no disponible",
-      };
-      await this.enviarInformacionFarma(bot, chatId, farmacia);
+
+      // Primero enviamos un mensaje con la cantidad de farmacias encontradas
+      await bot.sendMessage(
+        chatId,
+        `Se encontraron ${farmaciasResponse.length} farmacias cercanas a tu ubicación.`
+      );
+
+      // Enviamos información de cada farmacia (limitamos a 5 para no saturar)
+      const farmaciasToShow = farmaciasResponse.slice(0, 5);
+
+      for (const farmaciaResponse of farmaciasToShow) {
+        // Transformar PharmacyResponse a Farmacia
+        const farmacia: Farmacia = {
+          ...farmaciaResponse,
+          horario: farmaciaResponse.horario || "Horario no disponible",
+          coordenadas: farmaciaResponse.location,
+        };
+
+        await this.enviarInformacionFarma(bot, chatId, farmacia);
+      }
+
+      // Si hay más farmacias, ofrecemos mostrar más
+      if (farmaciasResponse.length > 5) {
+        await bot.sendMessage(
+          chatId,
+          `Hay ${
+            farmaciasResponse.length - 5
+          } farmacias más. ¿Deseas ver más resultados?`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Ver más farmacias",
+                    callback_data: "ver_mas_farmacias",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      } else {
+        // Si no hay más, solo mostramos el botón para volver al menú
+        await bot.sendMessage(
+          chatId,
+          "Estas son todas las farmacias encontradas en tu área.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
     } catch (error) {
       this.logger.error(
-        "Error al obtener información de los centros cercanos:",
+        "Error al obtener información de las farmacias cercanas:",
         error
       );
       await this.handleLocationError(chatId);
     }
   }
+
+  // private async enviarInformacionFarma(
+  //   bot: TelegramBot,
+  //   chatId: number,
+  //   farmacia: Farmacia
+  // ): Promise<void> {
+  //   try {
+  //     if (farmacia.coordenadas?.lat && farmacia.coordenadas?.lng) {
+  //       await bot.sendLocation(
+  //         chatId,
+  //         farmacia.coordenadas.lat,
+  //         farmacia.coordenadas.lng
+  //       );
+  //     }
+
+  //     const message = this.messageFormatter.formatFarmaMessage(farmacia);
+  //     const phoneUrl = this.messageFormatter.formatPhoneNumber(
+  //       farmacia.telefono || ""
+  //     );
+
+  //     await bot.sendMessage(chatId, message, {
+  //       parse_mode: "MarkdownV2",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "📱 Contactar",
+  //               url: phoneUrl,
+  //             },
+  //             {
+  //               text: "🗺 Cómo llegar",
+  //               url: `https://www.google.com/maps/dir/?api=1&destination=${farmacia.coordenadas.lat},${farmacia.coordenadas.lng}`,
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔍 Buscar otro centro",
+  //               callback_data: "buscar_otro_centro",
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     });
+  //   } catch (error) {
+  //     this.logger.error("Error enviando información de la clínica:", error);
+  //     await this.handleClinicError(bot, chatId);
+  //   }
+  // }
 
   private async enviarInformacionFarma(
     bot: TelegramBot,
@@ -440,6 +557,7 @@ export class TelegramService {
     farmacia: Farmacia
   ): Promise<void> {
     try {
+      // Enviar la ubicación de la farmacia
       if (farmacia.coordenadas?.lat && farmacia.coordenadas?.lng) {
         await bot.sendLocation(
           chatId,
@@ -448,44 +566,62 @@ export class TelegramService {
         );
       }
 
-      const message = this.messageFormatter.formatFarmaMessage(farmacia);
-      const phoneUrl = this.messageFormatter.formatPhoneNumber(
-        farmacia.telefono || ""
-      );
+      // Preparar el mensaje con la información de la farmacia
+      let message = `🏥 *${this.escapeMarkdown(
+        farmacia.nombre || "Farmacia"
+      )}*\n\n`;
+      message += `📍 *Dirección:* ${this.escapeMarkdown(
+        farmacia.direccion || "No disponible"
+      )}\n`;
+      message += `🕒 *Horario:* ${this.escapeMarkdown(
+        farmacia.horario || "No disponible"
+      )}\n`;
+      message += `📱 *Teléfono:* ${this.escapeMarkdown(
+        farmacia.telefono || "No disponible"
+      )}\n`;
+      message += `🚪 *Estado:* ${
+        farmacia.servicio24h ? "Abierto ahora" : "Posiblemente cerrado"
+      }\n`;
 
+      // Botones para llamar (si hay teléfono) y obtener indicaciones
+      const inlineKeyboard = [];
+
+      if (farmacia.telefono) {
+        inlineKeyboard.push([
+          {
+            text: "📞 Llamar",
+            url: `tel:${farmacia.telefono.replace(/\s+/g, "")}`,
+          },
+        ]);
+      }
+
+      inlineKeyboard.push([
+        {
+          text: "🗺️ Obtener indicaciones",
+          url: `https://www.google.com/maps/dir/?api=1&destination=${farmacia.coordenadas.lat},${farmacia.coordenadas.lng}`,
+        },
+      ]);
+
+      // Enviar el mensaje con la información
       await bot.sendMessage(chatId, message, {
-        parse_mode: "MarkdownV2",
+        parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "📱 Contactar",
-                url: phoneUrl,
-              },
-              {
-                text: "🗺 Cómo llegar",
-                url: `https://www.google.com/maps/dir/?api=1&destination=${farmacia.coordenadas.lat},${farmacia.coordenadas.lng}`,
-              },
-            ],
-            [
-              {
-                text: "🔍 Buscar otro centro",
-                callback_data: "buscar_otro_centro",
-              },
-            ],
-            [
-              {
-                text: "🔙 Volver al menú principal",
-                callback_data: "menu_principal",
-              },
-            ],
-          ],
+          inline_keyboard: inlineKeyboard,
         },
       });
     } catch (error) {
-      this.logger.error("Error enviando información de la clínica:", error);
-      await this.handleClinicError(bot, chatId);
+      this.logger.error("Error al enviar información de farmacia:", error);
+      await bot.sendMessage(
+        chatId,
+        "Ocurrió un error al mostrar la información de la farmacia."
+      );
     }
+  }
+
+  // Método auxiliar para escapar caracteres especiales de Markdown
+  private escapeMarkdown(text: string): string {
+    if (!text) return "No disponible";
+    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1");
   }
 
   // manejador de callback queries
@@ -560,52 +696,6 @@ export class TelegramService {
     // Configurar el manejador de ubicación
     this.setupLocationHandlerFarma(chatId);
   }
-
-  // capturo el nombre del usuario y el chatId , luego le muestro ek el menú principal
-  // private setupCommands(): void {
-  //   this.bot.onText(/\/start/, async (msg) => {
-  //     const chatId = msg.chat.id;
-  //     const userName = msg.from.first_name;
-  //     this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
-  //     await this.mostrarMenuPrincipal(chatId, userName);
-  //   });
-
-  //   this.bot.onText(/\/help/, (msg) => {
-  //     const chatId = msg.chat.id;
-  //     this.mostrarAyuda(chatId);
-  //   });
-  // }
-
-  // private setupCommands(): void {
-  //   try {
-  //     // Registrar comandos con Telegram
-  //     this.bot.setMyCommands([
-  //       { command: "/start", description: "Iniciar el bot" },
-  //       { command: "/help", description: "Ver comandos disponibles" },
-  //     ]);
-
-  //     this.bot.onText(/\/start/, async (msg) => {
-  //       const chatId = msg.chat.id;
-  //       const userName = msg.from.first_name;
-  //       this.logger.log(`Nuevo usuario: ${userName}, ChatID: ${chatId}`);
-
-  //       // Agregar retry logic
-  //       let retries = 3;
-  //       while (retries > 0) {
-  //         try {
-  //           await this.mostrarMenuPrincipal(chatId, userName);
-  //           break;
-  //         } catch (error) {
-  //           retries--;
-  //           if (retries === 0) throw error;
-  //           await new Promise((resolve) => setTimeout(resolve, 1000));
-  //         }
-  //       }
-  //     });
-  //   } catch (error) {
-  //     this.logger.error("Error setting up commands:", error);
-  //   }
-  // }
 
   private setupCommands(): void {
     try {
@@ -890,21 +980,6 @@ export class TelegramService {
       ],
     };
   }
-
-  //  private async mostrarMenuPrincipal(
-  //   chatId: number,
-  //   userName?: string
-  // ): Promise<void> {
-  //   const welcomeMessage = userName
-  //     ? `¡Hola ${userName}! 👋\n\n`
-  //     : "¡Bienvenido! 👋\n\n";
-
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     welcomeMessage + "Por favor, selecciona una opción:",
-  //     { reply_markup: this.getMainMenuKeyboard() }
-  //   );
-  // }
 
   // Método que acepta nombre de usuario opcional
   private async mostrarMenuPrincipal(chatId: number): Promise<void> {
