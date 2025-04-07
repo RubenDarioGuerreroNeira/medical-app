@@ -25,6 +25,7 @@ import {
   OSMStatus,
   NominatimResponse,
   PharmacyResponse,
+  ClinicaResponse,
 } from "./intrfaces/osm.interface";
 import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
@@ -258,32 +259,29 @@ export class TelegramService {
 
     this.bot.on("message", messageHandler);
   }
-
-  // MANEJADOR DE UBICACION
+  //--- busca clinicas y hospitales-----------
   private async mostrarCentrosCercanos(
     bot: TelegramBot,
     chatId: number,
     location: TelegramBot.Location
   ): Promise<void> {
     try {
-      // Mostrar mensaje de "buscando..."
       const searchingMessage = await bot.sendMessage(
         chatId,
-        "Buscando centros Entidades Cercanas a tu ubicación... 🔍"
+        "Buscando Centros de Atención Médica Cercanas a tu ubicación... 🔍"
       );
 
-      const clinica = await this.osmService.buscarClinicaCercana(
+      const clinicasResponse = await this.osmService.buscarClinicaCercana(
         location.latitude,
         location.longitude
       );
 
-      // Eliminar mensaje de "buscando..."
       await bot.deleteMessage(chatId, searchingMessage.message_id);
 
-      if (!clinica) {
+      if (!clinicasResponse || clinicasResponse.length === 0) {
         await bot.sendMessage(
           chatId,
-          "No se encontraron centros médicos cercanos a tu ubicación en un radio de 1km.",
+          "No se encontraron centros médicos cercanos a tu ubicación en un radio de 2km.",
           {
             reply_markup: {
               inline_keyboard: [
@@ -306,7 +304,79 @@ export class TelegramService {
         return;
       }
 
-      await this.enviarInformacionClinica(bot, chatId, clinica);
+      await bot.sendMessage(
+        chatId,
+        `Se encontraron ${clinicasResponse.length} centros médicos cercanos a tu ubicación.`
+      );
+
+      const clinicasToShow = clinicasResponse.slice(0, 5);
+
+      for (const clinicaResponse of clinicasToShow) {
+        // Transformar PharmacyResponse a Clinica con todas las propiedades requeridas
+        const clinica: Clinica = {
+          id: clinicaResponse.id || `temp-${Date.now()}`,
+          nombre: clinicaResponse.name || "Centro Médico",
+          direccion: clinicaResponse.address || "Dirección no disponible",
+          ciudad: clinicaResponse.city || "Ciudad no especificada",
+          estado: clinicaResponse.state || "Estado no especificado",
+          telefono: clinicaResponse.telefono || "No disponible",
+          coordenadas: {
+            lat: clinicaResponse.location?.lat || location.latitude,
+            lng: clinicaResponse.location?.lng || location.longitude,
+          },
+          horario: clinicaResponse.horario || "Horario no disponible",
+          especialidades: clinicaResponse.especialidades || [
+            "Medicina General",
+          ],
+          emergencia24h: clinicaResponse.emergencia24h || false,
+        };
+
+        await this.enviarInformacionClinica(bot, chatId, clinica);
+      }
+
+      if (clinicasResponse.length > 5) {
+        await bot.sendMessage(
+          chatId,
+          `Hay ${
+            clinicasResponse.length - 5
+          } centros médicos más. ¿Deseas ver más resultados?`,
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Ver más centros médicos",
+                    callback_data: "ver_mas_clinicas",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      } else {
+        await bot.sendMessage(
+          chatId,
+          "Estos son todos los centros médicos encontrados en tu área.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
     } catch (error) {
       this.logger.error(
         "Error al obtener información de los centros cercanos:",
@@ -315,68 +385,7 @@ export class TelegramService {
       await this.handleLocationError(chatId);
     }
   }
-
-  // private async mostrarFarmaCercanos(
-  //   bot: TelegramBot,
-  //   chatId: number,
-  //   location: TelegramBot.Location
-  // ): Promise<void> {
-  //   try {
-  //     // Mostrar mensaje de "buscando..."
-  //     const searchingMessage = await bot.sendMessage(
-  //       chatId,
-  //       "Buscando Farmacias Cercanas a tu ubicación... 🔍"
-  //     );
-
-  //     const farmaciaResponse = await this.osmService.buscarFarmaciaCercana(
-  //       location.latitude,
-  //       location.longitude
-  //     );
-
-  //     // Eliminar mensaje de "buscando..."
-  //     await bot.deleteMessage(chatId, searchingMessage.message_id);
-
-  //     if (!farmaciaResponse) {
-  //       await bot.sendMessage(
-  //         chatId,
-  //         "No se encontraron centros médicos cercanos a tu ubicación en un radio de 1km.",
-  //         {
-  //           reply_markup: {
-  //             inline_keyboard: [
-  //               [
-  //                 {
-  //                   text: "🔍 Ampliar búsqueda",
-  //                   callback_data: "ampliar_busqueda",
-  //                 },
-  //               ],
-  //               [
-  //                 {
-  //                   text: "🔙 Volver al menú principal",
-  //                   callback_data: "menu_principal",
-  //                 },
-  //               ],
-  //             ],
-  //           },
-  //         }
-  //       );
-  //       return;
-  //     }
-  //     // Transformar PharmacyResponse a Farmacia
-  //     const farmacia: Farmacia = {
-  //       ...farmaciaResponse,
-  //       horario: farmaciaResponse.horario || "Horario no disponible",
-  //     };
-  //     await this.enviarInformacionFarma(bot, chatId, farmacia);
-  //   } catch (error) {
-  //     this.logger.error(
-  //       "Error al obtener información de los centros cercanos:",
-  //       error
-  //     );
-  //     await this.handleLocationError(chatId);
-  //   }
-  // }
-
-  // BUSCA FARMACIAS CERCANAS
+  //------- BUSCA FARMACIAS CERCANAS---------------
   private async mostrarFarmaCercanos(
     bot: TelegramBot,
     chatId: number,
@@ -496,60 +505,6 @@ export class TelegramService {
       await this.handleLocationError(chatId);
     }
   }
-
-  // private async enviarInformacionFarma(
-  //   bot: TelegramBot,
-  //   chatId: number,
-  //   farmacia: Farmacia
-  // ): Promise<void> {
-  //   try {
-  //     if (farmacia.coordenadas?.lat && farmacia.coordenadas?.lng) {
-  //       await bot.sendLocation(
-  //         chatId,
-  //         farmacia.coordenadas.lat,
-  //         farmacia.coordenadas.lng
-  //       );
-  //     }
-
-  //     const message = this.messageFormatter.formatFarmaMessage(farmacia);
-  //     const phoneUrl = this.messageFormatter.formatPhoneNumber(
-  //       farmacia.telefono || ""
-  //     );
-
-  //     await bot.sendMessage(chatId, message, {
-  //       parse_mode: "MarkdownV2",
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             {
-  //               text: "📱 Contactar",
-  //               url: phoneUrl,
-  //             },
-  //             {
-  //               text: "🗺 Cómo llegar",
-  //               url: `https://www.google.com/maps/dir/?api=1&destination=${farmacia.coordenadas.lat},${farmacia.coordenadas.lng}`,
-  //             },
-  //           ],
-  //           [
-  //             {
-  //               text: "🔍 Buscar otro centro",
-  //               callback_data: "buscar_otro_centro",
-  //             },
-  //           ],
-  //           [
-  //             {
-  //               text: "🔙 Volver al menú principal",
-  //               callback_data: "menu_principal",
-  //             },
-  //           ],
-  //         ],
-  //       },
-  //     });
-  //   } catch (error) {
-  //     this.logger.error("Error enviando información de la clínica:", error);
-  //     await this.handleClinicError(bot, chatId);
-  //   }
-  // }
 
   private async enviarInformacionFarma(
     bot: TelegramBot,

@@ -7,6 +7,7 @@ import {
   PharmacyResponse,
   NominatimResponse,
   OSMPlace,
+  ClinicaResponse,
 } from "./intrfaces/osm.interface";
 import axios from "axios";
 
@@ -59,54 +60,13 @@ export class OSMService {
     }
   }
 
-  // async buscarFarmaciaCercana(
-  //   latitude: number,
-  //   longitude: number
-  // ): Promise<PharmacyResponse | null> {
-  //   try {
-  //     this.validateCoordinates(latitude, longitude);
-  //     const url = `${this.nominatimBaseUrl}/reverse`;
-  //     const params = new URLSearchParams({
-  //       lat: latitude.toString(),
-  //       lon: longitude.toString(),
-  //       format: "json",
-  //       addressdetails: "1",
-  //       zoom: "18", // Nivel de detalle
-  //     });
-
-  //     const response = await this.fetchWithRetry(`${url}?${params}`);
-  //     const data = await this.validateResponse<NominatimResponse>(response);
-
-  //     if (!data || !data.address) {
-  //       throw new HttpException(
-  //         "No se encontraron farmacias cercanas",
-  //         HttpStatus.NOT_FOUND
-  //       );
-  //     }
-
-  //     return {
-  //       name: data.display_name,
-  //       location: {
-  //         lat: parseFloat(data.lat),
-  //         lng: parseFloat(data.lon),
-  //       },
-  //       address: data.address.road || "Dirección no disponible",
-  //       isOpen: false,
-  //       rating: null,
-  //     };
-  //   } catch (error) {
-  //     this.handleError("buscarFarmaciaCercana", error);
-  //     return null;
-  //   }
-  // }
-
   async buscarFarmaciaCercana(
     latitude: number,
     longitude: number
   ): Promise<PharmacyResponse[] | null> {
     try {
       this.validateCoordinates(latitude, longitude);
-      
+
       // Usar Overpass API para buscar farmacias cercanas
       const overpassQuery = `
         [out:json];
@@ -119,77 +79,91 @@ export class OSMService {
         >;
         out skel qt;
       `;
-      
+
       const url = this.OVERPASS_BASE_URL;
       const params = new URLSearchParams({
-        data: overpassQuery
+        data: overpassQuery,
       });
-  
+
       const response = await axios.post(url, params.toString(), {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'User-Agent': 'TelegramBot/1.0'
-        }
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "TelegramBot/1.0",
+        },
       });
-  
-      if (!response.data || !response.data.elements || response.data.elements.length === 0) {
+
+      if (
+        !response.data ||
+        !response.data.elements ||
+        response.data.elements.length === 0
+      ) {
         this.logger.warn("No se encontraron farmacias cercanas");
         return null;
       }
-  
+
       // Procesar los resultados
       const farmacias = response.data.elements
-        .filter(element => element.tags && element.tags.amenity === 'pharmacy')
-        .map(element => {
+        .filter(
+          (element) => element.tags && element.tags.amenity === "pharmacy"
+        )
+        .map((element) => {
           return {
-            name: element.tags.name || 'Farmacia',
+            name: element.tags.name || "Farmacia",
             location: {
-              lat: element.lat || (element.center ? element.center.lat : latitude),
-              lng: element.lon || (element.center ? element.center.lon : longitude)
+              lat:
+                element.lat || (element.center ? element.center.lat : latitude),
+              lng:
+                element.lon ||
+                (element.center ? element.center.lon : longitude),
             },
-            address: [
-              element.tags['addr:street'],
-              element.tags['addr:housenumber']
-            ].filter(Boolean).join(' ') || 'Dirección no disponible',
-            isOpen: element.tags.opening_hours ? this.checkIfOpen(element.tags.opening_hours) : false,
+            address:
+              [element.tags["addr:street"], element.tags["addr:housenumber"]]
+                .filter(Boolean)
+                .join(" ") || "Dirección no disponible",
+            isOpen: element.tags.opening_hours
+              ? this.checkIfOpen(element.tags.opening_hours)
+              : false,
             rating: null,
-            telefono: element.tags.phone || element.tags['contact:phone'] || null,
-            horario: element.tags.opening_hours || 'Horario no disponible'
+            telefono:
+              element.tags.phone || element.tags["contact:phone"] || null,
+            horario: element.tags.opening_hours || "Horario no disponible",
           };
         });
-  
+
       return farmacias.length > 0 ? farmacias : null;
     } catch (error) {
       this.handleError("buscarFarmaciaCercana", error);
       return null;
     }
   }
-  
+
   // Método auxiliar para verificar si está abierto según el horario
   private checkIfOpen(openingHours: string): boolean {
     try {
       // Implementación básica, se puede mejorar
       const now = new Date();
-      const day = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][now.getDay()];
+      const day = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][now.getDay()];
       const time = now.getHours() * 100 + now.getMinutes();
-      
+
       // Buscar el día actual en el string de horarios
       if (openingHours.includes(day)) {
-        const dayPattern = new RegExp(`${day}\\s+(\\d{2}:\\d{2})-(\\d{2}:\\d{2})`);
+        const dayPattern = new RegExp(
+          `${day}\\s+(\\d{2}:\\d{2})-(\\d{2}:\\d{2})`
+        );
         const match = openingHours.match(dayPattern);
-        
+
         if (match) {
           const [_, openTime, closeTime] = match;
-          const [openHour, openMin] = openTime.split(':').map(Number);
-          const [closeHour, closeMin] = closeTime.split(':').map(Number);
-          
+          const [openHour, openMin] = openTime.split(":").map(Number);
+          const [closeHour, closeMin] = closeTime.split(":").map(Number);
+
           const openTimeValue = openHour * 100 + openMin;
           const closeTimeValue = closeHour * 100 + closeMin;
-          
+
           return time >= openTimeValue && time <= closeTimeValue;
         }
       }
-      
+
       return false;
     } catch (e) {
       return false;
@@ -199,33 +173,139 @@ export class OSMService {
   async buscarClinicaCercana(
     latitude: number,
     longitude: number
-  ): Promise<Clinica | null> {
+  ): Promise<ClinicaResponse[] | null> {
     try {
+      this.validateCoordinates(latitude, longitude);
+
+      // Usar Overpass API para buscar clinicas  cercanas
+      const overpassQuery = `
+        [out:json];
+        (
+          node["amenity"="hospital"](around:2000,${latitude},${longitude});
+        way["amenity"="hospital"](around:2000,${latitude},${longitude});
+        node["amenity"="clinic"](around:2000,${latitude},${longitude});
+        way["amenity"="clinic"](around:2000,${latitude},${longitude});
+        node["healthcare"="hospital"](around:2000,${latitude},${longitude});
+        way["healthcare"="hospital"](around:2000,${latitude},${longitude});
+        node["healthcare"="clinic"](around:2000,${latitude},${longitude});
+        way["healthcare"="clinic"](around:2000,${latitude},${longitude});
+        );
+        out body;
+        >;
+        out skel qt;
+      `;
+
+      const url = this.OVERPASS_BASE_URL;
       const params = new URLSearchParams({
-        format: "json",
-        lat: latitude.toString(),
-        lon: longitude.toString(),
-        amenity: "hospital,clinicas,doctors,healthcare,clinica,centro medico",
-        addressdetails: "1",
-        limit: "1",
-        radius: "1000", // Radio de búsqueda en metros
+        data: overpassQuery,
       });
 
-      const response = await axios.get(
-        `${this.nominatimBaseUrl}/reverse?${params}`,
-        {
-          headers: {
-            "User-Agent": "TelegramBot/1.0", // Importante para evitar bloqueos
-          },
-        }
-      );
+      const response = await axios.post(url, params.toString(), {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "TelegramBot/1.0",
+        },
+      });
 
-      if (!response.data) return null;
+      if (
+        !response.data ||
+        !response.data.elements ||
+        response.data.elements.length === 0
+      ) {
+        this.logger.warn("No se encontraron Centros de atención cercanos");
+        return null;
+      }
 
-      return this.formatClinicData(response.data);
+      // Procesar los resultados
+      const centros = response.data.elements
+        .filter((element) => {
+          return (
+            element.tags &&
+            (element.tags.amenity === "hospital" ||
+              element.tags.amenity === "cdi" ||
+              element.tags.amenity === "clinic" ||
+              element.tags.amenity === "clinic" ||
+              element.tags.amenity === "cdi" ||
+              element.tags.healthcare === "hospital" ||
+              element.tags.healthcare === "clinic")
+          );
+        })
+        .map((element) => {
+          // Determinamos el tipo de centro médico
+          const isCentroEmergencia =
+            element.tags.emergency === "yes" ||
+            element.tags.healthcare === "emergency" ||
+            element.tags.emergency_service === "yes";
+
+          // Extraemos las especialidades si existen
+          const especialidades = element.tags.healthcare_speciality
+            ? element.tags.healthcare_speciality.split(";")
+            : ["Medicina General"];
+
+          return {
+            id: element.id.toString(),
+            name: element.tags.name || "Centro Médico",
+            location: {
+              lat:
+                element.lat || (element.center ? element.center.lat : latitude),
+              lng:
+                element.lon ||
+                (element.center ? element.center.lon : longitude),
+            },
+            address:
+              [element.tags["addr:street"], element.tags["addr:housenumber"]]
+                .filter(Boolean)
+                .join(" ") || "Dirección no disponible",
+            city: element.tags["addr:city"] || "Ciudad no especificada",
+            state: element.tags["addr:state"] || "Estado no especificado",
+            telefono:
+              element.tags.phone ||
+              element.tags["contact:phone"] ||
+              "Teléfono no disponible",
+            horario: element.tags.opening_hours || "Horario no disponible",
+            especialidades: especialidades,
+            emergencia24h: isCentroEmergencia,
+            rating: null,
+          };
+        });
+
+      return centros.length > 0 ? centros : null;
     } catch (error) {
-      this.logger.error("Error buscando clínica cercana:", error);
+      this.handleError("buscarClinicaCercana", error);
       return null;
+    }
+  }
+
+  // Método auxiliar para verificar si está abierto según el horario
+  private checkIfCentroOpen(openingHours: string): boolean {
+    try {
+      // Implementación básica, se puede mejorar
+      const now = new Date();
+      const day = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][now.getDay()];
+      const time = now.getHours() * 100 + now.getMinutes();
+
+      // Buscar el día actual en el string de horarios
+      if (openingHours.includes(day)) {
+        const dayPattern = new RegExp(
+          `${day}\\s+(\\d{2}:\\d{2})-(\\d{2}:\\d{2})`
+        );
+        const match = openingHours.match(dayPattern);
+
+        if (match) {
+          const [_, openTime, closeTime] = match;
+          const [openHour, openMin] = openTime.split(":").map(Number);
+          const [closeHour, closeMin] = closeTime.split(":").map(Number);
+
+          const openTimeValue = openHour * 100 + openMin;
+          const closeTimeValue = closeHour * 100 + closeMin;
+
+          return time >= openTimeValue && time <= closeTimeValue;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -244,7 +324,7 @@ export class OSMService {
         lng: parseFloat(data.lon),
       },
       horario: "Horario no disponible",
-      especialidades: ["Medicina General"],
+      especialidades: ["Todas las especialidades"],
       emergencia24h: false,
     };
   }

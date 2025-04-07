@@ -118,3 +118,20 @@ export interface Farmacia {
   servicios?: string[];
   horario: string;
 }
+
+export interface ClinicaResponse {
+  id: string;
+  name: string;
+  address: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  city: string;
+  state: string;
+  telefono: string;
+  horario: string;
+  especialidades: string[];
+  emergencia24h: boolean;
+  rating?: number;
+}
