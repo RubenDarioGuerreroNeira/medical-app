@@ -177,18 +177,29 @@ export class OSMService {
     try {
       this.validateCoordinates(latitude, longitude);
 
-      // Usar Overpass API para buscar clinicas  cercanas
+      // Modificamos la consulta para ser más inclusiva y aumentamos el radio de búsqueda
       const overpassQuery = `
-        [out:json];
+        [out:json][timeout:25];
         (
-          node["amenity"="hospital"](around:2000,${latitude},${longitude});
-        way["amenity"="hospital"](around:2000,${latitude},${longitude});
-        node["amenity"="clinic"](around:2000,${latitude},${longitude});
-        way["amenity"="clinic"](around:2000,${latitude},${longitude});
-        node["healthcare"="hospital"](around:2000,${latitude},${longitude});
-        way["healthcare"="hospital"](around:2000,${latitude},${longitude});
-        node["healthcare"="clinic"](around:2000,${latitude},${longitude});
-        way["healthcare"="clinic"](around:2000,${latitude},${longitude});
+          // Hospitales
+          nwr["amenity"="hospital"](around:2000,${latitude},${longitude});
+          nwr["healthcare"="hospital"](around:2000,${latitude},${longitude});
+          
+          // Clínicas
+          nwr["amenity"="clinic"](around:2000,${latitude},${longitude});
+          nwr["healthcare"="clinic"](around:2000,${latitude},${longitude});
+          
+          // Centros de Salud
+          nwr["healthcare"="centre"](around:2000,${latitude},${longitude});
+          nwr["healthcare"="doctor"](around:2000,${latitude},${longitude});
+          
+          // Ambulatorios y CDIs
+          nwr["healthcare"="*"](around:2000,${latitude},${longitude});
+          nwr["amenity"="doctors"](around:2000,${latitude},${longitude});
+          nwr["amenity"="clinic"](around:2000,${latitude},${longitude});
+          
+          // Centros médicos generales
+          nwr["medical"="*"](around:2000,${latitude},${longitude});
         );
         out body;
         >;
@@ -207,44 +218,56 @@ export class OSMService {
         },
       });
 
-      if (
-        !response.data ||
-        !response.data.elements ||
-        response.data.elements.length === 0
-      ) {
+      if (!response.data?.elements || response.data.elements.length === 0) {
         this.logger.warn("No se encontraron Centros de atención cercanos");
         return null;
       }
 
-      // Procesar los resultados
+      // Simplificamos el filtro pero mantenemos la exclusión de establecimientos no médicos
       const centros = response.data.elements
         .filter((element) => {
-          return (
-            element.tags &&
-            (element.tags.amenity === "hospital" ||
-              element.tags.amenity === "cdi" ||
-              element.tags.amenity === "clinic" ||
-              element.tags.amenity === "clinic" ||
-              element.tags.amenity === "cdi" ||
-              element.tags.healthcare === "hospital" ||
-              element.tags.healthcare === "clinic")
-          );
+          if (!element.tags) return false;
+
+          const isHealthFacility =
+            element.tags.amenity === "hospital" ||
+            element.tags.amenity === "clinic" ||
+            element.tags.amenity === "doctors" ||
+            element.tags.healthcare ||
+            element.tags.medical;
+
+          const isNotExcluded =
+            !element.tags.tourism &&
+            !element.tags.shop &&
+            element.tags.amenity !== "restaurant" &&
+            element.tags.amenity !== "school" &&
+            element.tags.amenity !== "hotel";
+
+          return isHealthFacility && isNotExcluded;
         })
         .map((element) => {
           // Determinamos el tipo de centro médico
+          let defaultName = "Centro Médico";
+          if (element.tags.amenity === "hospital") defaultName = "Hospital";
+          else if (element.tags.amenity === "clinic") defaultName = "Clínica";
+          else if (element.tags.healthcare === "doctor")
+            defaultName = "Consultorio Médico";
+          else if (element.tags.amenity === "doctors")
+            defaultName = "Centro Médico";
+
           const isCentroEmergencia =
             element.tags.emergency === "yes" ||
             element.tags.healthcare === "emergency" ||
             element.tags.emergency_service === "yes";
 
-          // Extraemos las especialidades si existen
           const especialidades = element.tags.healthcare_speciality
             ? element.tags.healthcare_speciality.split(";")
+            : element.tags.medical_system
+            ? [element.tags.medical_system]
             : ["Medicina General"];
 
           return {
             id: element.id.toString(),
-            name: element.tags.name || "Centro Médico",
+            name: element.tags.name || defaultName,
             location: {
               lat:
                 element.lat || (element.center ? element.center.lat : latitude),
@@ -253,7 +276,11 @@ export class OSMService {
                 (element.center ? element.center.lon : longitude),
             },
             address:
-              [element.tags["addr:street"], element.tags["addr:housenumber"]]
+              [
+                element.tags["addr:street"],
+                element.tags["addr:housenumber"],
+                element.tags["addr:suburb"],
+              ]
                 .filter(Boolean)
                 .join(" ") || "Dirección no disponible",
             city: element.tags["addr:city"] || "Ciudad no especificada",
@@ -273,39 +300,6 @@ export class OSMService {
     } catch (error) {
       this.handleError("buscarClinicaCercana", error);
       return null;
-    }
-  }
-
-  // Método auxiliar para verificar si está abierto según el horario
-  private checkIfCentroOpen(openingHours: string): boolean {
-    try {
-      // Implementación básica, se puede mejorar
-      const now = new Date();
-      const day = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][now.getDay()];
-      const time = now.getHours() * 100 + now.getMinutes();
-
-      // Buscar el día actual en el string de horarios
-      if (openingHours.includes(day)) {
-        const dayPattern = new RegExp(
-          `${day}\\s+(\\d{2}:\\d{2})-(\\d{2}:\\d{2})`
-        );
-        const match = openingHours.match(dayPattern);
-
-        if (match) {
-          const [_, openTime, closeTime] = match;
-          const [openHour, openMin] = openTime.split(":").map(Number);
-          const [closeHour, closeMin] = closeTime.split(":").map(Number);
-
-          const openTimeValue = openHour * 100 + openMin;
-          const closeTimeValue = closeHour * 100 + closeMin;
-
-          return time >= openTimeValue && time <= closeTimeValue;
-        }
-      }
-
-      return false;
-    } catch (e) {
-      return false;
     }
   }
 
