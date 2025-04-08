@@ -938,13 +938,39 @@ export class TelegramService {
 
   // Método que acepta nombre de usuario opcional
   private async mostrarMenuPrincipal(chatId: number): Promise<void> {
-    const welcomeMessage = "¡Bienvenido! 👋\n\n";
+    try {
+      // Intentamos obtener información del chat para personalizar el saludo
+      const chat = await this.bot.getChat(chatId);
+      const userName = chat.first_name || "Usuario";
 
-    await this.bot.sendMessage(
-      chatId,
-      welcomeMessage + "Por favor, selecciona una opción:",
-      { reply_markup: this.getMainMenuKeyboard() }
-    );
+      const welcomeMessage =
+        `¡Hola ${userName}! 👋\n\n` +
+        `Bienvenido a tu Asistente Médico Virtual 🏥\n\n` +
+        `Te puedo ayudar con:\n` +
+        `• Encontrar farmacias cercanas 💊\n` +
+        `• Localizar centros médicos próximos 🏥\n` +
+        `• Responder consultas médicas con IA 🤖\n` +
+        `• Programar recordatorios de medicamentos ⏰\n\n` +
+        `¿En qué puedo ayudarte hoy?\n\n` +
+        `Selecciona una opción del menú:`;
+
+      await this.bot.sendMessage(chatId, welcomeMessage, {
+        parse_mode: "Markdown",
+        reply_markup: this.getMainMenuKeyboard(),
+      });
+    } catch (error) {
+      this.logger.error("Error al mostrar menú principal:", error);
+      // Fallback en caso de error al obtener información del usuario
+      const fallbackMessage =
+        "¡Bienvenido! 👋\n\n" +
+        "Soy tu Asistente Médico Virtual 🏥\n" +
+        "¿En qué puedo ayudarte hoy?\n\n" +
+        "Selecciona una opción del menú:";
+
+      await this.bot.sendMessage(chatId, fallbackMessage, {
+        reply_markup: this.getMainMenuKeyboard(),
+      });
+    }
   }
 
   // mostrar ayuda
