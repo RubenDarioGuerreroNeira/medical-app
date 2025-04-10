@@ -31,6 +31,7 @@ import { TelegramLocationHandler } from "./telegram-location-handler.service";
 import { TelegramMessageFormatter } from "./telegramMessageFormatter.service";
 import { TelegramErrorHandler } from "./telegramErrorHandler.service";
 import { ReminderService } from "./reminder.service";
+
 import { TelegramMessageOptions } from "./intrfaces/telegram_MessageOptions";
 
 @Injectable()
@@ -52,10 +53,12 @@ export class TelegramService {
     private messageFormatter: TelegramMessageFormatter,
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
-    private reminderService: ReminderService
+    private reminderService: ReminderService,
+    @Inject("TELEGRAM_BOT") private readonly telegramBot: TelegramBot
   ) {
-    const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
-    this.bot = new TelegramBot(token, { polling: true });
+    // const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+    // this.bot = new TelegramBot(token, { polling: true });
+    this.bot = telegramBot;
     this.initializeBot();
     this.agregarComandosClinica(this.bot);
     // manejador para callbacks queries
