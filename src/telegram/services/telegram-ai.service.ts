@@ -81,37 +81,6 @@ export class TelegramAIService extends TelegramBaseService {
       await this.manejarErrorConsulta(chatId);
     }
   }
-  // async handleImageMessage(
-  //   chatId: number,
-  //   msg: TelegramBot.Message
-  // ): Promise<void> {
-  //   try {
-  //     await this.bot.sendChatAction(chatId, "typing");
-
-  //     if (!msg.photo || msg.photo.length === 0) {
-  //       await this.bot.sendMessage(chatId, "No se pudo procesar la imagen.");
-  //       return;
-  //     }
-
-  //     const photo = msg.photo[msg.photo.length - 1];
-  //     const fileId = photo.file_id;
-  //     const fileLink = await this.bot.getFileLink(fileId);
-
-  //     // Procesar imagen y enviar a Gemini
-  //     const imageResponse = await fetch(fileLink);
-  //     const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
-
-  //     const extractedText = await this.geminiService.extractTextFromImage(
-  //       imageBuffer,
-  //       imageResponse.headers.get("content-type") || "image/jpeg"
-  //     );
-
-  //     await this.enviarResultadoAnalisisImagen(chatId, extractedText);
-  //   } catch (error) {
-  //     this.logger.error("Error handling image message:", error);
-  //     await this.manejarErrorImagen(chatId);
-  //   }
-  // }
 
   async handleImageMessage(
     chatId: number,
@@ -225,48 +194,34 @@ export class TelegramAIService extends TelegramBaseService {
   ): Promise<void> {
     const options: TelegramBot.SendMessageOptions = {
       parse_mode: "MarkdownV2",
-      reply_markup: esFinal
-        ? {
+    };
+
+    await this.bot.sendMessage(chatId, texto, options);
+
+    // Si es el mensaje final, preguntar si desea hacer más consultas
+    if (esFinal) {
+      await this.bot.sendMessage(
+        chatId,
+        "¿Deseas hacer otra consulta o volver al menú principal?",
+        {
+          reply_markup: {
             inline_keyboard: [
               [
+                {
+                  text: "📝 Nueva consulta",
+                  callback_data: "consulta_medica",
+                },
                 {
                   text: "🔙 Volver al menú principal",
                   callback_data: "menu_principal",
                 },
               ],
             ],
-          }
-        : undefined,
-    };
-
-    await this.bot.sendMessage(chatId, texto, options);
+          },
+        }
+      );
+    }
   }
-
-  // private async enviarResultadoAnalisisImagen(
-  //   chatId: number,
-  //   texto: string
-  // ): Promise<void> {
-  //   if (texto) {
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       "Texto extraído de la imagen:\n\n" + texto,
-  //       {
-  //         reply_markup: {
-  //           inline_keyboard: [
-  //             [
-  //               {
-  //                 text: "🔙 Volver al menú principal",
-  //                 callback_data: "menu_principal",
-  //               },
-  //             ],
-  //           ],
-  //         },
-  //       }
-  //     );
-  //   } else {
-  //     await this.manejarErrorImagen(chatId);
-  //   }
-  // }
 
   private async enviarResultadoAnalisisImagen(
     chatId: number,
@@ -275,11 +230,21 @@ export class TelegramAIService extends TelegramBaseService {
     if (texto) {
       await this.bot.sendMessage(
         chatId,
-        "Texto extraído de la imagen:\n\n" + texto,
+        "Texto extraído de la imagen:\n\n" + texto
+      );
+
+      // Preguntar si desea hacer más consultas
+      await this.bot.sendMessage(
+        chatId,
+        "¿Deseas hacer otra consulta o volver al menú principal?",
         {
           reply_markup: {
             inline_keyboard: [
               [
+                {
+                  text: "📝 Nueva consulta",
+                  callback_data: "consulta_medica",
+                },
                 {
                   text: "🔙 Volver al menú principal",
                   callback_data: "menu_principal",
@@ -292,11 +257,21 @@ export class TelegramAIService extends TelegramBaseService {
     } else {
       await this.bot.sendMessage(
         chatId,
-        "No se pudo extraer texto de la imagen.",
+        "No se pudo extraer texto de la imagen."
+      );
+
+      // Preguntar si desea intentar con otra imagen
+      await this.bot.sendMessage(
+        chatId,
+        "¿Deseas intentar con otra imagen o volver al menú principal?",
         {
           reply_markup: {
             inline_keyboard: [
               [
+                {
+                  text: "📷 Enviar otra imagen",
+                  callback_data: "consulta_medica",
+                },
                 {
                   text: "🔙 Volver al menú principal",
                   callback_data: "menu_principal",
@@ -331,11 +306,20 @@ export class TelegramAIService extends TelegramBaseService {
   private async manejarErrorImagen(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "No se pudo procesar la imagen. Por favor, asegúrate de que la imagen sea clara y legible.",
+      "No se pudo procesar la imagen. Por favor, asegúrate de que la imagen sea clara y legible."
+    );
+
+    await this.bot.sendMessage(
+      chatId,
+      "¿Deseas intentar con otra imagen o volver al menú principal?",
       {
         reply_markup: {
           inline_keyboard: [
             [
+              {
+                text: "📷 Enviar otra imagen",
+                callback_data: "consulta_medica",
+              },
               {
                 text: "🔙 Volver al menú principal",
                 callback_data: "menu_principal",
