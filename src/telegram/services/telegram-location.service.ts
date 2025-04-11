@@ -6,7 +6,7 @@ import * as TelegramBot from "node-telegram-bot-api";
 import { ConfigService } from "@nestjs/config";
 import { TelegramErrorHandler } from "../telegramErrorHandler.service";
 import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
-
+import {TelegramMenuService} from "./telegram-menu.service";
 interface Location {
   latitude: number;
   longitude: number;
@@ -20,6 +20,7 @@ export class TelegramLocationService extends TelegramBaseService {
     configService: ConfigService,
     errorHandler: TelegramErrorHandler,
     diagnosticService: TelegramDiagnosticService,
+    private menuService:TelegramMenuService,
     @Inject("TELEGRAM_BOT") bot: TelegramBot
   ) {
     super(configService, errorHandler, diagnosticService, bot);
@@ -61,26 +62,55 @@ export class TelegramLocationService extends TelegramBaseService {
     this.setupLocationHandler(chatId, tipo);
   }
 
+  // private setupLocationHandler(
+  //   chatId: number,
+  //   tipo: "farmacia" | "clinica"
+  // ): void {
+  //   const messageHandler = async (msg: TelegramBot.Message) => {
+  //     try {
+  //       if (msg.chat.id !== chatId) return;
+
+  //       if (msg.location) {
+  //         this.bot.removeListener("message", messageHandler);
+  //         await this.procesarUbicacion(chatId, msg.location, tipo);
+  //       } else if (msg.text === "❌ Cancelar") {
+  //         this.bot.removeListener("message", messageHandler);
+  //         await this.cancelarBusqueda(chatId);
+  //       }
+  //     } catch (error) {
+  //       this.logger.error("Error in location handler:", error);
+  //       await this.handleLocationError(chatId);
+  //       this.bot.removeListener("message", messageHandler);
+  //     }
+  //   };
+
+  //   this.bot.on("message", messageHandler);
+  // }
+
   private setupLocationHandler(
     chatId: number,
     tipo: "farmacia" | "clinica"
   ): void {
     const messageHandler = async (msg: TelegramBot.Message) => {
-      try {
-        if (msg.chat.id !== chatId) return;
+      if (!msg.location) {
+        if (msg.text === "❌ Cancelar") {
+          // Eliminar el teclado al cancelar
+          await this.bot.sendMessage(chatId, "Búsqueda cancelada.", {
+            reply_markup: { remove_keyboard: true },
+          });
 
-        if (msg.location) {
+          await this.menuService.mostrarMenuPrincipal(chatId);
           this.bot.removeListener("message", messageHandler);
-          await this.procesarUbicacion(chatId, msg.location, tipo);
-        } else if (msg.text === "❌ Cancelar") {
-          this.bot.removeListener("message", messageHandler);
-          await this.cancelarBusqueda(chatId);
+          return;
         }
-      } catch (error) {
-        this.logger.error("Error in location handler:", error);
-        await this.handleLocationError(chatId);
-        this.bot.removeListener("message", messageHandler);
+        return;
       }
+
+      // Remover el listener antes de procesar la ubicación
+      this.bot.removeListener("message", messageHandler);
+
+      // Procesar la ubicación
+      await this.procesarUbicacion(chatId, msg.location, tipo);
     };
 
     this.bot.on("message", messageHandler);
@@ -99,6 +129,11 @@ export class TelegramLocationService extends TelegramBaseService {
     );
 
     try {
+      // Eliminar el teclado de compartir ubicación inmediatamente
+      await this.bot.sendMessage(chatId, "Procesando tu ubicación...", {
+        reply_markup: { remove_keyboard: true },
+      });
+
       if (tipo === "farmacia") {
         await this.buscarFarmaciasCercanas(chatId, location);
       } else {
@@ -152,7 +187,10 @@ export class TelegramLocationService extends TelegramBaseService {
   ): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      `Se encontraron ${farmacias.length} farmacias cercanas:`
+      `Se encontraron ${farmacias.length} farmacias cercanas:`,
+      {
+        reply_markup: { remove_keyboard: true },
+      }
     );
 
     for (const farmacia of farmacias.slice(0, 5)) {
@@ -193,6 +231,7 @@ export class TelegramLocationService extends TelegramBaseService {
               },
             ],
           ],
+          remove_keyboard: true,
         },
       }
     );
@@ -204,7 +243,10 @@ export class TelegramLocationService extends TelegramBaseService {
   ): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      `Se encontraron ${clinicas.length} centros médicos cercanos:`
+      `Se encontraron ${clinicas.length} centros médicos cercanos:`,
+      {
+        reply_markup: { remove_keyboard: true },
+      }
     );
 
     for (const clinica of clinicas.slice(0, 5)) {
@@ -245,6 +287,7 @@ export class TelegramLocationService extends TelegramBaseService {
               },
             ],
           ],
+          remove_keyboard: true,
         },
       }
     );
@@ -273,6 +316,7 @@ export class TelegramLocationService extends TelegramBaseService {
               },
             ],
           ],
+          remove_keyboard: true,
         },
       }
     );
