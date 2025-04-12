@@ -62,30 +62,7 @@ export class TelegramLocationService extends TelegramBaseService {
     this.setupLocationHandler(chatId, tipo);
   }
 
-  // private setupLocationHandler(
-  //   chatId: number,
-  //   tipo: "farmacia" | "clinica"
-  // ): void {
-  //   const messageHandler = async (msg: TelegramBot.Message) => {
-  //     try {
-  //       if (msg.chat.id !== chatId) return;
-
-  //       if (msg.location) {
-  //         this.bot.removeListener("message", messageHandler);
-  //         await this.procesarUbicacion(chatId, msg.location, tipo);
-  //       } else if (msg.text === "❌ Cancelar") {
-  //         this.bot.removeListener("message", messageHandler);
-  //         await this.cancelarBusqueda(chatId);
-  //       }
-  //     } catch (error) {
-  //       this.logger.error("Error in location handler:", error);
-  //       await this.handleLocationError(chatId);
-  //       this.bot.removeListener("message", messageHandler);
-  //     }
-  //   };
-
-  //   this.bot.on("message", messageHandler);
-  // }
+  
 
   private setupLocationHandler(
     chatId: number,
