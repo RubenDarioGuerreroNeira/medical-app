@@ -282,10 +282,10 @@ export class TelegramLocationService extends TelegramBaseService {
 
     for (const farmacia of farmacias.slice(0, 5)) {
       const nombre = farmacia.name || "Farmacia sin nombre";
-      const direccion = farmacia.address || "Dirección no disponible";
-      const distancia = farmacia.distance
-        ? `${farmacia.distance.toFixed(2)} km`
-        : "Distancia desconocida";
+      // const direccion = farmacia.address || "Dirección no disponible";
+      // const distancia = farmacia.distance
+      // ? `${farmacia.distance.toFixed(2)} km`
+      // : "Distancia desconocida";
 
       // Enviar ubicación
       if (farmacia.location && farmacia.location.lat && farmacia.location.lng) {
@@ -298,11 +298,10 @@ export class TelegramLocationService extends TelegramBaseService {
         // Mensaje con información y botón para obtener direcciones
         await this.bot.sendMessage(
           chatId,
-          `🏥 *${this.escapeMarkdown(
-            nombre
-          )}*\n📍 Dirección: ${this.escapeMarkdown(
-            direccion
-          )}\n🚶 Distancia: ${distancia}`,
+          `🏥 *${this.escapeMarkdown(nombre)}*`,
+          // *\n📍 Dirección: ${this.escapeMarkdown(
+          //   direccion
+          // )}\n🚶 Distancia: ${distancia}`,
           {
             parse_mode: "MarkdownV2",
             reply_markup: {
@@ -320,11 +319,10 @@ export class TelegramLocationService extends TelegramBaseService {
       } else {
         await this.bot.sendMessage(
           chatId,
-          `🏥 *${this.escapeMarkdown(
-            nombre
-          )}*\n📍 Dirección: ${this.escapeMarkdown(
-            direccion
-          )}\n🚶 Distancia: ${distancia}`,
+          `🏥 *${this.escapeMarkdown(nombre)}`,
+          // )}*\n📍 Dirección: ${this.escapeMarkdown(
+          //   direccion
+          // )}\n🚶 Distancia: ${distancia}`,
           {
             parse_mode: "MarkdownV2",
           }
@@ -351,6 +349,89 @@ export class TelegramLocationService extends TelegramBaseService {
     );
   }
 
+  // private async enviarResultadosClinicas(
+  //   chatId: number,
+  //   clinicas: any[]
+  // ): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     `Se encontraron ${clinicas.length} centros médicos cercanos:`,
+  //     {
+  //       reply_markup: { remove_keyboard: true },
+  //     }
+  //   );
+
+  //   for (const clinica of clinicas.slice(0, 5)) {
+  //     const nombre = clinica.name || "Centro médico sin nombre";
+  //     const nombreEscapado = this.escapeMarkdown(nombre);
+  //     // const direccion = clinica.address || "Dirección no disponible";
+  //     // const distancia = clinica.distance
+  //     // ? `${clinica.distance.toFixed(2)} km`
+  //     // : "Distancia desconocida";
+
+  //     // Enviar ubicación
+  //     if (clinica.location && clinica.location.lat && clinica.location.lng) {
+  //       await this.bot.sendLocation(
+  //         chatId,
+  //         clinica.location.lat,
+  //         clinica.location.lng
+  //       );
+
+  //       // Mensaje con información y botón para obtener direcciones
+  //       await this.bot.sendMessage(
+  //         chatId,
+  //         `🏥 *${this.escapeMarkdown(nombreEscapado)}`,
+  //         // *\n📍 Dirección: ${this.escapeMarkdown(
+  //         //   direccion
+  //         // )}\n🚶 Distancia: ${distancia}`,
+  //         {
+  //           parse_mode: "MarkdownV2",
+  //           reply_markup: {
+  //             inline_keyboard: [
+  //               [
+  //                 {
+  //                   text: "🗺️ Cómo llegar",
+  //                   url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
+  //                 },
+  //               ],
+  //             ],
+  //           },
+  //         }
+  //       );
+  //     } else {
+  //       await this.bot.sendMessage(
+  //         chatId,
+  //         `🏥 *${this.escapeMarkdown(nombreEscapado)}`,
+  //         // *\n📍 Dirección: ${this.escapeMarkdown(
+  //         //   direccion
+  //         // )}\n🚶 Distancia: ${distancia}`,
+  //         {
+  //           parse_mode: "MarkdownV2",
+  //         }
+  //       );
+  //     }
+  //   }
+
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "Aquí tienes los centros médicos más cercanos a tu ubicación.",
+  //     {
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //         remove_keyboard: true,
+  //       },
+  //     }
+  //   );
+  // }
+
+
   private async enviarResultadosClinicas(
     chatId: number,
     clinicas: any[]
@@ -362,59 +443,49 @@ export class TelegramLocationService extends TelegramBaseService {
         reply_markup: { remove_keyboard: true },
       }
     );
-
+  
     for (const clinica of clinicas.slice(0, 5)) {
-      const nombre = clinica.name || "Centro médico sin nombre";
-      const direccion = clinica.address || "Dirección no disponible";
-      const distancia = clinica.distance
-        ? `${clinica.distance.toFixed(2)} km`
-        : "Distancia desconocida";
-
-      // Enviar ubicación
-      if (clinica.location && clinica.location.lat && clinica.location.lng) {
-        await this.bot.sendLocation(
-          chatId,
-          clinica.location.lat,
-          clinica.location.lng
-        );
-
-        // Mensaje con información y botón para obtener direcciones
-        await this.bot.sendMessage(
-          chatId,
-          `🏥 *${this.escapeMarkdown(
-            nombre
-          )}*\n📍 Dirección: ${this.escapeMarkdown(
-            direccion
-          )}\n🚶 Distancia: ${distancia}`,
-          {
-            parse_mode: "MarkdownV2",
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: "🗺️ Cómo llegar",
-                    url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
-                  },
+      try {
+        const nombre = clinica.name || "Centro médico sin nombre";
+        
+        // Enviar ubicación
+        if (clinica.location && clinica.location.lat && clinica.location.lng) {
+          await this.bot.sendLocation(
+            chatId,
+            clinica.location.lat,
+            clinica.location.lng
+          );
+  
+          // Mensaje con información y botón para obtener direcciones
+          // Usar texto plano en lugar de Markdown para evitar problemas de formato
+          await this.bot.sendMessage(
+            chatId,
+            `🏥 ${nombre}`,
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "🗺️ Cómo llegar",
+                      url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
+                    },
+                  ],
                 ],
-              ],
-            },
-          }
-        );
-      } else {
-        await this.bot.sendMessage(
-          chatId,
-          `🏥 *${this.escapeMarkdown(
-            nombre
-          )}*\n📍 Dirección: ${this.escapeMarkdown(
-            direccion
-          )}\n🚶 Distancia: ${distancia}`,
-          {
-            parse_mode: "MarkdownV2",
-          }
-        );
+              },
+            }
+          );
+        } else {
+          await this.bot.sendMessage(
+            chatId,
+            `🏥 ${nombre}`
+          );
+        }
+      } catch (error) {
+        this.logger.error(`Error al mostrar centro médico:`, error);
+        // Continuar con el siguiente centro médico
       }
     }
-
+  
     await this.bot.sendMessage(
       chatId,
       "Aquí tienes los centros médicos más cercanos a tu ubicación.",
