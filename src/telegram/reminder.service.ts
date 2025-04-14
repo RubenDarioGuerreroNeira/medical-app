@@ -23,7 +23,6 @@ export class ReminderService {
     success: "https://example.com/sounds/success.mp3",
   };
 
-
   constructor(
     @InjectRepository(MedicationReminder)
     private reminderRepository: Repository<MedicationReminder>,
@@ -68,14 +67,14 @@ export class ReminderService {
       daysOfWeek,
       timezone = "America/Caracas",
     } = reminderData;
-  
+
     if (!this.validateDaysOfWeek(daysOfWeek) || daysOfWeek.length === 0) {
       throw new Error("Los Días deben estar entre 0(Domingo y 6 (Sabado)");
     }
-    
+
     // Normalizar el formato de hora para almacenarlo en la base de datos
     const normalizedTime = this.normalizeTimeFormat(reminderTime);
-  
+
     const reminder = this.reminderRepository.create({
       chatId: chatId.toString(),
       userId: chatId.toString(),
@@ -88,49 +87,60 @@ export class ReminderService {
       isActive: true,
       type: "medication",
     });
-  
+
     const savedReminder = await this.reminderRepository.save(reminder);
     await this.scheduleReminder(savedReminder);
     return savedReminder;
   }
-  
+
   // Método para normalizar el formato de hora a HH:MM (formato 24 horas)
   private normalizeTimeFormat(time: string): string {
     // Eliminar espacios en blanco y convertir a minúsculas
     const cleanTime = time.trim().toLowerCase();
-    
+
     // Verificar si contiene am/pm
     let hours: number;
     let minutes: number;
-    
-    if (cleanTime.includes('am') || cleanTime.includes('pm')) {
+
+    if (cleanTime.includes("am") || cleanTime.includes("pm")) {
       // Formato 12 horas (e.g., "9:00 am", "3:30 pm")
-      const timePart = cleanTime.replace(/\s*(am|pm)\s*$/i, '');
-      const [hoursStr, minutesStr] = timePart.split(':');
-      
+      const timePart = cleanTime.replace(/\s*(am|pm)\s*$/i, "");
+      const [hoursStr, minutesStr] = timePart.split(":");
+
       hours = parseInt(hoursStr, 10);
       minutes = parseInt(minutesStr, 10);
-      
+
       // Convertir a formato 24 horas
-      if (cleanTime.includes('pm') && hours < 12) {
+      if (cleanTime.includes("pm") && hours < 12) {
         hours += 12;
-      } else if (cleanTime.includes('am') && hours === 12) {
+      } else if (cleanTime.includes("am") && hours === 12) {
         hours = 0;
       }
     } else {
       // Formato 24 horas (e.g., "09:00", "15:30")
-      const [hoursStr, minutesStr] = cleanTime.split(':');
+      const [hoursStr, minutesStr] = cleanTime.split(":");
       hours = parseInt(hoursStr, 10);
       minutes = parseInt(minutesStr, 10);
     }
-    
+
     // Validar que los valores sean números válidos
-    if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-      throw new Error(`Formato de hora inválido: ${time}. Use formato HH:MM o HH:MM AM/PM`);
+    if (
+      isNaN(hours) ||
+      isNaN(minutes) ||
+      hours < 0 ||
+      hours > 23 ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
+      throw new Error(
+        `Formato de hora inválido: ${time}. Use formato HH:MM o HH:MM AM/PM`
+      );
     }
-    
+
     // Devolver en formato HH:MM
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
   }
   private async scheduleReminder(reminder: MedicationReminder) {
     const cronExpression = this.createCronExpression(
@@ -205,7 +215,6 @@ export class ReminderService {
     const daysExpression = daysOfWeek.join(",");
     return `${minutes} ${hours} * * ${daysExpression}`;
   }
-
 
   // Modificar el método sendReminderNotification para usar el bot directamente
   private async sendReminderNotification(reminder: MedicationReminder) {
@@ -325,5 +334,21 @@ export class ReminderService {
       where: { chatId: chatId.toString() },
       order: { createdAt: "DESC" },
     });
+  }
+
+  async getReminderById(id: number): Promise<MedicationReminder | null> {
+    try {
+      const reminder = await this.reminderRepository.findOne({
+        where: { id },
+      });
+
+      return reminder || null;
+    } catch (error) {
+      this.logger.error(
+        `Error al buscar recordatorio por ID: ${error.message}`,
+        error.stack
+      );
+      return null;
+    }
   }
 }
