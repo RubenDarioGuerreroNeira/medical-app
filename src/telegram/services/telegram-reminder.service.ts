@@ -443,6 +443,13 @@ export class TelegramReminderService {
                 ],
                 [
                   {
+                    text: "🗑 Eliminar recordatorio",
+                    callback_data: "eliminar_recordatorio",
+                  },
+                ],
+
+                [
+                  {
                     text: "🔙 Volver al menú principal",
                     callback_data: "menu_principal",
                   },
@@ -484,7 +491,7 @@ export class TelegramReminderService {
               [
                 {
                   text: "❌ Eliminar recordatorio",
-                  callback_data: "mostrar_eliminar_recordatorio",
+                  callback_data: "eliminar_recordatorio",
                 },
               ],
               [
