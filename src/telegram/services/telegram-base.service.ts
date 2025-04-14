@@ -13,6 +13,7 @@ export class TelegramBaseService {
     protected configService: ConfigService,
     protected errorHandler: TelegramErrorHandler,
     protected diagnosticService: TelegramDiagnosticService,
+
     @Inject("TELEGRAM_BOT") protected bot: TelegramBot
   ) {
     this.setupBaseHandlers();

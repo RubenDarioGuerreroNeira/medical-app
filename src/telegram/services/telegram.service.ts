@@ -24,10 +24,8 @@ export class TelegramService {
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
     @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
-    @Inject("TELEGRAM_BOT") private bot:TelegramBot
+    @Inject("TELEGRAM_BOT") private bot: TelegramBot
   ) {
-    // const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
-    // this.bot = new TelegramBot(token, { polling: true });
     this.initializeBot();
   }
 

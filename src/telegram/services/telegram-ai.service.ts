@@ -5,6 +5,7 @@ import * as TelegramBot from "node-telegram-bot-api";
 import { ConfigService } from "@nestjs/config";
 import { TelegramErrorHandler } from "../telegramErrorHandler.service";
 import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
+import { TelegramMenuService } from "../services/telegram-menu.service";
 
 @Injectable()
 export class TelegramAIService extends TelegramBaseService {
@@ -13,6 +14,7 @@ export class TelegramAIService extends TelegramBaseService {
     configService: ConfigService,
     errorHandler: TelegramErrorHandler,
     diagnosticService: TelegramDiagnosticService,
+    private menuService: TelegramMenuService,
     @Inject("TELEGRAM_BOT") bot: TelegramBot
   ) {
     super(configService, errorHandler, diagnosticService, bot);

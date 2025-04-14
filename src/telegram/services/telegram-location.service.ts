@@ -21,6 +21,7 @@ export class TelegramLocationService extends TelegramBaseService {
     errorHandler: TelegramErrorHandler,
     diagnosticService: TelegramDiagnosticService,
     private menuService: TelegramMenuService,
+
     @Inject("TELEGRAM_BOT") bot: TelegramBot
   ) {
     super(configService, errorHandler, diagnosticService, bot);
@@ -69,12 +70,8 @@ export class TelegramLocationService extends TelegramBaseService {
     const messageHandler = async (msg: TelegramBot.Message) => {
       if (!msg.location) {
         if (msg.text === "❌ Cancelar") {
-          // Eliminar el teclado al cancelar
-          await this.bot.sendMessage(chatId, "Búsqueda cancelada.", {
-            reply_markup: { remove_keyboard: true },
-          });
-
-          await this.menuService.mostrarMenuPrincipal(chatId);
+          // Llamar al método cancelarBusqueda
+          await this.cancelarBusqueda(chatId);
           this.bot.removeListener("message", messageHandler);
           return;
         }
@@ -155,118 +152,6 @@ export class TelegramLocationService extends TelegramBaseService {
 
     await this.enviarResultadosClinicas(chatId, clinicas);
   }
-
-  // private async enviarResultadosFarmacias(
-  //   chatId: number,
-  //   farmacias: any[]
-  // ): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     `Se encontraron ${farmacias.length} farmacias cercanas:`,
-  //     {
-  //       reply_markup: { remove_keyboard: true },
-  //     }
-  //   );
-
-  //   for (const farmacia of farmacias.slice(0, 5)) {
-  //     const nombre = farmacia.name || "Farmacia sin nombre";
-  //     const direccion = farmacia.address || "Dirección no disponible";
-  //     const distancia = farmacia.distance
-  //       ? `${farmacia.distance.toFixed(2)} km`
-  //       : "Distancia desconocida";
-
-  //     const mensaje = `🏥 *${this.escapeMarkdown(
-  //       nombre
-  //     )}*\n📍 Dirección: ${this.escapeMarkdown(
-  //       direccion
-  //     )}\n🚶 Distancia: ${distancia}`;
-
-  //     if (farmacia.lat && farmacia.lon) {
-  //       await this.bot.sendLocation(chatId, farmacia.lat, farmacia.lon);
-  //       await this.bot.sendMessage(chatId, mensaje, {
-  //         parse_mode: "MarkdownV2",
-  //       });
-  //     } else {
-  //       await this.bot.sendMessage(chatId, mensaje, {
-  //         parse_mode: "MarkdownV2",
-  //       });
-  //     }
-  //   }
-
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "Aquí tienes las farmacias más cercanas a tu ubicación.",
-  //     {
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             {
-  //               text: "🔙 Volver al menú principal",
-  //               callback_data: "menu_principal",
-  //             },
-  //           ],
-  //         ],
-  //         remove_keyboard: true,
-  //       },
-  //     }
-  //   );
-  // }
-
-  // private async enviarResultadosClinicas(
-  //   chatId: number,
-  //   clinicas: any[]
-  // ): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     `Se encontraron ${clinicas.length} centros médicos cercanos:`,
-  //     {
-  //       reply_markup: { remove_keyboard: true },
-  //     }
-  //   );
-
-  //   for (const clinica of clinicas.slice(0, 5)) {
-  //     const nombre = clinica.name || "Centro médico sin nombre";
-  //     const direccion = clinica.address || "Dirección no disponible";
-  //     const distancia = clinica.distance
-  //       ? `${clinica.distance.toFixed(2)} km`
-  //       : "Distancia desconocida";
-
-  //     const mensaje = `🏥 *${this.escapeMarkdown(
-  //       nombre
-  //     )}*\n📍 Dirección: ${this.escapeMarkdown(
-  //       direccion
-  //     )}\n🚶 Distancia: ${distancia}`;
-
-  //     if (clinica.lat && clinica.lon) {
-  //       await this.bot.sendLocation(chatId, clinica.lat, clinica.lon);
-  //       await this.bot.sendMessage(chatId, mensaje, {
-  //         parse_mode: "MarkdownV2",
-  //       });
-  //     } else {
-  //       await this.bot.sendMessage(chatId, mensaje, {
-  //         parse_mode: "MarkdownV2",
-  //       });
-  //     }
-  //   }
-
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "Aquí tienes los centros médicos más cercanos a tu ubicación.",
-  //     {
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             {
-  //               text: "🔙 Volver al menú principal",
-  //               callback_data: "menu_principal",
-  //             },
-  //           ],
-  //         ],
-  //         remove_keyboard: true,
-  //       },
-  //     }
-  //   );
-  // }
 
   private async enviarResultadosFarmacias(
     chatId: number,
@@ -349,89 +234,6 @@ export class TelegramLocationService extends TelegramBaseService {
     );
   }
 
-  // private async enviarResultadosClinicas(
-  //   chatId: number,
-  //   clinicas: any[]
-  // ): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     `Se encontraron ${clinicas.length} centros médicos cercanos:`,
-  //     {
-  //       reply_markup: { remove_keyboard: true },
-  //     }
-  //   );
-
-  //   for (const clinica of clinicas.slice(0, 5)) {
-  //     const nombre = clinica.name || "Centro médico sin nombre";
-  //     const nombreEscapado = this.escapeMarkdown(nombre);
-  //     // const direccion = clinica.address || "Dirección no disponible";
-  //     // const distancia = clinica.distance
-  //     // ? `${clinica.distance.toFixed(2)} km`
-  //     // : "Distancia desconocida";
-
-  //     // Enviar ubicación
-  //     if (clinica.location && clinica.location.lat && clinica.location.lng) {
-  //       await this.bot.sendLocation(
-  //         chatId,
-  //         clinica.location.lat,
-  //         clinica.location.lng
-  //       );
-
-  //       // Mensaje con información y botón para obtener direcciones
-  //       await this.bot.sendMessage(
-  //         chatId,
-  //         `🏥 *${this.escapeMarkdown(nombreEscapado)}`,
-  //         // *\n📍 Dirección: ${this.escapeMarkdown(
-  //         //   direccion
-  //         // )}\n🚶 Distancia: ${distancia}`,
-  //         {
-  //           parse_mode: "MarkdownV2",
-  //           reply_markup: {
-  //             inline_keyboard: [
-  //               [
-  //                 {
-  //                   text: "🗺️ Cómo llegar",
-  //                   url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
-  //                 },
-  //               ],
-  //             ],
-  //           },
-  //         }
-  //       );
-  //     } else {
-  //       await this.bot.sendMessage(
-  //         chatId,
-  //         `🏥 *${this.escapeMarkdown(nombreEscapado)}`,
-  //         // *\n📍 Dirección: ${this.escapeMarkdown(
-  //         //   direccion
-  //         // )}\n🚶 Distancia: ${distancia}`,
-  //         {
-  //           parse_mode: "MarkdownV2",
-  //         }
-  //       );
-  //     }
-  //   }
-
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "Aquí tienes los centros médicos más cercanos a tu ubicación.",
-  //     {
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             {
-  //               text: "🔙 Volver al menú principal",
-  //               callback_data: "menu_principal",
-  //             },
-  //           ],
-  //         ],
-  //         remove_keyboard: true,
-  //       },
-  //     }
-  //   );
-  // }
-
-
   private async enviarResultadosClinicas(
     chatId: number,
     clinicas: any[]
@@ -443,11 +245,11 @@ export class TelegramLocationService extends TelegramBaseService {
         reply_markup: { remove_keyboard: true },
       }
     );
-  
+
     for (const clinica of clinicas.slice(0, 5)) {
       try {
         const nombre = clinica.name || "Centro médico sin nombre";
-        
+
         // Enviar ubicación
         if (clinica.location && clinica.location.lat && clinica.location.lng) {
           await this.bot.sendLocation(
@@ -455,37 +257,30 @@ export class TelegramLocationService extends TelegramBaseService {
             clinica.location.lat,
             clinica.location.lng
           );
-  
+
           // Mensaje con información y botón para obtener direcciones
           // Usar texto plano en lugar de Markdown para evitar problemas de formato
-          await this.bot.sendMessage(
-            chatId,
-            `🏥 ${nombre}`,
-            {
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    {
-                      text: "🗺️ Cómo llegar",
-                      url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
-                    },
-                  ],
+          await this.bot.sendMessage(chatId, `🏥 ${nombre}`, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🗺️ Cómo llegar",
+                    url: `https://www.google.com/maps/dir/?api=1&destination=${clinica.location.lat},${clinica.location.lng}&travelmode=driving`,
+                  },
                 ],
-              },
-            }
-          );
+              ],
+            },
+          });
         } else {
-          await this.bot.sendMessage(
-            chatId,
-            `🏥 ${nombre}`
-          );
+          await this.bot.sendMessage(chatId, `🏥 ${nombre}`);
         }
       } catch (error) {
         this.logger.error(`Error al mostrar centro médico:`, error);
         // Continuar con el siguiente centro médico
       }
     }
-  
+
     await this.bot.sendMessage(
       chatId,
       "Aquí tienes los centros médicos más cercanos a tu ubicación.",
@@ -541,7 +336,7 @@ export class TelegramLocationService extends TelegramBaseService {
       },
     });
     // Volver al menú principal
-    await this.mostrarMenuPrincipal(chatId);
+    await this.menuService.mostrarMenuPrincipal(chatId);
   }
 
   private async handleLocationError(chatId: number): Promise<void> {
@@ -555,45 +350,6 @@ export class TelegramLocationService extends TelegramBaseService {
               {
                 text: "🔙 Volver al menú principal",
                 callback_data: "menu_principal",
-              },
-            ],
-          ],
-        },
-      }
-    );
-  }
-
-  // Este método debe estar en TelegramBaseService, pero lo incluyo aquí por si acaso
-  private async mostrarMenuPrincipal(chatId: number): Promise<void> {
-    // Implementación básica, debería usar el servicio de menú
-    await this.bot.sendMessage(
-      chatId,
-      "¡Bienvenido al Asistente Médico Virtual! ¿En qué puedo ayudarte?",
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🏥 Farmacias Cercanas",
-                callback_data: "solicitar_ubicacion_farmacia",
-              },
-            ],
-            [
-              {
-                text: "👨‍🔬 Centros Médicos Cercanos",
-                callback_data: "mostrarCentrosCercanos",
-              },
-            ],
-            [
-              {
-                text: "🩺 Consulta Médica con IA",
-                callback_data: "consulta_medica",
-              },
-            ],
-            [
-              {
-                text: "🙋‍♂️ Recordatorios de Medicamentos",
-                callback_data: "recordatorios",
               },
             ],
           ],
