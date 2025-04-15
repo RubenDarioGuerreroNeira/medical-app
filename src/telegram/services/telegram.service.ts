@@ -7,6 +7,7 @@ import { TelegramLocationService } from "./telegram-location.service";
 import { TelegramReminderService } from "./telegram-reminder.service";
 import { TelegramErrorHandler } from "../telegramErrorHandler.service";
 import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
+import { TelegramContactService } from "./telegram-contact.service";
 
 @Injectable()
 export class TelegramService {
@@ -23,6 +24,7 @@ export class TelegramService {
     private reminderService: TelegramReminderService,
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
+    private contactService: TelegramContactService,
     @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
     @Inject("TELEGRAM_BOT") private bot: TelegramBot
   ) {
@@ -85,6 +87,9 @@ export class TelegramService {
           break;
         case "recordatorios":
           await this.reminderService.mostrarMenuRecordatorios(chatId);
+          break;
+        case "contacto":
+          await this.contactService.mostrarContacto(chatId);
           break;
         // Agregar más casos según sea necesario
       }

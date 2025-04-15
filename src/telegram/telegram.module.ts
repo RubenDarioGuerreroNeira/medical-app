@@ -19,7 +19,6 @@ import { OSMService } from "./farmacias-maps.service";
 import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { TelegramBotService } from "./telegramBotService.service";
 
-
 // Nuevos servicios refactorizados
 import { TelegramBaseService } from "./services/telegram-base.service";
 import { TelegramAIService } from "./services/telegram-ai.service";
@@ -30,6 +29,7 @@ import { TelegramService } from "./services/telegram.service";
 import { TelegramNotificationService } from "./telegramNotificationService.service";
 import { Repository } from "typeorm";
 import { ReminderService } from "./reminder.service";
+import { TelegramContactService } from "./services/telegram-contact.service";
 
 @Module({
   imports: [
@@ -71,6 +71,8 @@ import { ReminderService } from "./reminder.service";
     TelegramAIService,
     TelegramMenuService,
     TelegramLocationService,
+    TelegramReminderService,
+    TelegramContactService, // Agregar el servicio aquí
 
     // Primero registrar ReminderService como un servicio normal
     {
@@ -137,6 +139,7 @@ import { ReminderService } from "./reminder.service";
         reminderService: TelegramReminderService,
         errorHandler: TelegramErrorHandler,
         diagnosticService: TelegramDiagnosticService,
+        contactService: TelegramContactService,
         userStates: Map<number, any>,
         bot: TelegramBot,
         reminderServiceInstance: ReminderService
@@ -149,6 +152,7 @@ import { ReminderService } from "./reminder.service";
           reminderService,
           errorHandler,
           diagnosticService,
+          contactService,
           userStates,
           bot
         );
@@ -168,6 +172,7 @@ import { ReminderService } from "./reminder.service";
         TelegramReminderService,
         TelegramErrorHandler,
         TelegramDiagnosticService,
+        TelegramContactService,
         "USER_STATES_MAP",
         "TELEGRAM_BOT",
         ReminderService,
@@ -180,6 +185,7 @@ import { ReminderService } from "./reminder.service";
     "TELEGRAM_BOT",
     TelegramBotService,
     ReminderService,
+    TelegramContactService, // Exportar el servicio si es necesario
   ],
 })
 export class TelegramModule {}
