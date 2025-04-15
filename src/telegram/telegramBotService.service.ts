@@ -318,26 +318,6 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // private async initializePollingBot(token: string) {
-  //   try {
-  //     this.bot = new TelegramBot(token, {
-  //       polling: {
-  //         params: {
-  //           timeout: 30,
-  //         },
-  //         interval: 2000,
-  //         autoStart: true,
-  //       },
-  //     });
-
-  //     // Mejorado el manejo de errores
-  //     this.setupErrorHandlers();
-  //     this.logger.log("Bot iniciado en modo polling (desarrollo)");
-  //   } catch (error) {
-  //     this.logger.error("Error al inicializar bot en modo polling:", error);
-  //     throw error;
-  //   }
-  // }
 
   private async initializePollingBot(token: string) {
     try {
@@ -391,56 +371,14 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  // private async handlePollingError(error: Error): Promise<void> {
-  //   this.logger.error(`Error de polling: ${error.message}`);
 
-  //   // Si es un error 409, intentamos reiniciar el polling
-  //   if (error.message.includes("409")) {
-  //     await this.handleConflictError();
-  //     return;
-  //   }
-
-  //   if (this.retryCount >= this.MAX_RETRIES) {
-  //     this.logger.error("Máximo número de reintentos alcanzado");
-  //     this.retryCount = 0;
-  //     return;
-  //   }
-
-  //   try {
-  //     await this.bot.stopPolling();
-  //     await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY));
-  //     await this.bot.startPolling();
-
-  //     this.logger.log("Polling reiniciado exitosamente");
-  //     this.retryCount = 0;
-  //   } catch (retryError) {
-  //     this.retryCount++;
-  //     this.logger.error(
-  //       `Error al reiniciar polling (intento ${this.retryCount}/${this.MAX_RETRIES}):`,
-  //       retryError
-  //     );
-  //   }
-  // }
-
-  // // Método público para enviar mensajes
-  // async sendMessage(
-  //   chatId: number,
-  //   text: string
-  // ): Promise<TelegramBot.Message> {
-  //   try {
-  //     return await this.bot.sendMessage(chatId, text);
-  //   } catch (error) {
-  //     this.logger.error(`Error al enviar mensaje a ${chatId}:`, error);
-  //     throw error;
-  //   }
-  // }
 
   private async handlePollingError(error: Error): Promise<void> {
     this.logger.error(`Error de polling: ${error.message}`);
-  
+
     // Manejar errores fatales y de conexión restablecida
     if (
-      error.message.includes("ECONNRESET") || 
+      error.message.includes("ECONNRESET") ||
       error.message.includes("EFATAL") ||
       (error as any).code === "EFATAL" ||
       (error as any).code === "ECONNRESET"
@@ -448,34 +386,35 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(
         "Error de conexión detectado. Reiniciando polling con retraso exponencial..."
       );
-      
+
       try {
         // Asegurarse de detener el polling actual
         if (this.bot.isPolling()) {
           await this.bot.stopPolling();
         }
-        
+
         // Implementar backoff exponencial
-        const delayTime = Math.min(
-          5000 * Math.pow(2, this.retryCount), 
-          60000
-        ); // Entre 5s y 60s
-        
-        this.logger.log(`Esperando ${delayTime/1000} segundos antes de reintentar...`);
+        const delayTime = Math.min(5000 * Math.pow(2, this.retryCount), 60000); // Entre 5s y 60s
+
+        this.logger.log(
+          `Esperando ${delayTime / 1000} segundos antes de reintentar...`
+        );
         await new Promise((resolve) => setTimeout(resolve, delayTime));
-        
+
         // Reiniciar el polling con configuración más robusta
         await this.bot.startPolling({
           polling: {
             params: {
               timeout: 30,
-              allowed_updates: ["message", "callback_query", "inline_query"]
+              allowed_updates: ["message", "callback_query", "inline_query"],
             },
-            interval: 3000 // Intervalo más largo para reducir la carga
-          }
+            interval: 3000, // Intervalo más largo para reducir la carga
+          },
         });
-        
-        this.logger.log("Polling reiniciado exitosamente después de error de conexión");
+
+        this.logger.log(
+          "Polling reiniciado exitosamente después de error de conexión"
+        );
         this.retryCount = 0;
         return;
       } catch (retryError) {
@@ -484,36 +423,38 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
           `Error al reiniciar después de error de conexión (intento ${this.retryCount}/${this.MAX_RETRIES}):`,
           retryError
         );
-        
+
         // Si alcanzamos el máximo de reintentos, esperamos un tiempo más largo
         if (this.retryCount >= this.MAX_RETRIES) {
-          this.logger.warn(`Máximo número de reintentos alcanzado. Esperando 2 minutos antes de reiniciar contador.`);
+          this.logger.warn(
+            `Máximo número de reintentos alcanzado. Esperando 2 minutos antes de reiniciar contador.`
+          );
           await new Promise((resolve) => setTimeout(resolve, 120000));
           this.retryCount = 0;
         }
       }
     }
-  
+
     // Si es un error 409, intentamos reiniciar el polling
     if (error.message.includes("409")) {
       await this.handleConflictError();
       return;
     }
-  
+
     // Manejo genérico para otros errores de polling
     if (this.retryCount >= this.MAX_RETRIES) {
       this.logger.error("Máximo número de reintentos alcanzado");
       this.retryCount = 0;
       return;
     }
-  
+
     try {
       if (this.bot.isPolling()) {
         await this.bot.stopPolling();
       }
       await new Promise((resolve) => setTimeout(resolve, this.RETRY_DELAY));
       await this.bot.startPolling();
-  
+
       this.logger.log("Polling reiniciado exitosamente");
       this.retryCount = 0;
     } catch (retryError) {
