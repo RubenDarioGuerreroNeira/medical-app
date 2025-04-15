@@ -6,6 +6,13 @@
 
 Esta API, desarrollada con NestJS, ofrece una solución completa para la gestión de citas médicas, facilitando la administración de pacientes, médicos y sus respectivas citas en centros de salud. Está dirigida a clínicas, hospitales y consultorios médicos que buscan optimizar la organización y el control de su flujo de pacientes.
 
+## Desarrollador
+
+**Rubén D. Guerrero N.**  
+Desarrollador Full Stack  
+Email: rudargeneira@gmail.com  
+Telegram: @Rubedev
+
 ## Tecnologías Utilizadas
 
 - NestJS
@@ -69,7 +76,7 @@ Se gestionan los horarios de disponibilidad de los médicos utilizando un format
 
 ## Características Principales
 
-El bot de Telegram complementa nuestra API de citas médicas, ofreciendo una interfaz conversacional accesible y fácil de usar para los pacientes.
+El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nuestra API de citas médicas, ofreciendo una interfaz conversacional accesible y fácil de usar para los pacientes.
 
 ### Funcionalidades Implementadas
 
@@ -90,11 +97,65 @@ El bot de Telegram complementa nuestra API de citas médicas, ofreciendo una int
 
 ### Próximas Funcionalidades
 
-- Programación de citas médicas directamente desde el bot
-- Historial médico personal
-- Seguimiento de medicamentos con reconocimiento de imágenes
-- Telemedicina y videoconsultas
-- Integración con seguros médicos
+#### 1. Sistema de Citas Médicas
+
+- Programación, visualización y cancelación de citas médicas directamente desde Telegram
+- Recordatorios automáticos de citas próximas
+- Opción para reprogramar citas con un simple botón
+
+#### 2. Historial Médico Personal
+
+- Registro y consulta de historial médico básico
+- Almacenamiento de alergias, condiciones crónicas y medicamentos actuales
+- Generación de resúmenes compartibles con nuevos médicos
+
+#### 3. Seguimiento de Medicamentos Mejorado
+
+- Registro de medicamentos con fotos (el usuario puede enviar una foto del medicamento)
+- Alertas de interacciones medicamentosas peligrosas
+- Recordatorios personalizables (sonidos, frecuencia, mensajes)
+
+#### 4. Síntomas y Primeros Auxilios
+
+- Guía interactiva de primeros auxilios con imágenes y videos
+- Evaluador de síntomas básico que sugiera nivel de urgencia
+- Información sobre cuándo buscar atención médica inmediata
+
+#### 5. Integración con Seguros Médicos
+
+- Verificación de cobertura de seguro para clínicas y farmacias mostradas
+- Consulta de saldo disponible o estado de reembolsos
+- Información sobre trámites y documentación necesaria
+
+#### 6. Comunidad y Soporte
+
+- Grupos de apoyo para condiciones específicas
+- Conexión con otros pacientes (anónima y moderada)
+- Preguntas frecuentes sobre condiciones médicas comunes
+
+#### 7. Telemedicina
+
+- Integración con servicios de consulta médica virtual
+- Programación de videoconsultas desde el bot
+- Sala de espera virtual con notificaciones
+
+#### 8. Gamificación para Adherencia al Tratamiento
+
+- Sistema de puntos por seguir tratamientos correctamente
+- Insignias y logros por mantener hábitos saludables
+- Estadísticas visuales de progreso
+
+#### 9. Información Nutricional y Ejercicio
+
+- Recomendaciones personalizadas según condiciones médicas
+- Seguimiento de actividad física básica
+- Sugerencias de dietas específicas para condiciones médicas
+
+#### 10. Emergencias Médicas Mejoradas
+
+- Botón de pánico que envía ubicación a contactos de emergencia
+- Información de contacto de emergencias según ubicación actual
+- Instrucciones de audio para situaciones críticas
 
 ## Soporte
 
