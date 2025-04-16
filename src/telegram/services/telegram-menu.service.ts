@@ -19,6 +19,12 @@ export class TelegramMenuService extends TelegramBaseService {
             callback_data: "mostrarCentrosCercanos",
           },
         ],
+        // [
+        //   {
+        //     text: "👨‍🔬  Centros de Atención Médica Colombia \nBuscar ",
+        //     callback_data: "Centros médicos Colombia",
+        //   },
+        // ],
         [
           {
             text: "🩺 Preguntale a Nuestra IA ",

@@ -31,11 +31,20 @@ import { Repository } from "typeorm";
 import { ReminderService } from "./reminder.service";
 import { TelegramContactService } from "./services/telegram-contact.service";
 
+// apis
+import { HealthCentersService } from "./colombia/api-servicios-medicos-colombia.service";
+import { HttpModule } from "@nestjs/axios";
+import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forFeature([MedicationReminder]),
     ScheduleModule.forRoot(),
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
+    }),
   ],
   controllers: [TelegramController, TelegramWebhookController],
   providers: [
@@ -47,6 +56,8 @@ import { TelegramContactService } from "./services/telegram-contact.service";
     OSMService,
     ClinicasVenezuelaService,
     TelegramNotificationService,
+    HealthCentersService,
+    TelegramColombiaService,
 
     // Centralizar la creación del bot
     {
@@ -140,6 +151,7 @@ import { TelegramContactService } from "./services/telegram-contact.service";
         errorHandler: TelegramErrorHandler,
         diagnosticService: TelegramDiagnosticService,
         contactService: TelegramContactService,
+        colombiaService: TelegramColombiaService,
         userStates: Map<number, any>,
         bot: TelegramBot,
         reminderServiceInstance: ReminderService
@@ -153,6 +165,7 @@ import { TelegramContactService } from "./services/telegram-contact.service";
           errorHandler,
           diagnosticService,
           contactService,
+          colombiaService,
           userStates,
           bot
         );
@@ -173,6 +186,7 @@ import { TelegramContactService } from "./services/telegram-contact.service";
         TelegramErrorHandler,
         TelegramDiagnosticService,
         TelegramContactService,
+        TelegramColombiaService,
         "USER_STATES_MAP",
         "TELEGRAM_BOT",
         ReminderService,
@@ -186,6 +200,8 @@ import { TelegramContactService } from "./services/telegram-contact.service";
     TelegramBotService,
     ReminderService,
     TelegramContactService, // Exportar el servicio si es necesario
+    HealthCentersService,
+    TelegramColombiaService,
   ],
 })
 export class TelegramModule {}
