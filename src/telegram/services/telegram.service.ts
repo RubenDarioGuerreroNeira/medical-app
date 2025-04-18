@@ -9,6 +9,7 @@ import { TelegramErrorHandler } from "../telegramErrorHandler.service";
 import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
 import { TelegramContactService } from "./telegram-contact.service";
 import { TelegramColombiaService } from "../colombia/telegram-colombia.service";
+import { AppointmentCommands } from "./appointment.commands.service";
 
 @Injectable()
 export class TelegramService {
@@ -26,11 +27,13 @@ export class TelegramService {
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
     private contactService: TelegramContactService,
-    private colombiaService: TelegramColombiaService,
+    // private colombiaService: TelegramColombiaService,
+    private appointmentCommands: AppointmentCommands,
     @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
     @Inject("TELEGRAM_BOT") private bot: TelegramBot
   ) {
     this.initializeBot();
+    this.appointmentCommands.setupCommands();
   }
 
   private async initializeBot(): Promise<void> {
@@ -74,6 +77,8 @@ export class TelegramService {
     const data = callbackQuery.data;
 
     try {
+      // Verificar que el caso para recordatorio_cita_medica esté correctamente implementado
+
       switch (data) {
         case "menu_principal":
           await this.menuService.mostrarMenuPrincipal(chatId);
@@ -93,9 +98,12 @@ export class TelegramService {
         case "contacto":
           await this.contactService.mostrarContacto(chatId);
           break;
-        case "Centros médicos Colombia":
-          await this.colombiaService.solicitarCiudadColombia(chatId);
+        case "recordatorio_cita_medica":
+          await this.appointmentCommands.mostrarMenuCitas(chatId);
           break;
+        // case "Centros médicos Colombia":
+        //   await this.colombiaService.solicitarCiudadColombia(chatId);
+        //   break;
 
         // Agregar más casos según sea necesario
       }

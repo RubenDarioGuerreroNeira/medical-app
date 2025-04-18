@@ -14,6 +14,7 @@ import { ClinicasVenezuelaService } from "./centros-hospitalarios.service";
 import { Clinica } from "./intrfaces/interface-clinicas";
 import { Farmacia } from "./intrfaces/osm.interface";
 import { OSMService } from "./farmacias-maps.service";
+import { AppointmentCommands } from "./services/appointment.commands.service";
 import {
   AppointmentNotification,
   TelegramKeyboard,
@@ -54,6 +55,7 @@ export class TelegramService {
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
     private reminderService: ReminderService,
+    private appointmentCommands: AppointmentCommands,
     @Inject("TELEGRAM_BOT") private readonly telegramBot: TelegramBot
   ) {
     // const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
@@ -95,10 +97,45 @@ export class TelegramService {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
 
+    // observo que pasa
+    this.logger.log(`Procesando callback:{data} para chatId:${chatId}`);
+
     // Extraer reminderId del callback_data si está presente
     let reminderId: number | undefined;
     if (data.startsWith("delete_reminder_")) {
       reminderId = parseInt(data.split("_")[2], 10);
+    }
+
+    try {
+      // Responder al callback query para quitar el estado de "cargando" en el botón
+      await this.bot.answerCallbackQuery(callbackQuery.id);
+
+      if (data === "recordatorio_cita_medica") {
+        this.logger.log("Intentando mostrar menú de citas médicas...");
+        if (this.appointmentCommands) {
+          this.logger.log("appointmentCommands está disponible");
+          await this.appointmentCommands.mostrarMenuCitas(chatId);
+        } else {
+          this.logger.error("appointmentCommands no está disponible");
+          await this.bot.sendMessage(
+            chatId,
+            "❌ Error: El servicio de citas médicas no está disponible."
+          );
+        }
+        return;
+      }
+
+      // Resto del código para manejar otros callbacks...
+      // ...
+    } catch (error) {
+      this.logger.error(
+        `Error al procesar callback ${data}: ${error.message}`,
+        error.stack
+      );
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Lo siento, ocurrió un error al procesar tu solicitud."
+      );
     }
 
     const actionHandlers = {
@@ -113,11 +150,102 @@ export class TelegramService {
       cancel_reminder: () => this.handleDeleteReminder(chatId, reminderId),
       confirm_days: () => this.finalizarCreacionRecordatorio(chatId),
       play_sound: () => this.playSound(chatId), // Agregar manejador para reproducir sonido
+
+      // manejador citas medicas
+      recordatorio_cita_medica: () =>
+        this.appointmentCommands.mostrarMenuCitas(chatId),
+      cita_medica: () => this.appointmentCommands.mostrarMenuCitas(chatId),
+      // Agregar manejador para mostrar menú de citas
+      nueva_cita: () => this.appointmentCommands.iniciarCreacionCita(chatId),
+      ver_citas: () => this.appointmentCommands.mostrarCitas(chatId),
     };
 
     if (data in actionHandlers) {
       await actionHandlers[data]();
     }
+  }
+
+  //----- menu Principal
+  private async mostrarMenuPrincipal(chatId: number): Promise<void> {
+    try {
+      // Intentamos obtener información del chat para personalizar el saludo
+      const chat = await this.bot.getChat(chatId);
+      const userName = chat.first_name || "Usuario";
+
+      const welcomeMessage =
+        `¡Hola ${userName}! 👋\n\n` +
+        `Bienvenido a tu Asistente Médico Virtual 🏥\n\n` +
+        `Te puedo ayudar con:\n` +
+        `• Encontrar farmacias cercanas 💊\n` +
+        `• Localizar centros médicos próximos 🏥\n` +
+        `• Responder consultas médicas con IA 🤖\n` +
+        `• Programar recordatorios de medicamentos ⏰\n\n` +
+        `• Gestionar tus citas médicas 📅\n\n` +
+        `¿En qué puedo ayudarte hoy?\n\n` +
+        `Selecciona una opción del menú:`;
+
+      await this.bot.sendMessage(chatId, welcomeMessage, {
+        parse_mode: "Markdown",
+        reply_markup: this.getMainMenuKeyboard(),
+      });
+    } catch (error) {
+      this.logger.error("Error al mostrar menú principal:", error);
+      // Fallback en caso de error al obtener información del usuario
+      const fallbackMessage =
+        "¡Bienvenido! 👋\n\n" +
+        "Soy tu Asistente Médico Virtual 🏥\n" +
+        "¿En qué puedo ayudarte hoy?\n\n" +
+        "Selecciona una opción del menú:";
+
+      await this.bot.sendMessage(chatId, fallbackMessage, {
+        reply_markup: this.getMainMenuKeyboard(),
+      });
+    }
+  }
+
+  //------------MENU PRINCIPAL -------------------------
+  private getMainMenuKeyboard(): TelegramKeyboard {
+    return {
+      inline_keyboard: [
+        [
+          {
+            text: "🏥  Farmacias Cercanas \nBuscar",
+            callback_data: "solicitar_ubicacion_farmacia",
+          },
+        ],
+        [
+          {
+            text: "👨‍🔬  Centros de Atención Médica Cercanos \nBuscar ",
+            callback_data: "mostrarCentrosCercanos",
+          },
+        ],
+        [
+          {
+            text: "🩺 Preguntale a Nuestra IA ",
+            callback_data: "consulta_medica",
+          },
+        ],
+        [
+          {
+            text: "🙋‍♂️ Programar Recordatorio de Medicamentos",
+            callback_data: "recordatorios",
+          },
+        ],
+        [
+          {
+            text: "  Recordatorio de Citas Médicas",
+            callback_data: "recordatorio_cita_medica",
+          },
+        ],
+        [
+          //   { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
+          {
+            text: "📞 Contacto con el Desarrollador",
+            callback_data: "contacto",
+          },
+        ],
+      ],
+    };
   }
 
   // Método para cancelar la búsqueda y volver al menú principal
@@ -583,14 +711,33 @@ export class TelegramService {
   }
 
   // manejador de callback queries
+  // private setupCallbackHandler(): void {
+  //   this.bot.on("callback_query", async (callbackQuery) => {
+  //     const action = callbackQuery.data;
+  //     const msg = callbackQuery.message;
+  //     const chatId = msg.chat.id;
+
+  //     // await this.handleCallbackAction(action, chatId);
+  //     await this.bot.answerCallbackQuery(callbackQuery.id);
+  //   });
+  // }
+
   private setupCallbackHandler(): void {
     this.bot.on("callback_query", async (callbackQuery) => {
-      const action = callbackQuery.data;
-      const msg = callbackQuery.message;
-      const chatId = msg.chat.id;
+      try {
+        const chatId = callbackQuery.message.chat.id;
+        const data = callbackQuery.data;
 
-      // await this.handleCallbackAction(action, chatId);
-      await this.bot.answerCallbackQuery(callbackQuery.id);
+        // Log para depuración
+        this.logger.log(`Callback recibido: ${data} de chatId: ${chatId}`);
+
+        await this.handleCallbackQuery(callbackQuery);
+      } catch (error) {
+        this.logger.error(
+          `Error en callback handler: ${error.message}`,
+          error.stack
+        );
+      }
     });
   }
 
@@ -897,82 +1044,6 @@ export class TelegramService {
         "handleGeneralMessage",
         chatId
       );
-    }
-  }
-
-  //------------MENU PRINCIPAL -------------------------
-  private getMainMenuKeyboard(): TelegramKeyboard {
-    return {
-      inline_keyboard: [
-        [
-          {
-            text: "🏥  Farmacias Cercanas \nBuscar",
-            callback_data: "solicitar_ubicacion_farmacia",
-          },
-        ],
-        [
-          {
-            text: "👨‍🔬  Centros de Atención Médica Cercanos \nBuscar ",
-            callback_data: "mostrarCentrosCercanos",
-          },
-        ],
-        [
-          {
-            text: "🩺 Preguntale a Nuestra IA ",
-            callback_data: "consulta_medica",
-          },
-        ],
-        [
-          {
-            text: "🙋‍♂️ Programar Recordatorio de Medicamentos",
-            callback_data: "recordatorios",
-          },
-        ],
-        [
-          //   { text: "❌ Cancelar cita(Prueba)", callback_data: "cancelar_cita" },
-          {
-            text: "📞 Contacto con el Desarrollador",
-            callback_data: "contacto",
-          },
-        ],
-      ],
-    };
-  }
-
-  // Método que acepta nombre de usuario opcional
-  private async mostrarMenuPrincipal(chatId: number): Promise<void> {
-    try {
-      // Intentamos obtener información del chat para personalizar el saludo
-      const chat = await this.bot.getChat(chatId);
-      const userName = chat.first_name || "Usuario";
-
-      const welcomeMessage =
-        `¡Hola ${userName}! 👋\n\n` +
-        `Bienvenido a tu Asistente Médico Virtual 🏥\n\n` +
-        `Te puedo ayudar con:\n` +
-        `• Encontrar farmacias cercanas 💊\n` +
-        `• Localizar centros médicos próximos 🏥\n` +
-        `• Responder consultas médicas con IA 🤖\n` +
-        `• Programar recordatorios de medicamentos ⏰\n\n` +
-        `¿En qué puedo ayudarte hoy?\n\n` +
-        `Selecciona una opción del menú:`;
-
-      await this.bot.sendMessage(chatId, welcomeMessage, {
-        parse_mode: "Markdown",
-        reply_markup: this.getMainMenuKeyboard(),
-      });
-    } catch (error) {
-      this.logger.error("Error al mostrar menú principal:", error);
-      // Fallback en caso de error al obtener información del usuario
-      const fallbackMessage =
-        "¡Bienvenido! 👋\n\n" +
-        "Soy tu Asistente Médico Virtual 🏥\n" +
-        "¿En qué puedo ayudarte hoy?\n\n" +
-        "Selecciona una opción del menú:";
-
-      await this.bot.sendMessage(chatId, fallbackMessage, {
-        reply_markup: this.getMainMenuKeyboard(),
-      });
     }
   }
 

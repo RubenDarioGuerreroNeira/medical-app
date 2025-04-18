@@ -39,6 +39,12 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
+            text: "  Recordatorio de Citas Médicas",
+            callback_data: "recordatorio_cita_medica",
+          },
+        ],
+        [
+          {
             text: "📞 Contacto con el Desarrollador",
             callback_data: "contacto",
           },
@@ -60,6 +66,7 @@ export class TelegramMenuService extends TelegramBaseService {
         `• Localizar centros médicos próximos 🏥\n` +
         `• Responder consultas médicas con IA 🤖\n` +
         `• Programar recordatorios de medicamentos ⏰\n\n` +
+        `• Gestionar tus citas médicas 📅\n\n` +
         `¿En qué puedo ayudarte hoy?\n\n` +
         `Selecciona una opción del menú:`;
 

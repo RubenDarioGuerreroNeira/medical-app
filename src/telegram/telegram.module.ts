@@ -10,6 +10,7 @@ import { TelegramWebhookController } from "./telegramWebhook.controller";
 
 // Entidades
 import { MedicationReminder } from "../Entities/MedicationReminder.entity";
+import { MedicalAppointment } from "src/Entities/MedicalAppointment.entity";
 
 // Servicios de utilidad que se mantienen
 import { GeminiAIService } from "src/Gemini/gemini.service";
@@ -35,11 +36,13 @@ import { TelegramContactService } from "./services/telegram-contact.service";
 import { HealthCentersService } from "./colombia/api-servicios-medicos-colombia.service";
 import { HttpModule } from "@nestjs/axios";
 import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
+import { AppointmentCommands } from "./services/appointment.commands.service";
+import { AppointmentService } from "./services/appointment.service";
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forFeature([MedicationReminder]),
+    TypeOrmModule.forFeature([MedicationReminder, MedicalAppointment]),
     ScheduleModule.forRoot(),
     HttpModule.register({
       timeout: 5000,
@@ -58,6 +61,9 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
     TelegramNotificationService,
     HealthCentersService,
     TelegramColombiaService,
+    AppointmentCommands,
+    TelegramService,
+    // AppointmentService,
 
     // Centralizar la creación del bot
     {
@@ -139,6 +145,44 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
       ],
     },
 
+    // Modificar la configuración de AppointmentCommands
+    {
+      provide: AppointmentCommands,
+      useFactory: (
+        appointmentService: AppointmentService,
+        bot: TelegramBot
+      ) => {
+        return new AppointmentCommands(appointmentService, bot);
+      },
+      inject: [AppointmentService, "TELEGRAM_BOT"],
+    },
+
+    // Asegúrate de que AppointmentService esté configurado correctamente
+    {
+      provide: AppointmentService,
+      useFactory: (
+        appointmentRepo: Repository<MedicalAppointment>,
+        schedulerRegistry: SchedulerRegistry,
+        telegramService,
+        notificationService: TelegramNotificationService,
+        bot: TelegramBot
+      ) => {
+        return new AppointmentService(
+          appointmentRepo,
+          schedulerRegistry,
+          telegramService,
+          notificationService,
+          bot
+        );
+      },
+      inject: [
+        getRepositoryToken(MedicalAppointment),
+        SchedulerRegistry,
+        TelegramNotificationService,
+        "TELEGRAM_BOT",
+      ],
+    },
+
     // Definir TelegramService y establecer la referencia circular
     {
       provide: TelegramService,
@@ -151,10 +195,10 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
         errorHandler: TelegramErrorHandler,
         diagnosticService: TelegramDiagnosticService,
         contactService: TelegramContactService,
-        colombiaService: TelegramColombiaService,
+        // colombiaService: TelegramColombiaService,
+        appointmentCommands: AppointmentCommands,
         userStates: Map<number, any>,
-        bot: TelegramBot,
-        reminderServiceInstance: ReminderService
+        bot: TelegramBot
       ) => {
         const service = new TelegramService(
           configService,
@@ -165,15 +209,16 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
           errorHandler,
           diagnosticService,
           contactService,
-          colombiaService,
+          // colombiaService,
+          appointmentCommands,
           userStates,
           bot
         );
 
         // Establecer la referencia circular manualmente
-        if (reminderServiceInstance) {
-          reminderServiceInstance["telegramService"] = service;
-        }
+        // if (reminderServiceInstance) {
+        //   reminderServiceInstance["telegramService"] = service;
+        // }
 
         return service;
       },
@@ -186,7 +231,8 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
         TelegramErrorHandler,
         TelegramDiagnosticService,
         TelegramContactService,
-        TelegramColombiaService,
+        // TelegramColombiaService,
+        AppointmentCommands,
         "USER_STATES_MAP",
         "TELEGRAM_BOT",
         ReminderService,
@@ -202,6 +248,8 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
     TelegramContactService, // Exportar el servicio si es necesario
     HealthCentersService,
     TelegramColombiaService,
+    AppointmentCommands,
+    AppointmentService,
   ],
 })
 export class TelegramModule {}
