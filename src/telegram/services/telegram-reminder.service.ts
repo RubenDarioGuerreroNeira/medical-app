@@ -38,7 +38,7 @@ export class TelegramReminderService {
   async mostrarMenuRecordatorios(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "🕒 *Recordatorios de Medicamentos*\n\nPuedes programar recordatorios para tomar tus medicamentos a tiempo.",
+      "🕒 *Recordatorios de Medicamentos*\n\nPuedes programar recordatorios para tomar tus medicamentos a tiempo. Zona Horaria: Caracas ",
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -185,7 +185,25 @@ export class TelegramReminderService {
           );
           await this.bot.sendMessage(
             chatId,
-            "❌ Lo siento, hubo un error al actualizar el nombre. Por favor, intenta nuevamente."
+            "❌ Lo siento, hubo un error al actualizar el nombre. Por favor, intenta nuevamente.",
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "🔙 Volver a edición",
+                      callback_data: `edit_reminder_${reminderId}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔙 Volver al menú de recordatorios",
+                      callback_data: "recordatorios",
+                    },
+                  ],
+                ],
+              },
+            }
           );
         }
       });
@@ -196,7 +214,19 @@ export class TelegramReminderService {
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Lo siento, hubo un error. Por favor, intenta nuevamente."
+        "❌ Lo siento, hubo un error. Por favor, intenta nuevamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
       );
     }
   }
@@ -212,7 +242,19 @@ export class TelegramReminderService {
       ) {
         await this.bot.sendMessage(
           chatId,
-          "❌ Ha ocurrido un error. Por favor, intenta nuevamente."
+          "❌ Ha ocurrido un error. Por favor, intenta nuevamente.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
         );
         return;
       }
@@ -274,7 +316,25 @@ export class TelegramReminderService {
           );
           await this.bot.sendMessage(
             chatId,
-            "❌ Lo siento, hubo un error al actualizar la dosis. Por favor, intenta nuevamente."
+            "❌ Lo siento, hubo un error al actualizar la dosis. Por favor, intenta nuevamente.",
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "🔙 Volver a edición",
+                      callback_data: `edit_reminder_${reminderId}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔙 Volver al menú de recordatorios",
+                      callback_data: "recordatorios",
+                    },
+                  ],
+                ],
+              },
+            }
           );
         }
       });
@@ -301,7 +361,19 @@ export class TelegramReminderService {
       ) {
         await this.bot.sendMessage(
           chatId,
-          "❌ Ha ocurrido un error. Por favor, intenta nuevamente."
+          "❌ Ha ocurrido un error. Por favor, intenta nuevamente.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
         );
         return;
       }
@@ -375,7 +447,25 @@ export class TelegramReminderService {
           );
           await this.bot.sendMessage(
             chatId,
-            "❌ Lo siento, hubo un error al actualizar la hora. Por favor, intenta nuevamente."
+            "❌ Lo siento, hubo un error al actualizar la hora. Por favor, intenta nuevamente.",
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "🔙 Volver a edición",
+                      callback_data: `edit_reminder_${reminderId}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔙 Volver al menú de recordatorios",
+                      callback_data: "recordatorios",
+                    },
+                  ],
+                ],
+              },
+            }
           );
         }
       });
@@ -386,7 +476,19 @@ export class TelegramReminderService {
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Lo siento, hubo un error. Por favor, intenta nuevamente."
+        "❌ Lo siento, hubo un error. Por favor, intenta nuevamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
       );
     }
   }
@@ -440,7 +542,25 @@ export class TelegramReminderService {
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Lo siento, hubo un error al actualizar la frecuencia. Por favor, intenta nuevamente."
+        "❌ Lo siento, hubo un error al actualizar la frecuencia. Por favor, intenta nuevamente.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver a edición",
+                  callback_data: `edit_reminder_${reminderId}`,
+                },
+              ],
+              [
+                {
+                  text: "🔙 Volver al menú de recordatorios",
+                  callback_data: "recordatorios",
+                },
+              ],
+            ],
+          },
+        }
       );
     }
   }
@@ -456,7 +576,19 @@ export class TelegramReminderService {
       ) {
         await this.bot.sendMessage(
           chatId,
-          "❌ Ha ocurrido un error. Por favor, intenta nuevamente."
+          "❌ Ha ocurrido un error. Por favor, intenta nuevamente.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
         );
         return;
       }
@@ -530,7 +662,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "➕ Crear nuevo recordatorio(s)",
+                    text: "➕ Crear nuevo recordatorio(s) Zona Horaria America/Caracas ",
                     callback_data: "crear_recordatorio",
                   },
                 ],

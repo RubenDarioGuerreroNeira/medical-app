@@ -44,10 +44,10 @@ export class TelegramNotificationService {
         reply_markup: {
           inline_keyboard: [
             [
-              {
-                text: "🔔 Reproducir sonido nuevamente",
-                callback_data: "play_sound",
-              },
+              // {
+              //   text: "🔔 Reproducir sonido nuevamente",
+              //   callback_data: "play_sound",
+              // },
               {
                 text: "✅ Tomado",
                 callback_data: `taken_${reminder.id}`,
@@ -251,6 +251,12 @@ export class TelegramNotificationService {
                   callback_data: "menu_principal",
                 },
               ],
+              [
+                {
+                  text: "📋 Ver mis recordatorios",
+                  callback_data: "ver_recordatorios",
+                },
+              ],
             ],
           },
         }
@@ -264,14 +270,100 @@ export class TelegramNotificationService {
     }
   }
 
+  //-- original
+  // private async handlePostponeReminder(
+  //   chatId: number,
+  //   reminderId: number,
+  //   minutes: number
+  // ): Promise<void> {
+  //   try {
+  //     // Obtener el recordatorio
+  //     const reminder = await this.reminderService.getReminderById(reminderId);
+  //     if (!reminder) {
+  //       throw new Error(`Reminder with ID ${reminderId} not found`);
+  //     }
+
+  //     // Posponer el recordatorio
+  //     const newTime = await this.reminderService.postponeReminder(
+  //       reminderId,
+  //       minutes
+  //     );
+
+  //     // Enviar mensaje de confirmación
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
+  //       {
+  //         reply_markup: {
+  //           inline_keyboard: [
+  //             [
+  //               {
+  //                 text: "🔙 Volver al menú principal",
+  //                 callback_data: "menu_principal",
+  //               },
+  //             ],
+  //           ],
+  //         },
+  //       }
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error postponing reminder: ${error.message}`,
+  //       error.stack
+  //     );
+  //     throw error;
+  //   }
+  // }
+
+  // original
+  // private async handleMedicationTaken(
+  //   chatId: number,
+  //   reminderId: number
+  // ): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "✅ ¡Excelente! Has confirmado que tomaste tu medicamento."
+  //   );
+  // }
+
   private async handleMedicationTaken(
     chatId: number,
     reminderId: number
   ): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      "✅ ¡Excelente! Has confirmado que tomaste tu medicamento."
-    );
+    try {
+      // Obtener el recordatorio
+      const reminder = await this.reminderService.getReminderById(reminderId);
+      if (!reminder) {
+        throw new Error(`Reminder with ID ${reminderId} not found`);
+      }
+
+      // Registrar que el medicamento fue tomado
+      await this.reminderService.logMedicationTaken(reminderId);
+
+      // Enviar mensaje de confirmación
+      await this.bot.sendMessage(
+        chatId,
+        `✅ ¡Excelente! Has tomado tu medicamento ${reminder.medicationName}.\n\nTu próximo recordatorio será a la hora programada.`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error handling medication taken: ${error.message}`,
+        error.stack
+      );
+      throw error;
+    }
   }
 
   /**
