@@ -29,10 +29,19 @@ export class ReminderService {
     private schedulerRegistry: SchedulerRegistry,
     @Inject(forwardRef(() => TelegramService))
     private telegramService: TelegramService,
+    // @Inject(forwardRef(() => TelegramNotificationService))
     private notificationService: TelegramNotificationService,
     @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot
   ) {
     this.initializeReminders();
+
+    if (!bot || typeof bot.getMe !== "function") {
+      this.logger.error(
+        "Invalid TelegramBot instance provided to ReminderService"
+      );
+    } else {
+      this.logger.log("Valid TelegramBot instance received in ReminderService");
+    }
   }
 
   private async initializeReminders() {
@@ -65,12 +74,31 @@ export class ReminderService {
       dosage,
       reminderTime,
       daysOfWeek,
-      timezone = "America/Caracas",
+      // timezone = "America/Caracas",
+      //uso la zona horaria del usuario
+      timezone = this.getUserTimezone(chatId) || "UTC",
     } = reminderData;
 
+    // valido que los días de la semana sean correctos
     if (!this.validateDaysOfWeek(daysOfWeek) || daysOfWeek.length === 0) {
       throw new Error("Los Días deben estar entre 0(Domingo y 6 (Sabado)");
     }
+
+    // valido que la hora del recordatorio no sea menor a la hora actual
+    const now = new Date();
+    const [hours, minutes] = this.normalizeTimeFormat(reminderTime)
+      .split(":")
+      .map(Number);
+    const reminderDate = new Date();
+    reminderDate.setHours(hours, minutes, 0, 0);
+
+    // Si la hora ya pasó hoy y se intenta programar para hoy (día actual en daysOfWeek)
+    // const currentDay = now.getDay();
+    // if (reminderDate < now && daysOfWeek.includes(currentDay)) {
+    //   throw new Error(
+    //     "No se puede programar un recordatorio para una hora que ya pasó hoy"
+    //   );
+    // }
 
     // Normalizar el formato de hora para almacenarlo en la base de datos
     const normalizedTime = this.normalizeTimeFormat(reminderTime);
@@ -91,6 +119,21 @@ export class ReminderService {
     const savedReminder = await this.reminderRepository.save(reminder);
     await this.scheduleReminder(savedReminder);
     return savedReminder;
+  }
+
+  // Método para obtener la zona horaria del usuario
+  private getUserTimezone(chatId: number): string | null {
+    try {
+      // Aquí podrías implementar lógica para obtener la zona horaria guardada del usuario
+      // Por ejemplo, consultando una tabla de preferencias de usuario
+      // Por ahora, devolvemos null para usar el valor predeterminado
+      return null;
+    } catch (error) {
+      this.logger.error(
+        `Error al obtener zona horaria del usuario: ${error.message}`
+      );
+      return null;
+    }
   }
 
   // Método para normalizar el formato de hora a HH:MM (formato 24 horas)
@@ -336,19 +379,110 @@ export class ReminderService {
     });
   }
 
-  async getReminderById(id: number): Promise<MedicationReminder | null> {
+  // async getReminderById(id: number): Promise<MedicationReminder | null> {
+  //   try {
+  //     const reminder = await this.reminderRepository.findOne({
+  //       where: { id },
+  //     });
+
+  //     return reminder || null;
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error al buscar recordatorio por ID: ${error.message}`,
+  //       error.stack
+  //     );
+  //     return null;
+  //   }
+  // }
+  // notificaciones
+  async getReminderById(reminderId: number): Promise<MedicationReminder> {
     try {
       const reminder = await this.reminderRepository.findOne({
-        where: { id },
+        where: { id: reminderId },
       });
 
-      return reminder || null;
+      if (!reminder) {
+        this.logger.warn(`Reminder with ID ${reminderId} not found`);
+        return null;
+      }
+
+      return reminder;
     } catch (error) {
       this.logger.error(
-        `Error al buscar recordatorio por ID: ${error.message}`,
+        `Error getting reminder by ID: ${error.message}`,
         error.stack
       );
-      return null;
+      throw error;
+    }
+  }
+
+  async logMedicationTaken(reminderId: number): Promise<void> {
+    try {
+      const reminder = await this.getReminderById(reminderId);
+      if (!reminder) {
+        throw new Error(`Reminder with ID ${reminderId} not found`);
+      }
+
+      // Actualizar el registro de medicamentos tomados
+      // Aquí podrías agregar un campo lastTaken a tu entidad MedicationReminder
+      // o crear una nueva entidad para registrar el historial de medicamentos tomados
+
+      await this.reminderRepository.update(
+        { id: reminderId },
+        { lastTaken: new Date() }
+      );
+
+      this.logger.log(`Medication taken logged for reminder ID: ${reminderId}`);
+    } catch (error) {
+      this.logger.error(
+        `Error logging medication taken: ${error.message}`,
+        error.stack
+      );
+      throw error;
+    }
+  }
+
+  async postponeReminder(reminderId: number, minutes: number): Promise<string> {
+    try {
+      const reminder = await this.getReminderById(reminderId);
+      if (!reminder) {
+        throw new Error(`Reminder with ID ${reminderId} not found`);
+      }
+
+      // Calcular la nueva hora del recordatorio
+      const now = new Date();
+      const postponedTime = new Date(now.getTime() + minutes * 60000);
+
+      // Formatear la hora para mostrarla al usuario (HH:MM)
+      const formattedTime = postponedTime.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+
+      // Programar el nuevo recordatorio
+      const jobName = `postponed_reminder_${reminder.id}_${now.getTime()}`;
+      const job = new CronJob(
+        postponedTime,
+        () => this.notificationService.sendReminderNotification(reminder),
+        null,
+        true
+      );
+
+      // Registrar el trabajo en el scheduler
+      this.schedulerRegistry.addCronJob(jobName, job);
+
+      this.logger.log(
+        `Reminder ${reminderId} postponed for ${minutes} minutes to ${formattedTime}`
+      );
+
+      return formattedTime;
+    } catch (error) {
+      this.logger.error(
+        `Error postponing reminder: ${error.message}`,
+        error.stack
+      );
+      throw error;
     }
   }
 }

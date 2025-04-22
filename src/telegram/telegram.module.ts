@@ -70,6 +70,7 @@ import { AppointmentService } from "./services/appointment.service";
       provide: "TELEGRAM_BOT",
       useFactory: async (configService: ConfigService) => {
         const token = configService.get<string>("TELEGRAM_BOT_TOKEN");
+
         return new TelegramBot(token, { polling: true });
       },
       inject: [ConfigService],
@@ -195,6 +196,7 @@ import { AppointmentService } from "./services/appointment.service";
         errorHandler: TelegramErrorHandler,
         diagnosticService: TelegramDiagnosticService,
         contactService: TelegramContactService,
+
         // colombiaService: TelegramColombiaService,
         appointmentCommands: AppointmentCommands,
         userStates: Map<number, any>,
@@ -209,6 +211,7 @@ import { AppointmentService } from "./services/appointment.service";
           errorHandler,
           diagnosticService,
           contactService,
+
           // colombiaService,
           appointmentCommands,
           userStates,

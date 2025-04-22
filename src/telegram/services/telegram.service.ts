@@ -27,6 +27,7 @@ export class TelegramService {
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
     private contactService: TelegramContactService,
+
     // private colombiaService: TelegramColombiaService,
     private appointmentCommands: AppointmentCommands,
     @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
@@ -77,8 +78,62 @@ export class TelegramService {
     const data = callbackQuery.data;
 
     try {
-      // Verificar que el caso para recordatorio_cita_medica esté correctamente implementado
+      // Manejar callbacks de frecuencia
+      if (data.startsWith("freq_")) {
+        const [freq, nombreMedicamento, horaRecordatorio] = data
+          .split("_")
+          .slice(1);
+        await this.reminderService.guardarRecordatorio(
+          chatId,
+          nombreMedicamento,
+          horaRecordatorio,
+          freq
+        );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
 
+      // Manejar callbacks de edición de recordatorios
+      if (data.startsWith("edit_reminder_")) {
+        const reminderId = parseInt(data.split("_")[2]);
+        await this.reminderService.iniciarEdicionRecordatorio(
+          chatId,
+          reminderId
+        );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
+      // Manejar callbacks de actualización de frecuencia
+      if (data.startsWith("update_freq_")) {
+        const parts = data.split("_");
+        const reminderId = parseInt(parts[2]);
+        const frecuencia = parts[3];
+        await this.reminderService.actualizarFrecuencia(
+          chatId,
+          reminderId,
+          frecuencia
+        );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
+      // Manejar callbacks para eliminar recordatorios
+      if (data.startsWith("delete_reminder_")) {
+        const reminderId = parseInt(data.split("_")[2]);
+        await this.reminderService.eliminarRecordatorio(chatId, reminderId);
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+      // Manejar callbacks de recordatorios
+      // if (
+      //   data === "play_sound" ||
+      //   data.startsWith("taken_") ||
+      //   data.startsWith("postpone_")
+      // ) {
+      //   await this.notificationService.handleReminderCallback(callbackQuery);
+      //   return;
+      // }
       switch (data) {
         case "menu_principal":
           await this.menuService.mostrarMenuPrincipal(chatId);
@@ -92,9 +147,43 @@ export class TelegramService {
         case "mostrarCentrosCercanos":
           await this.locationService.solicitarUbicacion(chatId, "clinica");
           break;
+
+        // Agregar manejo para crear_recordatorio medico (trataniento)
         case "recordatorios":
           await this.reminderService.mostrarMenuRecordatorios(chatId);
           break;
+
+        case "ver_recordatorios":
+          await this.reminderService.mostrarEditarRecordatorio(chatId);
+          break;
+
+        case "crear_recordatorio":
+        case "create_reminder":
+          await this.reminderService.iniciarCreacionRecordatorio(chatId);
+          break;
+
+        case "editar_recordatorio_medico":
+          await this.reminderService.mostrarEditarRecordatorio(chatId);
+          break;
+
+        // Agregar casos para los botones de edición específicos
+        case "edit_name":
+          await this.reminderService.solicitarNuevoNombre(chatId);
+          break;
+        case "edit_dosage":
+          await this.reminderService.solicitarNuevaDosis(chatId);
+          break;
+        case "edit_time":
+          await this.reminderService.solicitarNuevaHora(chatId);
+          break;
+        case "edit_frequency":
+          await this.reminderService.solicitarNuevaFrecuencia(chatId);
+          break;
+
+        case "eliminar_recordatorio":
+          await this.reminderService.mostrarEliminarRecordatorio(chatId);
+          break;
+
         case "contacto":
           await this.contactService.mostrarContacto(chatId);
           break;

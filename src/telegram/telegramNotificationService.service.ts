@@ -1,21 +1,36 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as TelegramBot from 'node-telegram-bot-api';
-import { MedicationReminder } from '../Entities/MedicationReminder.entity';
+import { Injectable, Inject, Logger, forwardRef } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as TelegramBot from "node-telegram-bot-api";
+import { MedicationReminder } from "../Entities/MedicationReminder.entity";
+import { ReminderService } from "./reminder.service";
 
 @Injectable()
 export class TelegramNotificationService {
   private readonly logger = new Logger(TelegramNotificationService.name);
+
   private readonly soundEffects = {
-    reminder: 'https://example.com/sounds/reminder.mp3', // Replace with actual sound URL
-    alert: 'https://example.com/sounds/alert.mp3', // Replace with actual sound URL
+    reminder: "https://example.com/sounds/reminder.mp3", // Replace with actual sound URL
+    alert: "https://example.com/sounds/alert.mp3", // Replace with actual sound URL
   };
 
   constructor(
     private configService: ConfigService,
+    @Inject(forwardRef(() => ReminderService))
+    private reminderService: ReminderService,
     // private bot: TelegramBot
-    @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
-  ) {}
+    @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot
+  ) {
+    // Inicializar efectos de sonido
+    // Inicializar efectos de sonido
+    this.soundEffects = {
+      reminder:
+        this.configService.get<string>("REMINDER_SOUND_PATH") ||
+        "path/to/default/sound.mp3",
+      alert:
+        this.configService.get<string>("ALERT_SOUND_PATH") ||
+        "path/to/default/alert.mp3",
+    };
+  }
 
   async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
     try {
@@ -25,22 +40,22 @@ export class TelegramNotificationService {
       // Then send the reminder message with options to play sound again
       const messageOptions = {
         text: this.formatReminderMessage(reminder),
-        parse_mode: 'Markdown' as const,
+        parse_mode: "Markdown" as const,
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: '🔔 Reproducir sonido nuevamente',
-                callback_data: 'play_sound',
+                text: "🔔 Reproducir sonido nuevamente",
+                callback_data: "play_sound",
               },
               {
-                text: '✅ Tomado',
+                text: "✅ Tomado",
                 callback_data: `taken_${reminder.id}`,
               },
             ],
             [
               {
-                text: '⏰ Posponer 30 minutos',
+                text: "⏰ Posponer 30 minutos",
                 callback_data: `postpone_${reminder.id}_30`,
               },
             ],
@@ -54,12 +69,12 @@ export class TelegramNotificationService {
       });
 
       this.logger.log(
-        `Reminder notification sent successfully for reminder ID: ${reminder.id}`,
+        `Reminder notification sent successfully for reminder ID: ${reminder.id}`
       );
     } catch (error) {
       this.logger.error(
         `Error sending reminder notification: ${error.message}`,
-        error.stack,
+        error.stack
       );
       throw error;
     }
@@ -69,7 +84,7 @@ export class TelegramNotificationService {
     try {
       // Send notification sound
       await this.bot.sendVoice(chatId, this.soundEffects.reminder, {
-        caption: '🔔 ¡Es hora de tu medicamento!',
+        caption: "🔔 ¡Es hora de tu medicamento!",
       });
     } catch (error) {
       this.logger.error(`Error sending sound alert: ${error.message}`);
@@ -88,58 +103,185 @@ export class TelegramNotificationService {
   }
 
   async handleReminderCallback(
-    callbackQuery: TelegramBot.CallbackQuery,
+    callbackQuery: TelegramBot.CallbackQuery
   ): Promise<void> {
     const chatId = callbackQuery.message.chat.id;
-    const [action, reminderId, ...params] = callbackQuery.data.split('_');
+
+    const [action, reminderId, ...params] = callbackQuery.data.split("_");
 
     try {
       switch (action) {
-        case 'play':
+        case "play":
           await this.sendSoundAlert(chatId);
           break;
-        case 'taken':
+        case "taken":
           await this.handleMedicationTaken(chatId, Number(reminderId));
           break;
-        case 'postpone':
+        case "postpone":
           const minutes = Number(params[0]);
           await this.handlePostponeReminder(
             chatId,
             Number(reminderId),
-            minutes,
+            minutes
           );
           break;
       }
     } catch (error) {
       this.logger.error(
         `Error handling reminder callback: ${error.message}`,
-        error.stack,
+        error.stack
       );
       await this.bot.sendMessage(
         chatId,
-        '❌ Ocurrió un error. Por favor, intenta nuevamente.',
+        "❌ Ocurrió un error. Por favor, intenta nuevamente."
       );
+    }
+  }
+
+  // modificado
+  // async handleReminderCallback(
+  //   callbackQuery: TelegramBot.CallbackQuery
+  // ): Promise<void> {
+  //   const chatId = callbackQuery.message.chat.id;
+  //   const data = callbackQuery.data;
+
+  //   try {
+  //     // Responder al callback query para quitar el "loading" en el botón
+  //     await this.bot.answerCallbackQuery(callbackQuery.id);
+
+  //     if (data === "play_sound") {
+  //       // Reproducir sonido nuevamente
+  //       await this.sendSoundAlert(chatId);
+  //       return;
+  //     }
+
+  //     if (data.startsWith("taken_")) {
+  //       const reminderId = Number(data.split("_")[1]);
+  //       await this.handleMedicationTaken(chatId, reminderId);
+  //       return;
+  //     }
+
+  //     if (data.startsWith("postpone_")) {
+  //       const parts = data.split("_");
+  //       const reminderId = Number(parts[1]);
+  //       const minutes = Number(parts[2]);
+  //       await this.handlePostponeReminder(chatId, reminderId, minutes);
+  //       return;
+  //     }
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error handling reminder callback: ${error.message}`,
+  //       error.stack
+  //     );
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
+  //     );
+  //   }
+  // }
+
+  // private async handleMedicationTaken(
+  //   chatId: number,
+  //   reminderId: number
+  // ): Promise<void> {
+  //   try {
+  //     // Obtener el recordatorio
+  //     const reminder = await this.reminderService.getReminderById(reminderId);
+  //     if (!reminder) {
+  //       throw new Error(`Reminder with ID ${reminderId} not found`);
+  //     }
+
+  //     // Registrar que el medicamento fue tomado
+  //     await this.reminderService.logMedicationTaken(reminderId);
+
+  //     // Enviar mensaje de confirmación
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       `✅ ¡Excelente! Has tomado tu medicamento ${reminder.medicationName}.\n\nTu próximo recordatorio será a la hora programada.`,
+  //       {
+  //         reply_markup: {
+  //           inline_keyboard: [
+  //             [
+  //               {
+  //                 text: "🔙 Volver al menú principal",
+  //                 callback_data: "menu_principal",
+  //               },
+  //             ],
+  //           ],
+  //         },
+  //       }
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error handling medication taken: ${error.message}`,
+  //       error.stack
+  //     );
+  //     throw error;
+  //   }
+  // }
+
+  private async handlePostponeReminder(
+    chatId: number,
+    reminderId: number,
+    minutes: number
+  ): Promise<void> {
+    try {
+      // Obtener el recordatorio
+      const reminder = await this.reminderService.getReminderById(reminderId);
+      if (!reminder) {
+        throw new Error(`Reminder with ID ${reminderId} not found`);
+      }
+
+      // Posponer el recordatorio
+      const newTime = await this.reminderService.postponeReminder(
+        reminderId,
+        minutes
+      );
+
+      // Enviar mensaje de confirmación
+      await this.bot.sendMessage(
+        chatId,
+        `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error postponing reminder: ${error.message}`,
+        error.stack
+      );
+      throw error;
     }
   }
 
   private async handleMedicationTaken(
     chatId: number,
-    reminderId: number,
+    reminderId: number
   ): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      '✅ ¡Excelente! Has confirmado que tomaste tu medicamento.',
+      "✅ ¡Excelente! Has confirmado que tomaste tu medicamento."
     );
   }
 
-  private async handlePostponeReminder(
-    chatId: number,
-    reminderId: number,
-    minutes: number,
-  ): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      `⏰ Recordatorio pospuesto ${minutes} minutos. Te notificaré nuevamente.`,
-    );
-  }
+  // private async handlePostponeReminder(
+  //   chatId: number,
+  //   reminderId: number,
+  //   minutes: number,
+  // ): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     `⏰ Recordatorio pospuesto ${minutes} minutos. Te notificaré nuevamente.`,
+  //   );
+  // }
 }

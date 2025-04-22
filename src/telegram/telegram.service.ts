@@ -157,7 +157,6 @@ export class TelegramService {
       cita_medica: () => this.appointmentCommands.mostrarMenuCitas(chatId),
       // Agregar manejador para mostrar menú de citas
       nueva_cita: () => this.appointmentCommands.iniciarCreacionCita(chatId),
-      ver_citas: () => this.appointmentCommands.mostrarCitas(chatId),
     };
 
     if (data in actionHandlers) {

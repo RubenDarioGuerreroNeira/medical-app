@@ -88,28 +88,64 @@ export class TelegramDiagnosticService {
     }
   }
 
+  // async fixCommonIssues(bot: TelegramBot): Promise<void> {
+  //   try {
+  //     // 1. Delete any existing webhook
+  //     await bot.deleteWebHook();
+
+  //     // 2. Stop polling if active
+  //     if (bot.isPolling()) {
+  //       await bot.stopPolling();
+  //     }
+
+  //     // 3. Restart polling with optimal settings
+  //     await bot.startPolling({
+  //       polling: {
+  //         interval: 300, // Poll every 300ms
+  //         autoStart: true,
+  //         params: {
+  //           timeout: 10,
+  //         },
+  //       },
+  //     });
+
+  //     this.logger.log("Bot polling restarted successfully");
+  //   } catch (error) {
+  //     this.logger.error("Failed to fix common issues:", error);
+  //     throw error;
+  //   }
+  // }
+
   async fixCommonIssues(bot: TelegramBot): Promise<void> {
     try {
-      // 1. Delete any existing webhook
-      await bot.deleteWebHook();
-
-      // 2. Stop polling if active
-      if (bot.isPolling()) {
-        await bot.stopPolling();
+      // Add safety checks before calling methods
+      if (typeof bot.deleteWebHook === "function") {
+        await bot.deleteWebHook();
+      } else {
+        this.logger.warn("deleteWebHook method not available on bot instance");
       }
 
-      // 3. Restart polling with optimal settings
-      await bot.startPolling({
-        polling: {
-          interval: 300, // Poll every 300ms
-          autoStart: true,
-          params: {
-            timeout: 10,
-          },
-        },
-      });
+      if (typeof bot.isPolling === "function" && bot.isPolling()) {
+        await bot.stopPolling();
+      } else {
+        this.logger.warn("isPolling method not available or bot not polling");
+      }
 
-      this.logger.log("Bot polling restarted successfully");
+      // Only try to start polling if the method exists
+      if (typeof bot.startPolling === "function") {
+        await bot.startPolling({
+          polling: {
+            interval: 300,
+            autoStart: true,
+            params: {
+              timeout: 10,
+            },
+          },
+        });
+        this.logger.log("Bot polling restarted successfully");
+      } else {
+        this.logger.warn("startPolling method not available on bot instance");
+      }
     } catch (error) {
       this.logger.error("Failed to fix common issues:", error);
       throw error;

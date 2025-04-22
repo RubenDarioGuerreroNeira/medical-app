@@ -37,4 +37,7 @@ export class MedicationReminder {
 
   @Column({ type: "timestamp", nullable: true })
   updatedAt: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  lastTaken: Date;
 }
