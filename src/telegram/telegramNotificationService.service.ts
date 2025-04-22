@@ -274,6 +274,32 @@ export class TelegramNotificationService {
     );
   }
 
+  /**
+   * Envía un mensaje simple a un chat de Telegram
+   * @param chatId ID del chat al que enviar el mensaje
+   * @param message Texto del mensaje a enviar
+   * @param parseMode Modo de parseo del mensaje (opcional)
+   */
+  async sendSimpleMessage(
+    chatId: number,
+    message: string,
+    parseMode: "Markdown" | "HTML" = "Markdown"
+  ): Promise<void> {
+    try {
+      await this.bot.sendMessage(chatId, message, {
+        parse_mode: parseMode,
+      });
+
+      this.logger.log(`Mensaje simple enviado al chat ${chatId}`);
+    } catch (error) {
+      this.logger.error(
+        `Error enviando mensaje simple: ${error.message}`,
+        error.stack
+      );
+      throw error;
+    }
+  }
+
   // private async handlePostponeReminder(
   //   chatId: number,
   //   reminderId: number,

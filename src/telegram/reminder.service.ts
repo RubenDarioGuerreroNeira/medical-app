@@ -76,7 +76,7 @@ export class ReminderService {
       daysOfWeek,
       // timezone = "America/Caracas",
       //uso la zona horaria del usuario
-      timezone = this.getUserTimezone(chatId) || "UTC",
+      timezone = this.getUserTimezone(chatId) || "America/Caracas",
     } = reminderData;
 
     // valido que los días de la semana sean correctos

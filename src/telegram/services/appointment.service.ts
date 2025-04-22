@@ -33,6 +33,10 @@ export class AppointmentService {
     @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot
   ) {
     this.initializeAppointments();
+    // Verificar que el bot se inyectó correctamente
+    if (!this.bot) {
+      this.logger.error("El bot de Telegram no se inyectó correctamente");
+    }
   }
 
   private async initializeAppointments() {
@@ -249,6 +253,34 @@ export class AppointmentService {
     );
   }
 
+  // private async sendAppointmentNotification(
+  //   appointment: MedicalAppointment,
+  //   hoursBeforeAppointment: number
+  // ) {
+  //   try {
+  //     if (!this.bot) {
+  //       this.logger.error("No se puede enviar notificación: bot es undefined");
+  //       return;
+  //     }
+  //     const message = this.formatAppointmentMessage(
+  //       appointment,
+  //       hoursBeforeAppointment
+  //     );
+  //     await this.bot.sendMessage(Number(appointment.chatId), message, {
+  //       parse_mode: "Markdown",
+  //     });
+
+  //     this.logger.log(
+  //       `Notificación de cita enviada exitosamente para: ${appointment.doctorName}`
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error al enviar la notificación de cita: ${error.message}`,
+  //       error.stack
+  //     );
+  //   }
+  // }
+
   private async sendAppointmentNotification(
     appointment: MedicalAppointment,
     hoursBeforeAppointment: number
@@ -258,10 +290,26 @@ export class AppointmentService {
         appointment,
         hoursBeforeAppointment
       );
-      await this.bot.sendMessage(Number(appointment.chatId), message, {
-        parse_mode: "Markdown",
-      });
-
+      
+      // Usar el servicio de notificaciones
+      if (this.notificationService) {
+        // Crear un método en TelegramNotificationService si no existe
+        if (typeof this.notificationService.sendSimpleMessage === 'function') {
+          await this.notificationService.sendSimpleMessage(
+            Number(appointment.chatId),
+            message
+          );
+        } else if (this.bot) {
+          // Fallback al bot
+          await this.bot.sendMessage(Number(appointment.chatId), message);
+        }
+      } else if (this.bot) {
+        // Fallback al bot
+        await this.bot.sendMessage(Number(appointment.chatId), message);
+      } else {
+        this.logger.error("No hay mecanismo disponible para enviar notificaciones");
+      }
+  
       this.logger.log(
         `Notificación de cita enviada exitosamente para: ${appointment.doctorName}`
       );

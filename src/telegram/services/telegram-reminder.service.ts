@@ -664,7 +664,7 @@ export class TelegramReminderService {
   ): Promise<void> {
     // Obtener o detectar la zona horaria del usuario
     const userTimezone =
-      (await this.detectUserTimezone(chatId)) || "America/Bogota";
+      (await this.detectUserTimezone(chatId)) || "America/Caracas";
 
     // Guardar la zona horaria en el estado del usuario
     const userState = this.userStates.get(chatId) || {
@@ -880,7 +880,7 @@ export class TelegramReminderService {
       // Obtener la dosis y zona horaria del estado del usuario
       const userState = this.userStates.get(chatId);
       const dosage = userState?.reminderData?.dosage || "Dosis no especificada";
-      const timezone = userState?.reminderData?.timezone || "America/Bogota"; // Usar Bogotá como predeterminado para Colombia
+      const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Usar Bogotá como predeterminado para Colombia
 
       const savedReminder = await this.reminderService.createReminder(chatId, {
         medicationName: nombreMedicamento,

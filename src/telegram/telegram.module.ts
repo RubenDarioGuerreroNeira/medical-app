@@ -66,11 +66,25 @@ import { AppointmentService } from "./services/appointment.service";
     // AppointmentService,
 
     // Centralizar la creación del bot
+    // {
+    //   provide: "TELEGRAM_BOT",
+    //   useFactory: async (configService: ConfigService) => {
+    //     const token = configService.get<string>("TELEGRAM_BOT_TOKEN");
+
+    //     return new TelegramBot(token, { polling: true });
+    //   },
+    //   inject: [ConfigService],
+    // },
+
     {
       provide: "TELEGRAM_BOT",
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         const token = configService.get<string>("TELEGRAM_BOT_TOKEN");
-
+        if (!token) {
+          throw new Error(
+            "TELEGRAM_BOT_TOKEN no está definido en las variables de entorno"
+          );
+        }
         return new TelegramBot(token, { polling: true });
       },
       inject: [ConfigService],
