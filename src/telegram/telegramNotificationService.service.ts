@@ -146,47 +146,96 @@ export class TelegramNotificationService {
     }
   }
 
-  // modificado
-  // async handleReminderCallback(
-  //   callbackQuery: TelegramBot.CallbackQuery
+  // private async handlePostponeReminder(
+  //   chatId: number,
+  //   reminderId: number,
+  //   minutes: number
   // ): Promise<void> {
-  //   const chatId = callbackQuery.message.chat.id;
-  //   const data = callbackQuery.data;
-
   //   try {
-  //     // Responder al callback query para quitar el "loading" en el botón
-  //     await this.bot.answerCallbackQuery(callbackQuery.id);
-
-  //     if (data === "play_sound") {
-  //       // Reproducir sonido nuevamente
-  //       await this.sendSoundAlert(chatId);
-  //       return;
+  //     // Obtener el recordatorio
+  //     const reminder = await this.reminderService.getReminderById(reminderId);
+  //     if (!reminder) {
+  //       throw new Error(`Reminder with ID ${reminderId} not found`);
   //     }
 
-  //     if (data.startsWith("taken_")) {
-  //       const reminderId = Number(data.split("_")[1]);
-  //       await this.handleMedicationTaken(chatId, reminderId);
-  //       return;
-  //     }
-
-  //     if (data.startsWith("postpone_")) {
-  //       const parts = data.split("_");
-  //       const reminderId = Number(parts[1]);
-  //       const minutes = Number(parts[2]);
-  //       await this.handlePostponeReminder(chatId, reminderId, minutes);
-  //       return;
-  //     }
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error handling reminder callback: ${error.message}`,
-  //       error.stack
+  //     // Posponer el recordatorio
+  //     const newTime = await this.reminderService.postponeReminder(
+  //       reminderId,
+  //       minutes
   //     );
+
+  //     // Enviar mensaje de confirmación
   //     await this.bot.sendMessage(
   //       chatId,
-  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
+  //       `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
+  //       {
+  //         reply_markup: {
+  //           inline_keyboard: [
+  //             [
+  //               {
+  //                 text: "🔙 Volver al menú principal",
+  //                 callback_data: "menu_principal",
+  //               },
+  //             ],
+  //             [
+  //               {
+  //                 text: "📋 Ver mis recordatorios",
+  //                 callback_data: "ver_recordatorios",
+  //               },
+  //             ],
+  //           ],
+  //         },
+  //       }
   //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error postponing reminder: ${error.message}`,
+  //       error.stack
+  //     );
+  //     throw error;
   //   }
   // }
+
+  private async handlePostponeReminder(
+    chatId: number,
+    reminderId: number,
+    minutes: number
+  ): Promise<void> {
+    try {
+      const reminder = await this.reminderService.getReminderById(reminderId);
+      if (!reminder) {
+        throw new Error(`Reminder with ID ${reminderId} not found`);
+      }
+
+      const newTime = await this.reminderService.postponeReminder(
+        reminderId,
+        minutes
+      );
+
+      await this.bot.sendMessage(
+        chatId,
+        `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+    } catch (error) {
+      this.logger.error(`Error postponing reminder: ${error.message}`);
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error. Por favor, intenta nuevamente."
+      );
+    }
+  }
 
   // private async handleMedicationTaken(
   //   chatId: number,
@@ -228,127 +277,18 @@ export class TelegramNotificationService {
   //   }
   // }
 
-  private async handlePostponeReminder(
-    chatId: number,
-    reminderId: number,
-    minutes: number
-  ): Promise<void> {
-    try {
-      // Obtener el recordatorio
-      const reminder = await this.reminderService.getReminderById(reminderId);
-      if (!reminder) {
-        throw new Error(`Reminder with ID ${reminderId} not found`);
-      }
-
-      // Posponer el recordatorio
-      const newTime = await this.reminderService.postponeReminder(
-        reminderId,
-        minutes
-      );
-
-      // Enviar mensaje de confirmación
-      await this.bot.sendMessage(
-        chatId,
-        `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
-                },
-              ],
-              [
-                {
-                  text: "📋 Ver mis recordatorios",
-                  callback_data: "ver_recordatorios",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    } catch (error) {
-      this.logger.error(
-        `Error postponing reminder: ${error.message}`,
-        error.stack
-      );
-      throw error;
-    }
-  }
-
-  //-- original
-  // private async handlePostponeReminder(
-  //   chatId: number,
-  //   reminderId: number,
-  //   minutes: number
-  // ): Promise<void> {
-  //   try {
-  //     // Obtener el recordatorio
-  //     const reminder = await this.reminderService.getReminderById(reminderId);
-  //     if (!reminder) {
-  //       throw new Error(`Reminder with ID ${reminderId} not found`);
-  //     }
-
-  //     // Posponer el recordatorio
-  //     const newTime = await this.reminderService.postponeReminder(
-  //       reminderId,
-  //       minutes
-  //     );
-
-  //     // Enviar mensaje de confirmación
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
-  //       {
-  //         reply_markup: {
-  //           inline_keyboard: [
-  //             [
-  //               {
-  //                 text: "🔙 Volver al menú principal",
-  //                 callback_data: "menu_principal",
-  //               },
-  //             ],
-  //           ],
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error postponing reminder: ${error.message}`,
-  //       error.stack
-  //     );
-  //     throw error;
-  //   }
-  // }
-
-  // original
-  // private async handleMedicationTaken(
-  //   chatId: number,
-  //   reminderId: number
-  // ): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "✅ ¡Excelente! Has confirmado que tomaste tu medicamento."
-  //   );
-  // }
-
   private async handleMedicationTaken(
     chatId: number,
     reminderId: number
   ): Promise<void> {
     try {
-      // Obtener el recordatorio
       const reminder = await this.reminderService.getReminderById(reminderId);
       if (!reminder) {
         throw new Error(`Reminder with ID ${reminderId} not found`);
       }
 
-      // Registrar que el medicamento fue tomado
       await this.reminderService.logMedicationTaken(reminderId);
 
-      // Enviar mensaje de confirmación
       await this.bot.sendMessage(
         chatId,
         `✅ ¡Excelente! Has tomado tu medicamento ${reminder.medicationName}.\n\nTu próximo recordatorio será a la hora programada.`,
@@ -366,11 +306,11 @@ export class TelegramNotificationService {
         }
       );
     } catch (error) {
-      this.logger.error(
-        `Error handling medication taken: ${error.message}`,
-        error.stack
+      this.logger.error(`Error handling medication taken: ${error.message}`);
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error. Por favor, intenta nuevamente."
       );
-      throw error;
     }
   }
 
@@ -399,15 +339,4 @@ export class TelegramNotificationService {
       throw error;
     }
   }
-
-  // private async handlePostponeReminder(
-  //   chatId: number,
-  //   reminderId: number,
-  //   minutes: number,
-  // ): Promise<void> {
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     `⏰ Recordatorio pospuesto ${minutes} minutos. Te notificaré nuevamente.`,
-  //   );
-  // }
 }
