@@ -48,21 +48,21 @@ export class TelegramNotificationService {
         parse_mode: "Markdown" as const,
         reply_markup: {
           inline_keyboard: [
+            // [
+            //   {
+            //     text: "✅ Tomado",
+            //     callback_data: `taken_${reminder.id}`,
+            //   },
+            // ],
+            // [
+            //   {
+            //     text: "⏰ Posponer 30 minutos",
+            //     callback_data: `postpone_${reminder.id}_30`,
+            //   },
+            // ],
             [
               {
-                text: "✅ Tomado",
-                callback_data: `taken_${reminder.id}`,
-              },
-            ],
-            [
-              {
-                text: "⏰ Posponer 30 minutos",
-                callback_data: `postpone_${reminder.id}_30`,
-              },
-            ],
-            [
-              {
-                text: " Tomado",
+                text: " ✅ Tomado",
                 callback_data: `menu_principal`,
               },
             ],
@@ -186,43 +186,6 @@ export class TelegramNotificationService {
       );
     }
   }
-
-  // private async handleMedicationTaken(
-  //   chatId: number,
-  //   reminderId: number
-  // ): Promise<void> {
-  //   try {
-  //     const reminder = await this.reminderService.getReminderById(reminderId);
-  //     if (!reminder) {
-  //       throw new Error(`Reminder with ID ${reminderId} not found`);
-  //     }
-
-  //     await this.reminderService.logMedicationTaken(reminderId);
-
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       `✅ ¡Excelente! Has tomado tu medicamento ${reminder.medicationName}.\n\nTu próximo recordatorio será a la hora programada.`,
-  //       {
-  //         reply_markup: {
-  //           inline_keyboard: [
-  //             [
-  //               {
-  //                 text: "🔙 Volver al menú principal",
-  //                 callback_data: "menu_principal",
-  //               },
-  //             ],
-  //           ],
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(`Error handling medication taken: ${error.message}`);
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
-  //     );
-  //   }
-  // }
 
   private async handleMedicationTaken(
     chatId: number,

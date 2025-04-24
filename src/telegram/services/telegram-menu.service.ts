@@ -27,19 +27,19 @@ export class TelegramMenuService extends TelegramBaseService {
         // ],
         [
           {
-            text: "🩺 Preguntas sobre medicamentos, por texto ó photo  ",
+            text: "🩺 Preguntas sobre medicamentos",
             callback_data: "consulta_medica",
           },
         ],
         [
           {
-            text: "🙋‍♂️ Recordatorio de tratamiento(s) médicos",
+            text: "🙋‍♂️ Programa Recordatorio\nde tratamiento(s) medicos",
             callback_data: "recordatorios",
           },
         ],
         [
           {
-            text: "📲  Recordatorio de Citas Médicas",
+            text: "📲 Programa Recordatorio(s)\nde citas médicas",
             callback_data: "recordatorio_cita_medica",
           },
         ],
