@@ -30,6 +30,11 @@ export class TelegramNotificationService {
         this.configService.get<string>("ALERT_SOUND_PATH") ||
         "path/to/default/alert.mp3",
     };
+
+    // inicializa los callback
+    this.bot.on("callback_query", async (callbackQuery) => {
+      await this.handleReminderCallback(callbackQuery);
+    });
   }
 
   async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
@@ -106,6 +111,9 @@ export class TelegramNotificationService {
     callbackQuery: TelegramBot.CallbackQuery
   ): Promise<void> {
     const chatId = callbackQuery.message.chat.id;
+
+    // Responder al callback_query para evitar que el botón quede "cargando"
+    await this.bot.answerCallbackQuery(callbackQuery.id);
 
     const [action, reminderId, ...params] = callbackQuery.data.split("_");
 
