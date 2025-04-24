@@ -628,7 +628,7 @@ export class TelegramReminderService {
               [
                 {
                   text: "🔙 Cancelar",
-                  callback_data: `edit_reminder_${reminderId}`,
+                  callback_data: `menu_principal`,
                 },
               ],
             ],
