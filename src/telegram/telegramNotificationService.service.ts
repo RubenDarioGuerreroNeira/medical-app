@@ -152,19 +152,16 @@ export class TelegramNotificationService {
   //   minutes: number
   // ): Promise<void> {
   //   try {
-  //     // Obtener el recordatorio
   //     const reminder = await this.reminderService.getReminderById(reminderId);
   //     if (!reminder) {
   //       throw new Error(`Reminder with ID ${reminderId} not found`);
   //     }
 
-  //     // Posponer el recordatorio
   //     const newTime = await this.reminderService.postponeReminder(
   //       reminderId,
   //       minutes
   //     );
 
-  //     // Enviar mensaje de confirmación
   //     await this.bot.sendMessage(
   //       chatId,
   //       `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
@@ -177,22 +174,16 @@ export class TelegramNotificationService {
   //                 callback_data: "menu_principal",
   //               },
   //             ],
-  //             [
-  //               {
-  //                 text: "📋 Ver mis recordatorios",
-  //                 callback_data: "ver_recordatorios",
-  //               },
-  //             ],
   //           ],
   //         },
   //       }
   //     );
   //   } catch (error) {
-  //     this.logger.error(
-  //       `Error postponing reminder: ${error.message}`,
-  //       error.stack
+  //     this.logger.error(`Error postponing reminder: ${error.message}`);
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
   //     );
-  //     throw error;
   //   }
   // }
 
@@ -242,16 +233,13 @@ export class TelegramNotificationService {
   //   reminderId: number
   // ): Promise<void> {
   //   try {
-  //     // Obtener el recordatorio
   //     const reminder = await this.reminderService.getReminderById(reminderId);
   //     if (!reminder) {
   //       throw new Error(`Reminder with ID ${reminderId} not found`);
   //     }
 
-  //     // Registrar que el medicamento fue tomado
   //     await this.reminderService.logMedicationTaken(reminderId);
 
-  //     // Enviar mensaje de confirmación
   //     await this.bot.sendMessage(
   //       chatId,
   //       `✅ ¡Excelente! Has tomado tu medicamento ${reminder.medicationName}.\n\nTu próximo recordatorio será a la hora programada.`,
@@ -269,11 +257,11 @@ export class TelegramNotificationService {
   //       }
   //     );
   //   } catch (error) {
-  //     this.logger.error(
-  //       `Error handling medication taken: ${error.message}`,
-  //       error.stack
+  //     this.logger.error(`Error handling medication taken: ${error.message}`);
+  //     await this.bot.sendMessage(
+  //       chatId,
+  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
   //     );
-  //     throw error;
   //   }
   // }
 
