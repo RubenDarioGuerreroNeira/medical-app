@@ -627,8 +627,8 @@ export class TelegramReminderService {
               ],
               [
                 {
-                  text: "🔙 Cancelar",
-                  callback_data: `menu_principal`,
+                  text: "🔙 Volver",
+                  callback_data: `recordatorios`,
                 },
               ],
             ],
@@ -908,7 +908,7 @@ export class TelegramReminderService {
                 callback_data: `freq_semanal_${nombreMedicamento}_${horaRecordatorio}`,
               },
             ],
-            [{ text: "Cancelar", callback_data: "cancelar_recordatorio" }],
+            [{ text: "Cancelar", callback_data: "menu_principal" }],
           ],
         },
       }
