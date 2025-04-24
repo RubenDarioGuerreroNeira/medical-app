@@ -37,22 +37,66 @@ export class TelegramNotificationService {
     });
   }
 
+  // async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
+  //   try {
+  //     // Send voice message first (sound alert)
+  //     await this.sendSoundAlert(Number(reminder.chatId));
+
+  //     // Then send the reminder message with options to play sound again
+  //     const messageOptions = {
+  //       text: this.formatReminderMessage(reminder),
+  //       parse_mode: "Markdown" as const,
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             // {
+  //             //   text: "🔔 Reproducir sonido nuevamente",
+  //             //   callback_data: "play_sound",
+  //             // },
+  //             {
+  //               text: "✅ Tomado",
+  //               callback_data: `taken_${reminder.id}`,
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "⏰ Posponer 30 minutos",
+  //               callback_data: `postpone_${reminder.id}_30`,
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     };
+
+  //     await this.bot.sendMessage(Number(reminder.chatId), messageOptions.text, {
+  //       parse_mode: messageOptions.parse_mode,
+  //       reply_markup: messageOptions.reply_markup,
+  //     });
+
+  //     this.logger.log(
+  //       `Reminder notification sent successfully for reminder ID: ${reminder.id}`
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Error sending reminder notification: ${error.message}`,
+  //       error.stack
+  //     );
+  //     throw error;
+  //   }
+  // }
+
   async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
     try {
       // Send voice message first (sound alert)
       await this.sendSoundAlert(Number(reminder.chatId));
 
-      // Then send the reminder message with options to play sound again
-      const messageOptions = {
-        text: this.formatReminderMessage(reminder),
+      // Construir el mensaje y las opciones correctamente
+      const text = this.formatReminderMessage(reminder);
+      const options = {
         parse_mode: "Markdown" as const,
         reply_markup: {
           inline_keyboard: [
             [
-              // {
-              //   text: "🔔 Reproducir sonido nuevamente",
-              //   callback_data: "play_sound",
-              // },
               {
                 text: "✅ Tomado",
                 callback_data: `taken_${reminder.id}`,
@@ -68,10 +112,8 @@ export class TelegramNotificationService {
         },
       };
 
-      await this.bot.sendMessage(Number(reminder.chatId), messageOptions.text, {
-        parse_mode: messageOptions.parse_mode,
-        reply_markup: messageOptions.reply_markup,
-      });
+      // Enviar el mensaje con las opciones correctamente
+      await this.bot.sendMessage(Number(reminder.chatId), text, options);
 
       this.logger.log(
         `Reminder notification sent successfully for reminder ID: ${reminder.id}`
