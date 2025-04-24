@@ -37,54 +37,6 @@ export class TelegramNotificationService {
     });
   }
 
-  // async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
-  //   try {
-  //     // Send voice message first (sound alert)
-  //     await this.sendSoundAlert(Number(reminder.chatId));
-
-  //     // Then send the reminder message with options to play sound again
-  //     const messageOptions = {
-  //       text: this.formatReminderMessage(reminder),
-  //       parse_mode: "Markdown" as const,
-  //       reply_markup: {
-  //         inline_keyboard: [
-  //           [
-  //             // {
-  //             //   text: "🔔 Reproducir sonido nuevamente",
-  //             //   callback_data: "play_sound",
-  //             // },
-  //             {
-  //               text: "✅ Tomado",
-  //               callback_data: `taken_${reminder.id}`,
-  //             },
-  //           ],
-  //           [
-  //             {
-  //               text: "⏰ Posponer 30 minutos",
-  //               callback_data: `postpone_${reminder.id}_30`,
-  //             },
-  //           ],
-  //         ],
-  //       },
-  //     };
-
-  //     await this.bot.sendMessage(Number(reminder.chatId), messageOptions.text, {
-  //       parse_mode: messageOptions.parse_mode,
-  //       reply_markup: messageOptions.reply_markup,
-  //     });
-
-  //     this.logger.log(
-  //       `Reminder notification sent successfully for reminder ID: ${reminder.id}`
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Error sending reminder notification: ${error.message}`,
-  //       error.stack
-  //     );
-  //     throw error;
-  //   }
-  // }
-
   async sendReminderNotification(reminder: MedicationReminder): Promise<void> {
     try {
       // Send voice message first (sound alert)
@@ -106,6 +58,12 @@ export class TelegramNotificationService {
               {
                 text: "⏰ Posponer 30 minutos",
                 callback_data: `postpone_${reminder.id}_30`,
+              },
+            ],
+            [
+              {
+                text: " Tomado",
+                callback_data: `menu_principal`,
               },
             ],
           ],
@@ -187,47 +145,6 @@ export class TelegramNotificationService {
       );
     }
   }
-
-  // private async handlePostponeReminder(
-  //   chatId: number,
-  //   reminderId: number,
-  //   minutes: number
-  // ): Promise<void> {
-  //   try {
-  //     const reminder = await this.reminderService.getReminderById(reminderId);
-  //     if (!reminder) {
-  //       throw new Error(`Reminder with ID ${reminderId} not found`);
-  //     }
-
-  //     const newTime = await this.reminderService.postponeReminder(
-  //       reminderId,
-  //       minutes
-  //     );
-
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       `⏰ Recordatorio pospuesto ${minutes} minutos.\n\nTe recordaré tomar ${reminder.medicationName} a las ${newTime}.`,
-  //       {
-  //         reply_markup: {
-  //           inline_keyboard: [
-  //             [
-  //               {
-  //                 text: "🔙 Volver al menú principal",
-  //                 callback_data: "menu_principal",
-  //               },
-  //             ],
-  //           ],
-  //         },
-  //       }
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(`Error postponing reminder: ${error.message}`);
-  //     await this.bot.sendMessage(
-  //       chatId,
-  //       "❌ Ocurrió un error. Por favor, intenta nuevamente."
-  //     );
-  //   }
-  // }
 
   private async handlePostponeReminder(
     chatId: number,
