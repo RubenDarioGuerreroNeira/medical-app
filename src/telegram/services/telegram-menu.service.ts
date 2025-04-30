@@ -45,6 +45,24 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
+            text: "🗣️ Historial Médico",
+            callback_data: "historial_medico",
+          },
+        ],
+        // [
+        //   {
+        //     text: "❓ Ayuda",
+        //     callback_data: "ayuda",
+        //   },
+        // ],
+        // [
+        //   {
+        //     text: "🔙 Volver al menú principal",
+        //     callback_data: "menu_principal",
+        //   },
+        // ],
+        [
+          {
             text: "📞 Contacto con el Desarrollador",
             callback_data: "contacto",
           },

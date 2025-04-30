@@ -10,6 +10,7 @@ import { TelegramDiagnosticService } from "../telegramDiagnosticService.service"
 import { TelegramContactService } from "./telegram-contact.service";
 import { TelegramColombiaService } from "../colombia/telegram-colombia.service";
 import { AppointmentCommands } from "./appointment.commands.service";
+import { TelegramHistorialMedicoService } from "../services/telegram-historial-medico.service";
 
 @Injectable()
 export class TelegramService {
@@ -27,6 +28,7 @@ export class TelegramService {
     private errorHandler: TelegramErrorHandler,
     private diagnosticService: TelegramDiagnosticService,
     private contactService: TelegramContactService,
+    private historialMedicoService: TelegramHistorialMedicoService,
 
     // private colombiaService: TelegramColombiaService,
     private appointmentCommands: AppointmentCommands,
@@ -134,6 +136,15 @@ export class TelegramService {
       //   await this.notificationService.handleReminderCallback(callbackQuery);
       //   return;
       // }
+
+      // Manejar callbacks de historial médico
+      if (data.startsWith("historial_detalle_")) {
+        const historialId = parseInt(data.replace("historial_detalle_", ""));
+        await this.historialMedicoService.mostrarHistorialMedico(chatId);
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
       switch (data) {
         case "menu_principal":
           await this.menuService.mostrarMenuPrincipal(chatId);
@@ -195,6 +206,21 @@ export class TelegramService {
         //   break;
 
         // Agregar más casos según sea necesario
+
+        case "historial_medico":
+          await this.historialMedicoService.handleHistorialMedicoCommandByChatId(
+            chatId
+          );
+          break;
+        // Agregar estos casos al switch
+        case "nuevo_historial":
+          await this.historialMedicoService.iniciarRegistroHistorialMedico(
+            chatId
+          );
+          break;
+        case "ver_historiales":
+          await this.historialMedicoService.mostrarHistorialMedico(chatId);
+          break;
       }
 
       await this.bot.answerCallbackQuery(callbackQuery.id);

@@ -11,6 +11,7 @@ import { TelegramWebhookController } from "./telegramWebhook.controller";
 // Entidades
 import { MedicationReminder } from "../Entities/MedicationReminder.entity";
 import { MedicalAppointment } from "src/Entities/MedicalAppointment.entity";
+import { TelegramHistorialMedico } from "../Entities/TelegramHistorialMedico.entity";
 
 // Servicios de utilidad que se mantienen
 import { GeminiAIService } from "src/Gemini/gemini.service";
@@ -39,15 +40,24 @@ import { TelegramColombiaService } from "./colombia/telegram-colombia.service";
 import { AppointmentCommands } from "./services/appointment.commands.service";
 import { AppointmentService } from "./services/appointment.service";
 
+// Importar el nuevo servicio y módulo
+import { TelegramHistorialMedicoService } from "./services/telegram-historial-medico.service";
+import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/telegram-historial-medico.module";
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forFeature([MedicationReminder, MedicalAppointment]),
+    TypeOrmModule.forFeature([
+      MedicationReminder,
+      MedicalAppointment,
+      TelegramHistorialMedico,
+    ]),
     ScheduleModule.forRoot(),
     HttpModule.register({
       timeout: 5000,
       maxRedirects: 5,
     }),
+    TelegramHistorialMedicoModule,
   ],
   controllers: [TelegramController, TelegramWebhookController],
   providers: [
@@ -63,6 +73,8 @@ import { AppointmentService } from "./services/appointment.service";
     TelegramColombiaService,
     AppointmentCommands,
     TelegramService,
+
+    TelegramHistorialMedicoService,
     // AppointmentService,
 
     // Centralizar la creación del bot
@@ -210,6 +222,7 @@ import { AppointmentService } from "./services/appointment.service";
         errorHandler: TelegramErrorHandler,
         diagnosticService: TelegramDiagnosticService,
         contactService: TelegramContactService,
+        historialMedicoService: TelegramHistorialMedicoService,
 
         // colombiaService: TelegramColombiaService,
         appointmentCommands: AppointmentCommands,
@@ -225,9 +238,12 @@ import { AppointmentService } from "./services/appointment.service";
           errorHandler,
           diagnosticService,
           contactService,
+          historialMedicoService,
+          // null,
 
           // colombiaService,
           appointmentCommands,
+          // telegramHistorialMedicoService,
           userStates,
           bot
         );
@@ -248,6 +264,7 @@ import { AppointmentService } from "./services/appointment.service";
         TelegramErrorHandler,
         TelegramDiagnosticService,
         TelegramContactService,
+        TelegramHistorialMedicoService,
         // TelegramColombiaService,
         AppointmentCommands,
         "USER_STATES_MAP",
@@ -267,6 +284,7 @@ import { AppointmentService } from "./services/appointment.service";
     TelegramColombiaService,
     AppointmentCommands,
     AppointmentService,
+    TelegramHistorialMedicoService,
   ],
 })
 export class TelegramModule {}

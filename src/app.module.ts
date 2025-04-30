@@ -2,6 +2,8 @@ import { Inject, Module } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
+
+// entidades
 import { Usuario } from "./Entities/Usuarios.entity";
 import { Medico } from "./Entities/Medico.entity";
 import { Cita } from "./Entities/Cita.entity";
@@ -11,6 +13,7 @@ import { MedicationReminder } from "./Entities/MedicationReminder.entity";
 import { RecetaMedica } from "./Entities/RecetaMedica.entity";
 import { NotaMedica } from "./Entities/NotaMedica.entity";
 import { MedicalAppointment } from "./Entities/MedicalAppointment.entity";
+import { TelegramHistorialMedico } from "./Entities/TelegramHistorialMedico.entity";
 
 import { UsuariosModule } from "./usuarios/usuarios.module";
 import { MedicosModule } from "./medicos/medicos.module";
@@ -56,6 +59,7 @@ import { TelegramModule } from "./telegram/telegram.module";
         NotaMedica,
         MedicationReminder,
         MedicalAppointment,
+        TelegramHistorialMedico,
       ],
       synchronize: process.env.NODE_ENV !== "production",
     }),
