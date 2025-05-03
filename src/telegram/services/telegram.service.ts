@@ -145,6 +145,32 @@ export class TelegramService {
         return;
       }
 
+      // ...existing code inside handleCallbackQuery...
+      // Manejar callbacks de actualización de día semanal (edición)
+      if (data.startsWith("update_day_semanal_")) {
+        const parts = data.split("_");
+        const reminderId = parseInt(parts[3]);
+        const dayNumber = parseInt(parts[4]);
+        const dayNames = [
+          "Domingo",
+          "Lunes",
+          "Martes",
+          "Miércoles",
+          "Jueves",
+          "Viernes",
+          "Sábado",
+        ];
+        const nombreDia = dayNames[dayNumber];
+        await this.reminderService.actualizarDiaSemanal(
+          chatId,
+          reminderId,
+          dayNumber,
+          nombreDia
+        );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
       switch (data) {
         case "menu_principal":
           await this.menuService.mostrarMenuPrincipal(chatId);

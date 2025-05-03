@@ -5,6 +5,9 @@ import { CreateTelegramHistorialMedicoDto } from "../../telegram-historial-medic
 
 @Injectable()
 export class TelegramHistorialMedicoService {
+  create(historialData: CreateTelegramHistorialMedicoDto) {
+    throw new Error("Method not implemented.");
+  }
   private readonly logger = new Logger(TelegramHistorialMedicoService.name);
 
   constructor(
@@ -83,40 +86,42 @@ export class TelegramHistorialMedicoService {
   }
 
   // Método público que acepta directamente un chatId
-public async handleHistorialMedicoCommandByChatId(chatId: number): Promise<void> {
-  await this.bot.sendMessage(
-    chatId,
-    "🏥 *Gestión de Historial Médico* 🏥\n\n" +
-      "Puedes gestionar tu historial médico con los siguientes comandos:\n\n" +
-      "• /nuevohistorial - Registrar una nueva consulta médica\n" +
-      "• /mishistoriales - Ver tu historial médico completo",
-    { 
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: "📝 Nuevo Historial",
-              callback_data: "nuevo_historial"
-            }
+  public async handleHistorialMedicoCommandByChatId(
+    chatId: number
+  ): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "🏥 *Gestión de Historial Médico* 🏥\n\n" +
+        "Puedes gestionar tu historial médico con los siguientes comandos:\n\n" +
+        "• /nuevohistorial - Registrar una nueva consulta médica\n" +
+        "• /mishistoriales - Ver tu historial médico completo",
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📝 Nuevo Historial",
+                callback_data: "nuevo_historial",
+              },
+            ],
+            [
+              {
+                text: "📋 Ver Mis Historiales",
+                callback_data: "ver_historiales",
+              },
+            ],
+            [
+              {
+                text: "🔙 Volver al menú principal",
+                callback_data: "menu_principal",
+              },
+            ],
           ],
-          [
-            {
-              text: "📋 Ver Mis Historiales",
-              callback_data: "ver_historiales"
-            }
-          ],
-          [
-            {
-              text: "🔙 Volver al menú principal",
-              callback_data: "menu_principal"
-            }
-          ]
-        ]
+        },
       }
-    }
-  );
-}
+    );
+  }
 
   async iniciarRegistroHistorialMedico(chatId: number): Promise<void> {
     try {

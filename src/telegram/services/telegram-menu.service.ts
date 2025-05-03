@@ -33,13 +33,13 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
-            text: "🙋‍♂️ Programa Recordatorio\nde tratamiento(s) medicos",
+            text: "🙋‍♂️ Recordatorio\n\nde tratamiento(s) medicos",
             callback_data: "recordatorios",
           },
         ],
         [
           {
-            text: "📲 Programa Recordatorio(s)\nde citas médicas",
+            text: "📲 Recordatorio\nde cita(s) médica(s)",
             callback_data: "recordatorio_cita_medica",
           },
         ],
@@ -49,18 +49,7 @@ export class TelegramMenuService extends TelegramBaseService {
             callback_data: "historial_medico",
           },
         ],
-        // [
-        //   {
-        //     text: "❓ Ayuda",
-        //     callback_data: "ayuda",
-        //   },
-        // ],
-        // [
-        //   {
-        //     text: "🔙 Volver al menú principal",
-        //     callback_data: "menu_principal",
-        //   },
-        // ],
+
         [
           {
             text: "📞 Contacto con el Desarrollador",
@@ -82,7 +71,8 @@ export class TelegramMenuService extends TelegramBaseService {
         `Te puedo ayudar con:\n` +
         `• Encontrar farmacias cercanas 💊\n` +
         `• Localizar centros médicos próximos 🏥\n` +
-        `• Preguntale a nuestra  IA, sobre tus medicamentos, por texto o imagen 🤖\n` +
+        `• Preguntale a nuestra  IA, sobre tus medicamentos\n, 
+            puedes escribirle, o enviarle una fotografía 🤖\n` +
         `• Programar recordatorios de tus tratamientos médicos ⏰\n\n` +
         `• Programar recordatorios de tus citas médicas 📅\n\n` +
         `¿En qué puedo ayudarte hoy?\n\n` +

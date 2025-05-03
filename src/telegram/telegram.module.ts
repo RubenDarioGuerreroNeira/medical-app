@@ -149,12 +149,14 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
       useFactory: (
         bot: TelegramBot,
         userStatesMap: Map<number, any>,
-        reminderService: ReminderService
+        reminderService: ReminderService,
+        historialMedicoService: TelegramHistorialMedicoService
       ) => {
         const service = new TelegramReminderService(
           bot,
           userStatesMap,
-          reminderService
+          reminderService,
+          historialMedicoService
         );
 
         // Verificar que reminderService es la instancia correcta
