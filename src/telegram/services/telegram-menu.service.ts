@@ -71,10 +71,12 @@ export class TelegramMenuService extends TelegramBaseService {
         `Te puedo ayudar con:\n` +
         `• Encontrar farmacias cercanas 💊\n` +
         `• Localizar centros médicos próximos 🏥\n` +
-        `• Preguntale a nuestra  IA, sobre tus medicamentos\n, 
-            puedes escribirle, o enviarle una fotografía 🤖\n` +
-        `• Programar recordatorios de tus tratamientos médicos ⏰\n\n` +
-        `• Programar recordatorios de tus citas médicas 📅\n\n` +
+        `• Consultar información sobre medicamentos con IA 🤖\n` +
+        `  (puedes escribir o enviar una foto del medicamento)\n` +
+        `• Programar recordatorios para tus tratamientos médicos ⏰\n` +
+        `• Gestionar tus citas médicas 📅\n` +
+        `• Mantener tu historial médico personal 📋\n` +
+        `• Recibir alertas y notificaciones personalizadas 🔔\n\n` +
         `¿En qué puedo ayudarte hoy?\n\n` +
         `Selecciona una opción del menú:`;
 

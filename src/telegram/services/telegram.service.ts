@@ -80,11 +80,55 @@ export class TelegramService {
     const data = callbackQuery.data;
 
     try {
-      // Manejar callbacks de frecuencia
+      
+      //callback para cuando selecciono recordatorio semanal,
+      // me muestra los dias de la semana para que seleccione el dia
+      if (data.startsWith("day_semanal_")) {
+        const parts = data.split("_");
+        const dayNumber = parseInt(parts[2]);
+        const nombreMedicamento = parts[3];
+        const horaRecordatorio = parts.slice(4).join("_"); // Por si la hora tiene espacios
+
+        const dayNames = [
+          "Domingo",
+          "Lunes",
+          "Martes",
+          "Miércoles",
+          "Jueves",
+          "Viernes",
+          "Sábado",
+        ];
+        const nombreDia = dayNames[dayNumber];
+
+        await this.reminderService.guardarRecordatorio(
+          chatId,
+          nombreMedicamento,
+          horaRecordatorio,
+          "semanal",
+          dayNumber,
+          nombreDia
+        );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
       if (data.startsWith("freq_")) {
         const [freq, nombreMedicamento, horaRecordatorio] = data
           .split("_")
           .slice(1);
+
+        if (freq === "semanal") {
+          // Mostrar selector de días de la semana para creación
+          await this.reminderService.mostrarSelectorDiaSemanal(
+            chatId,
+            nombreMedicamento,
+            horaRecordatorio
+          );
+          await this.bot.answerCallbackQuery(callbackQuery.id);
+          return;
+        }
+
+        // Para otras frecuencias, crear el recordatorio directamente
         await this.reminderService.guardarRecordatorio(
           chatId,
           nombreMedicamento,
@@ -127,15 +171,7 @@ export class TelegramService {
         await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
-      // Manejar callbacks de recordatorios
-      // if (
-      //   data === "play_sound" ||
-      //   data.startsWith("taken_") ||
-      //   data.startsWith("postpone_")
-      // ) {
-      //   await this.notificationService.handleReminderCallback(callbackQuery);
-      //   return;
-      // }
+      
 
       // Manejar callbacks de historial médico
       if (data.startsWith("historial_detalle_")) {
