@@ -72,7 +72,7 @@ Se gestionan los horarios de disponibilidad de los médicos utilizando un format
 
 # Bot de Telegram para Citas Médicas
 
-<img src="/src/images/beautiful-young-female-doctor-looking-camera-office (1) (1).jpg" width="320" alt="Telegram Bot Screenshot" />
+<img src="/src/images/Bot telegram Bw.jpg" width="320" alt="Telegram Bot Screenshot" />
 
 ## Características Principales
 
@@ -86,14 +86,13 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
 - **Consultas Médicas por IA**: Responde preguntas médicas básicas utilizando inteligencia artificial
 - **Recordatorios de Medicamentos**: Configura y gestiona recordatorios para tomar medicamentos
 - **Información de Contacto**: Acceso rápido a información de contacto del centro médico
-
-### Tecnologías Utilizadas
-
-- Node-telegram-bot-api
-- NestJS para la integración con el backend
-- Servicios de geolocalización
-- Integración con APIs externas para información médica
-- Cloudinary para manejo de imágenes
+- **Gestión de Historial Médico**: Registro y consulta de historiales médicos personales
+  - Creación de nuevos registros médicos con diagnósticos, tratamientos y médicos
+  - Visualización detallada del historial médico completo
+  - Eliminación de registros médicos específicos
+  - Interfaz intuitiva con botones interactivos para navegar entre opciones
+- **Recordatorios de Citas Médicas**: Configuración y gestión de recordatorios para citas médicas programadas
+- **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
 
 ### Próximas Funcionalidades
 
@@ -103,55 +102,49 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
 - Recordatorios automáticos de citas próximas
 - Opción para reprogramar citas con un simple botón
 
-#### 2. Historial Médico Personal
-
-- Registro y consulta de historial médico básico
-- Almacenamiento de alergias, condiciones crónicas y medicamentos actuales
-- Generación de resúmenes compartibles con nuevos médicos
-
-#### 3. Seguimiento de Medicamentos Mejorado
+#### 2. Seguimiento de Medicamentos Mejorado
 
 - Registro de medicamentos con fotos (el usuario puede enviar una foto del medicamento)
 - Alertas de interacciones medicamentosas peligrosas
 - Recordatorios personalizables (sonidos, frecuencia, mensajes)
 
-#### 4. Síntomas y Primeros Auxilios
+#### 3. Síntomas y Primeros Auxilios
 
 - Guía interactiva de primeros auxilios con imágenes y videos
 - Evaluador de síntomas básico que sugiera nivel de urgencia
 - Información sobre cuándo buscar atención médica inmediata
 
-#### 5. Integración con Seguros Médicos
+#### 4. Integración con Seguros Médicos
 
 - Verificación de cobertura de seguro para clínicas y farmacias mostradas
 - Consulta de saldo disponible o estado de reembolsos
 - Información sobre trámites y documentación necesaria
 
-#### 6. Comunidad y Soporte
+#### 5. Comunidad y Soporte
 
 - Grupos de apoyo para condiciones específicas
 - Conexión con otros pacientes (anónima y moderada)
 - Preguntas frecuentes sobre condiciones médicas comunes
 
-#### 7. Telemedicina
+#### 6. Telemedicina
 
 - Integración con servicios de consulta médica virtual
 - Programación de videoconsultas desde el bot
 - Sala de espera virtual con notificaciones
 
-#### 8. Gamificación para Adherencia al Tratamiento
+#### 7. Gamificación para Adherencia al Tratamiento
 
 - Sistema de puntos por seguir tratamientos correctamente
 - Insignias y logros por mantener hábitos saludables
 - Estadísticas visuales de progreso
 
-#### 9. Información Nutricional y Ejercicio
+#### 8. Información Nutricional y Ejercicio
 
 - Recomendaciones personalizadas según condiciones médicas
 - Seguimiento de actividad física básica
 - Sugerencias de dietas específicas para condiciones médicas
 
-#### 10. Emergencias Médicas Mejoradas
+#### 9. Emergencias Médicas Mejoradas
 
 - Botón de pánico que envía ubicación a contactos de emergencia
 - Información de contacto de emergencias según ubicación actual
@@ -164,3 +157,11 @@ Para soporte o consultas, por favor contactar a través de los canales disponibl
 ## Licencia
 
 MIT
+
+### Tecnologías Utilizadas
+
+- Node-telegram-bot-api
+- NestJS para la integración con el backend
+- Servicios de geolocalización
+- Integración con APIs externas para información médica
+- Cloudinary para manejo de imágenes
