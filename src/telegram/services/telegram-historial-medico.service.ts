@@ -32,31 +32,20 @@ export class TelegramHistorialMedicoService {
     );
   }
 
-  // private async handleHistorialMedicoCommand(
-  //   msg: TelegramBot.Message
-  // ): Promise<void> {
-  //   const chatId = msg.chat.id;
-
-  //   await this.bot.sendMessage(
-  //     chatId,
-  //     "🏥 *Gestión de Historial Médico* 🏥\n\n" +
-  //       "Puedes gestionar tu historial médico con los siguientes comandos:\n\n" +
-  //       "• /nuevohistorial - Registrar una nueva consulta médica\n" +
-  //       "• /mishistoriales - Ver tu historial médico completo",
-  //     { parse_mode: "Markdown" }
-  //   );
-  // }
-
   public async handleHistorialMedicoCommand(
     msg: TelegramBot.Message
   ): Promise<void> {
     const chatId = msg.chat.id;
     await this.bot.sendMessage(
       chatId,
-      "🏥 *Gestión de Historial Médico* 🏥\n\n" +
-        "Puedes gestionar tu historial médico con los siguientes comandos:\n\n" +
-        "• /nuevohistorial - Registrar una nueva consulta médica\n" +
-        "• /mishistoriales - Ver tu historial médico completo",
+      "🏥 *TU HISTORIAL MÉDICO PERSONAL* 🏥\n\n" +
+        "Mantén un registro completo de tus consultas médicas, diagnósticos y tratamientos en un solo lugar.\n\n" +
+        "📋 *Beneficios:*\n" +
+        "• Acceso rápido a tu historial médico en cualquier momento\n" +
+        "• Seguimiento de diagnósticos y tratamientos\n" +
+        "• Registro organizado de tus médicos y especialistas\n" +
+        "• Información médica importante siempre disponible\n\n" +
+        "¿Qué deseas hacer hoy?",
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -91,10 +80,14 @@ export class TelegramHistorialMedicoService {
   ): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "🏥 *Gestión de Historial Médico* 🏥\n\n" +
-        "Puedes gestionar tu historial médico con los siguientes comandos:\n\n" +
-        "• /nuevohistorial - Registrar una nueva consulta médica\n" +
-        "• /mishistoriales - Ver tu historial médico completo",
+      "🏥 *TU HISTORIAL MÉDICO PERSONAL* 🏥\n\n" +
+        "Mantén un registro completo de tus consultas médicas, diagnósticos y tratamientos en un solo lugar.\n\n" +
+        "📋 *Beneficios:*\n" +
+        "• Acceso rápido a tu historial médico en cualquier momento\n" +
+        "• Seguimiento de diagnósticos y tratamientos\n" +
+        "• Registro organizado de tus médicos y especialistas\n" +
+        "• Información médica importante siempre disponible\n\n" +
+        "¿Qué deseas hacer hoy?",
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -202,6 +195,7 @@ export class TelegramHistorialMedicoService {
     await this.bot.sendMessage(
       chatId,
       "🔬 Por favor, ingresa la especialidad del médico:\n" +
+        "si deseas cancelar el registro escribe /cancelar\n" +
         '(Si no deseas registrarla, escribe "ninguna")',
       {
         reply_markup: {
@@ -299,7 +293,29 @@ export class TelegramHistorialMedicoService {
       if (msg.chat.id !== chatId) return;
       if (msg.text === "/cancelar") {
         this.userStates.delete(chatId);
-        await this.bot.sendMessage(chatId, "❌ Registro cancelado.");
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Registro cancelado.",
+
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🏥 Historial Médico",
+                    callback_data: "ver_historiales",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Menú Principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
         return;
       }
 
@@ -396,11 +412,27 @@ export class TelegramHistorialMedicoService {
     }
   }
 
+  private async handleError(chatId: number): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "❌ Lo siento, ha ocurrido un error. Por favor, intenta nuevamente más tarde."
+    );
+    this.userStates.delete(chatId);
+  }
+
   async mostrarHistorialMedico(
     chatId: number,
     historialId?: number
   ): Promise<void> {
     try {
+      // Primero, verificamos si hay un manejador de callback activo y lo eliminamos
+      // para evitar duplicaciones
+      const state = this.userStates.get(chatId) || {};
+      if (state.activeCallbackHandler) {
+        this.bot.removeListener("callback_query", state.activeCallbackHandler);
+        state.activeCallbackHandler = null;
+      }
+
       const historiales = await this.historialMedicoService.findByChatId(
         chatId.toString()
       );
@@ -409,9 +441,41 @@ export class TelegramHistorialMedicoService {
         await this.bot.sendMessage(
           chatId,
           "📋 No tienes registros médicos guardados.\n\n" +
-            "Puedes crear uno nuevo con el comando /nuevohistorial"
+            "Puedes crear uno nuevo con el comando /nuevohistorial",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "📝 Crear nuevo registro",
+                    callback_data: "nuevo_historial",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
         );
         return;
+      }
+
+      // Eliminar mensaje anterior si existe
+      if (state.lastHistorialListMessageId) {
+        try {
+          await this.bot.deleteMessage(
+            chatId,
+            state.lastHistorialListMessageId.toString()
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudo eliminar el mensaje anterior: ${error.message}`
+          );
+        }
       }
 
       // Mostrar resumen de historiales
@@ -430,7 +494,8 @@ export class TelegramHistorialMedicoService {
         mensaje += "\n";
       });
 
-      mensaje += "Para ver detalles de un registro, selecciona su número:";
+      mensaje +=
+        "Para ver detalles de un registro o eliminarlo,\nselecciona su número:";
 
       // Crear teclado inline con opciones numeradas
       const keyboard = [];
@@ -447,26 +512,67 @@ export class TelegramHistorialMedicoService {
         keyboard.push(row);
       }
 
-      await this.bot.sendMessage(chatId, mensaje, {
+      // Añadir botón para volver
+      keyboard.push([
+        {
+          text: "🔙 Volver al menú principal",
+          callback_data: "menu_principal",
+        },
+      ]);
+
+      const sentMessage = await this.bot.sendMessage(chatId, mensaje, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: keyboard,
         },
       });
 
+      // Guardar el ID del mensaje para poder eliminarlo después
+      this.userStates.set(chatId, {
+        ...state,
+        lastHistorialListMessageId: sentMessage.message_id,
+      });
+
       // Configurar manejador para la selección de historial
-      this.bot.on("callback_query", async (callbackQuery) => {
+      const callbackHandler = async (callbackQuery) => {
+        // Verificar que el callback es para este chat
+        if (callbackQuery.message.chat.id !== chatId) return;
+
+        // Verificar que es un callback de detalle de historial
         if (!callbackQuery.data?.startsWith("historial_detalle_")) return;
+
+        await this.bot.answerCallbackQuery(callbackQuery.id);
 
         const historialId = parseInt(
           callbackQuery.data.replace("historial_detalle_", "")
         );
-        await this.mostrarDetalleHistorial(
-          callbackQuery.message.chat.id,
-          historialId
-        );
-        await this.bot.answerCallbackQuery(callbackQuery.id);
-      });
+
+        // Eliminar el mensaje de lista para mantener limpio el chat
+        try {
+          const currentState = this.userStates.get(chatId);
+          if (currentState?.lastHistorialListMessageId) {
+            await this.bot.deleteMessage(
+              chatId,
+              currentState.lastHistorialListMessageId.toString()
+            );
+            currentState.lastHistorialListMessageId = null;
+          }
+        } catch (error) {
+          this.logger.warn(
+            `No se pudo eliminar el mensaje anterior: ${error.message}`
+          );
+        }
+
+        await this.mostrarDetalleHistorial(chatId, historialId);
+      };
+
+      // Guardar referencia al manejador para poder eliminarlo después
+      const updatedState = this.userStates.get(chatId) || {};
+      updatedState.activeCallbackHandler = callbackHandler;
+      this.userStates.set(chatId, updatedState);
+
+      // Usar once para que solo se ejecute una vez
+      this.bot.once("callback_query", callbackHandler);
     } catch (error) {
       this.logger.error(
         `Error al mostrar historial: ${error.message}`,
@@ -491,7 +597,7 @@ export class TelegramHistorialMedicoService {
       mensaje += `📅 *Fecha:* ${fechaConsulta}\n`;
       mensaje += `🔍 *Diagnóstico:* ${historial.diagnostico}\n`;
 
-      if (historial.tratamiento) {
+      if (historial.tratamiento && historial.tratamiento !== "ninguno") {
         mensaje += `💊 *Tratamiento:* ${historial.tratamiento}\n`;
       }
 
@@ -499,21 +605,24 @@ export class TelegramHistorialMedicoService {
         mensaje += `📝 *Descripción:* ${historial.descripcion}\n`;
       }
 
-      if (historial.nombreMedico) {
+      if (historial.nombreMedico && historial.nombreMedico !== "ninguno") {
         mensaje += `👨‍⚕️ *Médico:* ${historial.nombreMedico}\n`;
       }
 
-      if (historial.especialidadMedico) {
+      if (
+        historial.especialidadMedico &&
+        historial.especialidadMedico !== "ninguna"
+      ) {
         mensaje += `🔬 *Especialidad:* ${historial.especialidadMedico}\n`;
       }
 
-      if (historial.centroMedico) {
+      if (historial.centroMedico && historial.centroMedico !== "ninguno") {
         mensaje += `🏥 *Centro Médico:* ${historial.centroMedico}\n`;
       }
 
       mensaje += `🔒 *Compartible:* ${historial.esCompartible ? "Sí" : "No"}\n`;
 
-      await this.bot.sendMessage(chatId, mensaje, {
+      const sentMessage = await this.bot.sendMessage(chatId, mensaje, {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
@@ -522,14 +631,53 @@ export class TelegramHistorialMedicoService {
                 text: "🗑️ Eliminar",
                 callback_data: `historial_eliminar_${historial.id}`,
               },
-              { text: "🔙 Volver", callback_data: "historial_volver" },
+              {
+                text: "🔙 Volver a la lista",
+                callback_data: "historial_volver",
+              },
+            ],
+            [
+              {
+                text: "🏠 Menú principal",
+                callback_data: "menu_principal",
+              },
             ],
           ],
         },
       });
 
+      // Guardar el ID del mensaje para poder eliminarlo después
+      this.userStates.set(chatId, {
+        ...this.userStates.get(chatId),
+        lastHistorialDetailMessageId: sentMessage.message_id,
+      });
+
       // Configurar manejador para eliminar o volver
-      this.bot.once("callback_query", async (callbackQuery) => {
+      // IMPORTANTE: Usar once en lugar de on para evitar múltiples manejadores
+      const callbackHandler = async (callbackQuery) => {
+        // Verificar que el callback es para este chat
+        if (callbackQuery.message.chat.id !== chatId) return;
+
+        // Eliminar este manejador para evitar duplicados
+        this.bot.removeListener("callback_query", callbackHandler);
+
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+
+        // Eliminar el mensaje de detalle para mantener limpio el chat
+        try {
+          const state = this.userStates.get(chatId);
+          if (state?.lastHistorialDetailMessageId) {
+            await this.bot.deleteMessage(
+              chatId,
+              state.lastHistorialDetailMessageId.toString()
+            );
+          }
+        } catch (error) {
+          this.logger.warn(
+            `No se pudo eliminar el mensaje anterior: ${error.message}`
+          );
+        }
+
         if (callbackQuery.data === "historial_volver") {
           await this.mostrarHistorialMedico(chatId);
         } else if (callbackQuery.data?.startsWith("historial_eliminar_")) {
@@ -537,9 +685,13 @@ export class TelegramHistorialMedicoService {
             callbackQuery.data.replace("historial_eliminar_", "")
           );
           await this.confirmarEliminarHistorial(chatId, idEliminar);
+        } else if (callbackQuery.data === "menu_principal") {
+          // Manejar el regreso al menú principal
+          // Aquí deberías llamar al método correspondiente
         }
-        await this.bot.answerCallbackQuery(callbackQuery.id);
-      });
+      };
+
+      this.bot.once("callback_query", callbackHandler);
     } catch (error) {
       this.logger.error(
         `Error al mostrar detalle: ${error.message}`,
@@ -553,7 +705,7 @@ export class TelegramHistorialMedicoService {
     chatId: number,
     historialId: number
   ): Promise<void> {
-    await this.bot.sendMessage(
+    const sentMessage = await this.bot.sendMessage(
       chatId,
       "⚠️ *¿Estás seguro de que deseas eliminar este registro médico?*\n\n" +
         "Esta acción no se puede deshacer.",
@@ -563,11 +715,11 @@ export class TelegramHistorialMedicoService {
           inline_keyboard: [
             [
               {
-                text: "Sí, eliminar",
+                text: "✅ Sí, eliminar",
                 callback_data: `historial_confirmar_eliminar_${historialId}`,
               },
               {
-                text: "No, cancelar",
+                text: "❌ No, cancelar",
                 callback_data: "historial_cancelar_eliminar",
               },
             ],
@@ -576,7 +728,37 @@ export class TelegramHistorialMedicoService {
       }
     );
 
-    this.bot.once("callback_query", async (callbackQuery) => {
+    // Guardar el ID del mensaje para poder eliminarlo después
+    this.userStates.set(chatId, {
+      ...this.userStates.get(chatId),
+      lastConfirmDeleteMessageId: sentMessage.message_id,
+    });
+
+    // IMPORTANTE: Usar once en lugar de on para evitar múltiples manejadores
+    const callbackHandler = async (callbackQuery) => {
+      // Verificar que el callback es para este chat
+      if (callbackQuery.message.chat.id !== chatId) return;
+
+      // Eliminar este manejador para evitar duplicados
+      this.bot.removeListener("callback_query", callbackHandler);
+
+      await this.bot.answerCallbackQuery(callbackQuery.id);
+
+      // Eliminar el mensaje de confirmación para mantener limpio el chat
+      try {
+        const state = this.userStates.get(chatId);
+        if (state?.lastConfirmDeleteMessageId) {
+          await this.bot.deleteMessage(
+            chatId,
+            state.lastConfirmDeleteMessageId.toString()
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `No se pudo eliminar el mensaje anterior: ${error.message}`
+        );
+      }
+
       if (callbackQuery.data?.startsWith("historial_confirmar_eliminar_")) {
         const idEliminar = parseInt(
           callbackQuery.data.replace("historial_confirmar_eliminar_", "")
@@ -595,15 +777,8 @@ export class TelegramHistorialMedicoService {
       } else if (callbackQuery.data === "historial_cancelar_eliminar") {
         await this.mostrarHistorialMedico(chatId);
       }
-      await this.bot.answerCallbackQuery(callbackQuery.id);
-    });
-  }
+    };
 
-  private async handleError(chatId: number): Promise<void> {
-    await this.bot.sendMessage(
-      chatId,
-      "❌ Lo siento, ha ocurrido un error. Por favor, intenta nuevamente más tarde."
-    );
-    this.userStates.delete(chatId);
+    this.bot.once("callback_query", callbackHandler);
   }
 }
