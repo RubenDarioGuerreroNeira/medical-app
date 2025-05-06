@@ -80,7 +80,6 @@ export class TelegramService {
     const data = callbackQuery.data;
 
     try {
-      
       //callback para cuando selecciono recordatorio semanal,
       // me muestra los dias de la semana para que seleccione el dia
       if (data.startsWith("day_semanal_")) {
@@ -171,7 +170,6 @@ export class TelegramService {
         await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
-      
 
       // Manejar callbacks de historial médico
       if (data.startsWith("historial_detalle_")) {
@@ -203,6 +201,15 @@ export class TelegramService {
           dayNumber,
           nombreDia
         );
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
+      // este callback se activa cuando en creacion de nuevo recordatrio,
+      //encuentra un medicamento con el mismo nombre
+      if (data.startsWith("continue_create_")) {
+        const nombreMedicamento = data.substring("continue_create_".length);
+        await this.reminderService.solicitarDosis(chatId, nombreMedicamento);
         await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }

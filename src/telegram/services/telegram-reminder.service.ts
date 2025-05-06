@@ -30,6 +30,15 @@ export class TelegramReminderService {
       const data = callbackQuery.data;
       if (!data) return;
 
+      // manejador de callback cuando el medicamento existe
+
+      if (data.startsWith("continue_create_")) {
+        const nombreMedicamento = data.substring("continue_create_".length);
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        await this.solicitarDosis(chatId, nombreMedicamento);
+        return;
+      }
+
       // Manejar callbacks de frecuencia
       if (data.startsWith("freq_")) {
         const parts = data.split("_");
@@ -218,6 +227,8 @@ export class TelegramReminderService {
     );
   }
 
+  
+
   async iniciarCreacionRecordatorio(chatId: number): Promise<void> {
     this.userStates.set(chatId, {
       step: "medication_name",
@@ -239,7 +250,58 @@ export class TelegramReminderService {
       if (!msg.text) return;
 
       const nombreMedicamento = msg.text;
-      await this.solicitarDosis(chatId, nombreMedicamento);
+
+      // Verificar si ya existe un recordatorio con este nombre
+      try {
+        const reminders = await this.reminderService.getUserReminders(chatId);
+        const existingReminder = reminders.find(
+          (r) =>
+            r.medicationName.toLowerCase() === nombreMedicamento.toLowerCase()
+        );
+
+        if (existingReminder) {
+          // Si existe, mostrar mensaje y opción de editar
+          await this.bot.sendMessage(
+            chatId,
+            `⚠️ Ya existe un recordatorio para el medicamento "${nombreMedicamento}".\n\n¿Qué deseas hacer?`,
+            {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: "✏️ Editar recordatorio existente",
+                      callback_data: `edit_reminder_${existingReminder.id}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "➕ Crear uno nuevo de todos modos",
+                      callback_data: `continue_create_${nombreMedicamento}`,
+                    },
+                  ],
+                  [
+                    {
+                      text: "🔙 Volver al menú de recordatorios",
+                      callback_data: "recordatorios",
+                    },
+                  ],
+                ],
+              },
+            }
+          );
+          return;
+        }
+
+        // Si no existe, continuar con el flujo normal
+        await this.solicitarDosis(chatId, nombreMedicamento);
+      } catch (error) {
+        this.logger.error(
+          `Error al verificar recordatorios existentes: ${error.message}`,
+          error.stack
+        );
+        // En caso de error, continuamos con el flujo normal
+        await this.solicitarDosis(chatId, nombreMedicamento);
+      }
     });
   }
 
@@ -1064,7 +1126,7 @@ export class TelegramReminderService {
     }
   }
 
-  private async solicitarDosis(
+   async solicitarDosis(
     chatId: number,
     nombreMedicamento: string
   ): Promise<void> {
@@ -1227,7 +1289,6 @@ export class TelegramReminderService {
     );
   }
 
-
   async mostrarSelectorDiaSemanal(
     chatId: number,
     nombreMedicamento: string,
@@ -1236,30 +1297,51 @@ export class TelegramReminderService {
     console.log(
       `Mostrando selector de día para: ${nombreMedicamento}, hora: ${horaRecordatorio}`
     );
-  
+
     // Obtener el reminderId del estado del usuario
     const userState = this.userStates.get(chatId);
     const reminderId = userState?.reminderData?.reminderId;
-  
+
     try {
       let inline_keyboard;
       if (reminderId) {
         // Edición de recordatorio existente
         inline_keyboard = [
           [
-            { text: "Domingo", callback_data: `update_day_semanal_${reminderId}_0` },
-            { text: "Lunes", callback_data: `update_day_semanal_${reminderId}_1` },
+            {
+              text: "Domingo",
+              callback_data: `update_day_semanal_${reminderId}_0`,
+            },
+            {
+              text: "Lunes",
+              callback_data: `update_day_semanal_${reminderId}_1`,
+            },
           ],
           [
-            { text: "Martes", callback_data: `update_day_semanal_${reminderId}_2` },
-            { text: "Miércoles", callback_data: `update_day_semanal_${reminderId}_3` },
+            {
+              text: "Martes",
+              callback_data: `update_day_semanal_${reminderId}_2`,
+            },
+            {
+              text: "Miércoles",
+              callback_data: `update_day_semanal_${reminderId}_3`,
+            },
           ],
           [
-            { text: "Jueves", callback_data: `update_day_semanal_${reminderId}_4` },
-            { text: "Viernes", callback_data: `update_day_semanal_${reminderId}_5` },
+            {
+              text: "Jueves",
+              callback_data: `update_day_semanal_${reminderId}_4`,
+            },
+            {
+              text: "Viernes",
+              callback_data: `update_day_semanal_${reminderId}_5`,
+            },
           ],
           [
-            { text: "Sábado", callback_data: `update_day_semanal_${reminderId}_6` },
+            {
+              text: "Sábado",
+              callback_data: `update_day_semanal_${reminderId}_6`,
+            },
           ],
           [{ text: "Cancelar", callback_data: "menu_principal" }],
         ];
@@ -1267,24 +1349,45 @@ export class TelegramReminderService {
         // Creación de nuevo recordatorio
         inline_keyboard = [
           [
-            { text: "Domingo", callback_data: `day_semanal_0_${nombreMedicamento}_${horaRecordatorio}` },
-            { text: "Lunes", callback_data: `day_semanal_1_${nombreMedicamento}_${horaRecordatorio}` },
+            {
+              text: "Domingo",
+              callback_data: `day_semanal_0_${nombreMedicamento}_${horaRecordatorio}`,
+            },
+            {
+              text: "Lunes",
+              callback_data: `day_semanal_1_${nombreMedicamento}_${horaRecordatorio}`,
+            },
           ],
           [
-            { text: "Martes", callback_data: `day_semanal_2_${nombreMedicamento}_${horaRecordatorio}` },
-            { text: "Miércoles", callback_data: `day_semanal_3_${nombreMedicamento}_${horaRecordatorio}` },
+            {
+              text: "Martes",
+              callback_data: `day_semanal_2_${nombreMedicamento}_${horaRecordatorio}`,
+            },
+            {
+              text: "Miércoles",
+              callback_data: `day_semanal_3_${nombreMedicamento}_${horaRecordatorio}`,
+            },
           ],
           [
-            { text: "Jueves", callback_data: `day_semanal_4_${nombreMedicamento}_${horaRecordatorio}` },
-            { text: "Viernes", callback_data: `day_semanal_5_${nombreMedicamento}_${horaRecordatorio}` },
+            {
+              text: "Jueves",
+              callback_data: `day_semanal_4_${nombreMedicamento}_${horaRecordatorio}`,
+            },
+            {
+              text: "Viernes",
+              callback_data: `day_semanal_5_${nombreMedicamento}_${horaRecordatorio}`,
+            },
           ],
           [
-            { text: "Sábado", callback_data: `day_semanal_6_${nombreMedicamento}_${horaRecordatorio}` },
+            {
+              text: "Sábado",
+              callback_data: `day_semanal_6_${nombreMedicamento}_${horaRecordatorio}`,
+            },
           ],
           [{ text: "Cancelar", callback_data: "menu_principal" }],
         ];
       }
-  
+
       await this.bot.sendMessage(
         chatId,
         "¿Qué día de la semana prefieres para tu recordatorio?",
@@ -1306,7 +1409,6 @@ export class TelegramReminderService {
       );
     }
   }
-
 
   async guardarRecordatorioSemanal(
     chatId: number,
