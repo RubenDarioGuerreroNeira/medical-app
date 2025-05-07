@@ -91,6 +91,11 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
   - Visualización detallada del historial médico completo
   - Eliminación de registros médicos específicos
   - Interfaz intuitiva con botones interactivos para navegar entre opciones
+  - **Exportación de Recordatorios Médicos**: Genera y descarga reportes de medicamentos en formato PDF o CSV
+  - Exportación personalizada con datos del paciente
+  - Opción para compartir directamente con profesionales médicos
+  - Formato profesional para uso clínico
+  - Resumen estadístico de medicamentos y frecuencias
 - **Recordatorios de Citas Médicas**: Configuración y gestión de recordatorios para citas médicas programadas
 - **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
 

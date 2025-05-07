@@ -69,14 +69,16 @@ export class TelegramMenuService extends TelegramBaseService {
         `¡Hola ${userName}! 👋\n\n` +
         `Bienvenido a tu Asistente Médico Virtual 🏥\n\n` +
         `Te puedo ayudar con:\n` +
-        `• Encontrar farmacias cercanas 💊\n` +
-        `• Localizar centros médicos próximos 🏥\n` +
-        `• Consultar información sobre medicamentos con IA 🤖\n` +
+        `• 💊 Encontrar farmacias cercanas a tu ubicación\n` +
+        `• 🏥 Localizar centros médicos próximos a ti\n` +
+        `• 🤖 Consultar información sobre medicamentos con IA\n` +
         `  (puedes escribir o enviar una foto del medicamento)\n` +
-        `• Programar recordatorios para tus tratamientos médicos ⏰\n` +
-        `• Gestionar tus citas médicas 📅\n` +
-        `• Mantener tu historial médico personal 📋\n` +
-        `• Recibir alertas y notificaciones personalizadas 🔔\n\n` +
+        `• ⏰ Programar y gestionar recordatorios para tus tratamientos médicos\n` +
+        `• 📊 Exportar tus recordatorios de medicamentos en PDF o CSV\n` +
+        `• 📅 Agendar y administrar tus citas médicas\n` +
+        `• 📋 Crear y mantener tu historial médico personal\n` +
+        `• 📱 Compartir información médica con tus profesionales de salud\n` +
+        `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n\n` +
         `¿En qué puedo ayudarte hoy?\n\n` +
         `Selecciona una opción del menú:`;
 
