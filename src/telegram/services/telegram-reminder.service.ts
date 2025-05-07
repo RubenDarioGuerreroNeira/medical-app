@@ -5,6 +5,13 @@ import { ReminderService } from "../reminder.service";
 import { CreateTelegramHistorialMedicoDto } from "../../telegram-historial-medico/dto/create-telegram-historial-medico.dto";
 import { TelegramHistorialMedicoService } from "./telegram-historial-medico.service";
 
+import * as PDFDocument from "pdfkit";
+import * as fs from "fs";
+import * as path from "path";
+import * as csv from "fast-csv";
+import * as moment from "moment";
+import "moment/locale/es";
+
 @Injectable()
 export class TelegramReminderService {
   private readonly logger = new Logger(TelegramReminderService.name);
@@ -30,8 +37,31 @@ export class TelegramReminderService {
       const data = callbackQuery.data;
       if (!data) return;
 
-      // manejador de callback cuando el medicamento existe
+      // Manejar callbacks de exportación
+      if (data === "exportar_recordatorios") {
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        await this.mostrarOpcionesExportacion(chatId);
+        return;
+      }
 
+      if (
+        data === "exportar_recordatorios_pdf" ||
+        data === "exportar_recordatorios_csv"
+      ) {
+        const formato = data.endsWith("_pdf") ? "pdf" : "csv";
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        await this.exportarRecordatorios(chatId, formato);
+        return;
+      }
+
+      if (data.startsWith("compartir_recordatorios_")) {
+        const formato = data.split("_")[2];
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        await this.solicitarContactoMedico(chatId, formato);
+        return;
+      }
+
+      // manejador de callback cuando el medicamento existe
       if (data.startsWith("continue_create_")) {
         const nombreMedicamento = data.substring("continue_create_".length);
         await this.bot.answerCallbackQuery(callbackQuery.id);
@@ -188,6 +218,45 @@ export class TelegramReminderService {
     });
   }
 
+  // async mostrarMenuRecordatorios(chatId: number): Promise<void> {
+  //   await this.bot.sendMessage(
+  //     chatId,
+  //     "🕒 *Recordatorios de Medicamentos*\n\nPuedes programar recordatorios para tomar tus medicamentos a tiempo. Zona Horaria: Caracas ",
+  //     {
+  //       parse_mode: "Markdown",
+  //       reply_markup: {
+  //         inline_keyboard: [
+  //           [
+  //             {
+  //               text: "➕ Crear nuevo recordatorio(s) tratamiento",
+  //               callback_data: "crear_recordatorio",
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: " ✏ Ver ó Editar recordatorio(s) tratamiento",
+  //               callback_data: "ver_recordatorios",
+  //             },
+  //           ],
+
+  //           [
+  //             {
+  //               text: "🗑 Elimina  recordatorio(s) tratamiento",
+  //               callback_data: "eliminar_recordatorio",
+  //             },
+  //           ],
+  //           [
+  //             {
+  //               text: "🔙 Volver al menú principal",
+  //               callback_data: "menu_principal",
+  //             },
+  //           ],
+  //         ],
+  //       },
+  //     }
+  //   );
+  // }
+
   async mostrarMenuRecordatorios(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
@@ -208,11 +277,16 @@ export class TelegramReminderService {
                 callback_data: "ver_recordatorios",
               },
             ],
-
             [
               {
                 text: "🗑 Elimina  recordatorio(s) tratamiento",
                 callback_data: "eliminar_recordatorio",
+              },
+            ],
+            [
+              {
+                text: "📊 Exportar recordatorios",
+                callback_data: "exportar_recordatorios",
               },
             ],
             [
@@ -226,8 +300,6 @@ export class TelegramReminderService {
       }
     );
   }
-
-  
 
   async iniciarCreacionRecordatorio(chatId: number): Promise<void> {
     this.userStates.set(chatId, {
@@ -1126,7 +1198,7 @@ export class TelegramReminderService {
     }
   }
 
-   async solicitarDosis(
+  async solicitarDosis(
     chatId: number,
     nombreMedicamento: string
   ): Promise<void> {
@@ -2076,5 +2148,315 @@ export class TelegramReminderService {
       );
       this.userStates.delete(chatId);
     }
+  }
+
+  // nuevo metodo formato exportacion
+  async mostrarOpcionesExportacion(chatId: number): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "📊 *Exportación de Recordatorios* 📊\n\n" +
+        "Puedes exportar tus recordatorios de medicación para compartirlos con tu médico o guardarlos para tu registro personal.\n\n" +
+        "¿En qué formato deseas exportar tus recordatorios?",
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📝 CSV (Excel)",
+                callback_data: "exportar_recordatorios_csv",
+              },
+              {
+                text: "📕 PDF",
+                callback_data: "exportar_recordatorios_pdf",
+              },
+            ],
+            [
+              {
+                text: "🔙 Volver al menú de recordatorios",
+                callback_data: "recordatorios",
+              },
+            ],
+          ],
+        },
+      }
+    );
+  }
+
+  async exportarRecordatorios(
+    chatId: number,
+    formato: "csv" | "pdf"
+  ): Promise<void> {
+    const reminders = await this.reminderService.getUserReminders(chatId);
+
+    if (!reminders || reminders.length === 0) {
+      await this.bot.sendMessage(
+        chatId,
+        "No tienes recordatorios para exportar.",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "📋 Menú de Recordatorios",
+                  callback_data: "recordatorios",
+                },
+              ],
+              [
+                {
+                  text: "🔙 Volver al Menú Principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+      return;
+    }
+
+    if (formato === "csv") {
+      // Generar CSV simple en memoria
+      const csvRows = [
+        "Medicamento,Dosis,Hora,Días",
+        ...reminders.map(
+          (r) =>
+            `"${r.medicationName}","${r.dosage}","${
+              r.reminderTime
+            }","${this.formatDaysOfWeek(r.daysOfWeek)}"`
+        ),
+      ];
+      const csvContent = csvRows.join("\n");
+      await this.bot.sendDocument(
+        chatId,
+        Buffer.from(csvContent),
+        {},
+        { filename: "recordatorios.csv", contentType: "text/csv" }
+      );
+      // Agregar botón para compartir con el médico
+      await this.bot.sendMessage(
+        chatId,
+        "¿Deseas compartir tus recordatorios con tu médico?",
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "Compartir con mi médico",
+                  callback_data: `compartir_recordatorios_${formato}`,
+                },
+              ],
+              [
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          },
+        }
+      );
+      return;
+    }
+
+    if (formato === "pdf") {
+      // Generar PDF simple en memoria
+      const PDFDocument = require("pdfkit");
+      const doc = new PDFDocument();
+      const chunks: Buffer[] = [];
+      doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+      doc.on("end", async () => {
+        const pdfBuffer = Buffer.concat(chunks);
+        await this.bot.sendDocument(
+          chatId,
+          pdfBuffer,
+          {},
+          {
+            filename: "Recordatorios tratamientos médicos.pdf",
+            contentType: "application/pdf",
+          }
+        );
+
+        // Añadir botones después de enviar el documento PDF
+        await this.bot.sendMessage(
+          chatId,
+          "✅ Tus recordatorios han sido generador en formato PDF.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "📋 Menú de Recordatorios",
+                    callback_data: "recordatorios",
+                  },
+                ],
+                [
+                  {
+                    text: "🔙 Volver al Menú Principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      });
+      doc.fontSize(16).text("Tus Recordatorios", { align: "center" });
+      // Título
+      const chat = await this.bot.getChat(chatId);
+      const nombreUsuario = chat.first_name
+        ? `${chat.first_name} ${chat.last_name || ""}`.trim()
+        : chat.username
+        ? chat.username
+        : "No especificado";
+
+      doc.fontSize(12).text(`Paciente: ${nombreUsuario}`);
+      doc.fontSize(12).text(`ID: ${chatId}`);
+      doc.moveDown();
+      doc.fontSize(14).text("Información del Paciente:", { underline: true });
+      doc.fontSize(12).text(`Nombre: ${nombreUsuario}`);
+      doc.fontSize(12).text(`ID: ${chatId}`);
+      doc.moveDown();
+
+      doc.fontSize(14).text("Resumen de Medicamentos:", { underline: true });
+      doc.moveDown();
+
+      // Tabla de resumen
+      const medicamentos = reminders.map((r) => r.medicationName);
+      const medicamentosUnicos = [...new Set(medicamentos)];
+      doc
+        .fontSize(12)
+        .text(`Total de medicamentos: ${medicamentosUnicos.length}`);
+      doc.fontSize(12).text(`Total de recordatorios: ${reminders.length}`);
+      doc.moveDown(2);
+
+      // Contenido detallado
+      doc.fontSize(14).text("Detalle de Recordatorios:", { underline: true });
+      doc.moveDown();
+
+      reminders.forEach((reminder, index) => {
+        doc.fontSize(13).text(`${index + 1}. ${reminder.medicationName}`, {
+          continued: true,
+        });
+        doc.fontSize(11).text(` (ID: ${reminder.id})`, { align: "right" });
+
+        doc.fontSize(12).text(`Dosis: ${reminder.dosage}`);
+        doc.fontSize(12).text(`Hora: ${reminder.reminderTime}`);
+
+        // Formatear días de la semana
+        const diasSemana = this.formatDaysOfWeek(reminder.daysOfWeek);
+        doc.fontSize(12).text(`Días: ${diasSemana}`);
+
+        if (reminder.lastTaken) {
+          doc
+            .fontSize(12)
+            .text(
+              `Última toma: ${moment(reminder.lastTaken).format(
+                "DD/MM/YYYY HH:mm"
+              )}`
+            );
+        }
+
+        // Añadir una línea separadora entre recordatorios
+        if (index < reminders.length - 1) {
+          doc.moveDown(0.5);
+          doc
+            .strokeColor("#cccccc")
+            .lineWidth(1)
+            .moveTo(50, doc.y)
+            .lineTo(550, doc.y)
+            .stroke();
+        }
+
+        doc.moveDown();
+      });
+
+      // Añadir pie de página
+      doc
+        .fontSize(10)
+        .text("Este documento fue generado automáticamente por @Medicbot.", {
+          align: "center",
+          bottom: 30,
+        });
+
+      //--------------------
+      doc.moveDown();
+      reminders.forEach((r, i) => {
+        doc
+          .fontSize(12)
+          .text(
+            `#${i + 1}\nMedicamento: ${r.medicationName}\nDosis: ${
+              r.dosage
+            }\nHora: ${r.reminderTime}\nDías: ${this.formatDaysOfWeek(
+              r.daysOfWeek
+            )}\n`
+          );
+        doc.moveDown();
+      });
+      doc.end();
+      return;
+    }
+
+    //
+  }
+
+  async solicitarContactoMedico(
+    chatId: number,
+    formato: string
+  ): Promise<void> {
+    await this.bot.sendMessage(
+      chatId,
+      "Por favor, comparte el contacto de tu médico o escribe su número de teléfono para enviarle tus recordatorios.",
+      {
+        reply_markup: {
+          keyboard: [
+            [{ text: "Compartir contacto", request_contact: true }],
+            [{ text: "Cancelar" }],
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true,
+        },
+      }
+    );
+
+    // Esperar la respuesta del usuario (contacto o texto)
+    this.bot.once("contact", async (msg) => {
+      if (msg.chat.id !== chatId) return;
+      const telefono = msg.contact?.phone_number;
+      await this.bot.sendMessage(
+        chatId,
+        `Contacto recibido: ${telefono}\nEnviando recordatorios...`
+      );
+      await this.exportarRecordatorios(chatId, formato as "csv" | "pdf");
+      await this.bot.sendMessage(
+        chatId,
+        "✅ Tus recordatorios han sido preparados. Si tu médico usa Telegram y ya interactuó con este bot, podrá recibirlos aquí. Si no, reenvía el archivo manualmente por WhatsApp, correo, etc."
+      );
+    });
+
+    this.bot.once("message", async (msg) => {
+      if (msg.chat.id !== chatId) return;
+      if (msg.text === "Cancelar") {
+        await this.bot.sendMessage(chatId, "Operación cancelada.");
+        return;
+      }
+      // Si el usuario escribe un número de teléfono
+      if (/^\+?\d{7,15}$/.test(msg.text || "")) {
+        await this.bot.sendMessage(
+          chatId,
+          `Número recibido: ${msg.text}\nEnviando recordatorios...`
+        );
+        await this.exportarRecordatorios(chatId, formato as "csv" | "pdf");
+        await this.bot.sendMessage(
+          chatId,
+          "✅ Tus recordatorios han sido preparados. Si tu médico usa Telegram y ya interactuó con este bot, podrá recibirlos aquí. Si no, reenvía el archivo manualmente por WhatsApp, correo, etc."
+        );
+      } else if (!msg.contact) {
+        await this.bot.sendMessage(
+          chatId,
+          "Por favor, comparte un contacto válido o escribe un número de teléfono."
+        );
+      }
+    });
   }
 } // fin

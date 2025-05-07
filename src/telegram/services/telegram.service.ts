@@ -111,6 +111,23 @@ export class TelegramService {
         return;
       }
 
+      // Manejar callbacks de exportación de recordatorios
+      if (data === "exportar_recordatorios") {
+        await this.reminderService.mostrarOpcionesExportacion(chatId);
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
+      if (
+        data === "exportar_recordatorios_pdf" ||
+        data === "exportar_recordatorios_csv"
+      ) {
+        const formato = data.endsWith("_pdf") ? "pdf" : "csv";
+        await this.reminderService.exportarRecordatorios(chatId, formato);
+        await this.bot.answerCallbackQuery(callbackQuery.id);
+        return;
+      }
+
       if (data.startsWith("freq_")) {
         const [freq, nombreMedicamento, horaRecordatorio] = data
           .split("_")
