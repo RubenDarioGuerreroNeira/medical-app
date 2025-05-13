@@ -32,6 +32,7 @@ import { TelegramNotificationService } from "./telegramNotificationService.servi
 import { Repository } from "typeorm";
 import { ReminderService } from "./reminder.service";
 import { TelegramContactService } from "./services/telegram-contact.service";
+import { TelegramLabResultsService } from "./services/telegram-lab-results.service";
 
 // apis
 import { HealthCentersService } from "./colombia/api-servicios-medicos-colombia.service";
@@ -73,20 +74,11 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
     TelegramColombiaService,
     AppointmentCommands,
     TelegramService,
+    TelegramLabResultsService, // <-- Agrega aquí
 
     TelegramHistorialMedicoService,
     // AppointmentService,
 
-    // Centralizar la creación del bot
-    // {
-    //   provide: "TELEGRAM_BOT",
-    //   useFactory: async (configService: ConfigService) => {
-    //     const token = configService.get<string>("TELEGRAM_BOT_TOKEN");
-
-    //     return new TelegramBot(token, { polling: true });
-    //   },
-    //   inject: [ConfigService],
-    // },
 
     {
       provide: "TELEGRAM_BOT",
@@ -225,6 +217,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         diagnosticService: TelegramDiagnosticService,
         contactService: TelegramContactService,
         historialMedicoService: TelegramHistorialMedicoService,
+        labResultsService: TelegramLabResultsService, // <-- Agrega aquí
 
         // colombiaService: TelegramColombiaService,
         appointmentCommands: AppointmentCommands,
@@ -241,6 +234,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
           diagnosticService,
           contactService,
           historialMedicoService,
+          labResultsService, // <-- Y pásalo aquí
           // null,
 
           // colombiaService,
@@ -250,10 +244,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
           bot
         );
 
-        // Establecer la referencia circular manualmente
-        // if (reminderServiceInstance) {
-        //   reminderServiceInstance["telegramService"] = service;
-        // }
+        
 
         return service;
       },
@@ -267,6 +258,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         TelegramDiagnosticService,
         TelegramContactService,
         TelegramHistorialMedicoService,
+        TelegramLabResultsService, // <-- Agrega aquí
         // TelegramColombiaService,
         AppointmentCommands,
         "USER_STATES_MAP",

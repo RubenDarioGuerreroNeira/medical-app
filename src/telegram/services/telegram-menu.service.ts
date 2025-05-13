@@ -45,6 +45,12 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
+            text: "📊 Interpretar resultados de laboratorio",
+            callback_data: "interpretar_resultados",
+          },
+        ],
+        [
+          {
             text: "🗣️ Historial Médico",
             callback_data: "historial_medico",
           },
@@ -78,7 +84,8 @@ export class TelegramMenuService extends TelegramBaseService {
         `• 📅 Agendar y administrar tus citas médicas\n` +
         `• 📋 Crear y mantener tu historial médico personal\n` +
         `• 📱 Compartir información médica con tus profesionales de salud\n` +
-        `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n\n` +
+        `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n` +
+        `• 🧪 Interpretar resultados de laboratorio (envía texto o foto y recibe una interpretación automática)\n\n` +
         `¿En qué puedo ayudarte hoy?\n\n` +
         `Selecciona una opción del menú:`;
 

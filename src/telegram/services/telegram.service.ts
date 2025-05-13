@@ -11,6 +11,7 @@ import { TelegramContactService } from "./telegram-contact.service";
 import { TelegramColombiaService } from "../colombia/telegram-colombia.service";
 import { AppointmentCommands } from "./appointment.commands.service";
 import { TelegramHistorialMedicoService } from "../services/telegram-historial-medico.service";
+import { TelegramLabResultsService } from "./telegram-lab-results.service";
 
 @Injectable()
 export class TelegramService {
@@ -29,6 +30,7 @@ export class TelegramService {
     private diagnosticService: TelegramDiagnosticService,
     private contactService: TelegramContactService,
     private historialMedicoService: TelegramHistorialMedicoService,
+    private labResultsService: TelegramLabResultsService, // <-- Agrega aquí
 
     // private colombiaService: TelegramColombiaService,
     private appointmentCommands: AppointmentCommands,
@@ -306,6 +308,10 @@ export class TelegramService {
           break;
         case "ver_historiales":
           await this.historialMedicoService.mostrarHistorialMedico(chatId);
+          break;
+
+        case "interpretar_resultados":
+          await this.labResultsService.iniciarInterpretacionResultados(chatId);
           break;
       }
 

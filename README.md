@@ -98,6 +98,7 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
   - Resumen estadístico de medicamentos y frecuencias
 - **Recordatorios de Citas Médicas**: Configuración y gestión de recordatorios para citas médicas programadas
 - **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
+- **Interpretación de Resultados de Laboratorio**: Procesamiento automático de resultados de laboratorio y visualización en formato texto
 
 ### Próximas Funcionalidades
 
