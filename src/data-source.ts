@@ -10,6 +10,13 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+
+ // --- COMIENZO DE LA CONFIGURACIÓN SSL CONDICIONAL ---
+  ssl: process.env.NODE_ENV === 'production' ? {
+    rejectUnauthorized: false // Importante: Lee la nota abajo sobre rejectUnauthorized
+    // Si Render proporciona un CA certificado específico o lo descargas,
+    // puedes usarlo aquí: ca: fs.readFileSync('./path/to/your/ca-certificate.crt').toString(),
+  } : false, // En desarrollo (NODE_ENV != 'production'), no usa SSL
   
   entities: ['src/Entities/*.entity{.ts,.js}'],
   migrations: ['src/migrations/*{.ts,.js}'],

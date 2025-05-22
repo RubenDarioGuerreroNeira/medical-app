@@ -16,21 +16,19 @@ export class TelegramHistorialMedicoService {
     @Inject("USER_STATES_MAP")
     private readonly userStates: Map<number, any>,
     private readonly historialMedicoService: HistorialMedicoDataService
-  ) {
-    this.setupCommandHandlers();
-  }
+  ) {}
 
-  setupCommandHandlers(): void {
-    this.bot.onText(/\/historialmedico/, (msg) =>
-      this.handleHistorialMedicoCommand(msg)
-    );
-    this.bot.onText(/\/nuevohistorial/, (msg) =>
-      this.iniciarRegistroHistorialMedico(msg.chat.id)
-    );
-    this.bot.onText(/\/mishistoriales/, (msg) =>
-      this.mostrarHistorialMedico(msg.chat.id)
-    );
-  }
+  // setupCommandHandlers(): void {
+  //   this.bot.onText(/\/historialmedico/, (msg) =>
+  //     this.handleHistorialMedicoCommand(msg)
+  //   );
+  //   this.bot.onText(/\/nuevohistorial/, (msg) =>
+  //     this.iniciarRegistroHistorialMedico(msg.chat.id)
+  //   );
+  //   this.bot.onText(/\/mishistoriales/, (msg) =>
+  //     this.mostrarHistorialMedico(msg.chat.id)
+  //   );
+  // }
 
   public async handleHistorialMedicoCommand(
     msg: TelegramBot.Message
@@ -118,8 +116,10 @@ export class TelegramHistorialMedicoService {
 
   async iniciarRegistroHistorialMedico(chatId: number): Promise<void> {
     try {
+      this.logger.log(`[${chatId}] Iniciando registro de historial médico`);
       this.userStates.set(chatId, {
-        step: "diagnostico",
+        currentOperation: "create_historial_medico",
+        step: "awaiting_diagnostico",
         historialData: {},
       });
 
@@ -134,7 +134,7 @@ export class TelegramHistorialMedicoService {
       await this.solicitarDiagnostico(chatId);
     } catch (error) {
       this.logger.error(
-        `Error al iniciar registro: ${error.message}`,
+        `[${chatId}] Error al iniciar registro: ${error.message}`,
         error.stack
       );
       await this.handleError(chatId);
@@ -142,6 +142,8 @@ export class TelegramHistorialMedicoService {
   }
 
   private async solicitarDiagnostico(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar diagnóstico médico`);
+
     await this.bot.sendMessage(
       chatId,
       "🔍 Por favor, ingresa el diagnóstico médico:",
@@ -154,10 +156,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "diagnostico");
+    this.setupMessageHandler(chatId, "awaiting_diagnostico");
   }
 
   private async solicitarTratamiento(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar tratamiento médico`);
     await this.bot.sendMessage(
       chatId,
       "💊 Por favor, ingresa el tratamiento prescrito:\n" +
@@ -171,10 +174,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "tratamiento");
+    this.setupMessageHandler(chatId, "awaiting_tratamiento");
   }
 
   private async solicitarNombreMedico(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar nombre del médico`);
     await this.bot.sendMessage(
       chatId,
       "👨‍⚕️ Por favor, ingresa el nombre del médico:\n" +
@@ -188,10 +192,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "nombreMedico");
+    this.setupMessageHandler(chatId, "awaiting_nombreMedico");
   }
 
   private async solicitarEspecialidadMedico(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar especialidad médica`);
     await this.bot.sendMessage(
       chatId,
       "🔬 Por favor, ingresa la especialidad del médico:\n" +
@@ -206,10 +211,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "especialidadMedico");
+    this.setupMessageHandler(chatId, "awaiting_especialidadMedico");
   }
 
   private async solicitarCentroMedico(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar centro médico`);
     await this.bot.sendMessage(
       chatId,
       "🏥 Por favor, ingresa el nombre del centro médico:\n" +
@@ -223,10 +229,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "centroMedico");
+    this.setupMessageHandler(chatId, "awaiting_centroMedico");
   }
 
   private async solicitarDescripcion(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar descripción médica`);
     await this.bot.sendMessage(
       chatId,
       "📋 Por favor, proporciona una descripción de la consulta médica:\n" +
@@ -240,10 +247,11 @@ export class TelegramHistorialMedicoService {
     );
 
     // Configurar manejador para la respuesta
-    this.setupMessageHandler(chatId, "descripcion");
+    this.setupMessageHandler(chatId, "awaiting_descripcion");
   }
 
   private async solicitarCompartible(chatId: number): Promise<void> {
+    this.logger.log(`[${chatId}] Solicitar opción de compartible`);
     await this.bot.sendMessage(
       chatId,
       "🔒 ¿Deseas que este registro sea compartible con otros médicos?",
@@ -289,9 +297,13 @@ export class TelegramHistorialMedicoService {
   }
 
   private setupMessageHandler(chatId: number, currentStep: string): void {
+    this.logger.log(`[${chatId}] Configurando Message Handler `);
     const messageHandler = async (msg: TelegramBot.Message) => {
+      this.logger.log(`[${chatId}] Message Handler ejecutando`);
+
       if (msg.chat.id !== chatId) return;
       if (msg.text === "/cancelar") {
+        this.logger.log(`[${chatId}] Registro Cancelado`);
         this.userStates.delete(chatId);
         await this.bot.sendMessage(
           chatId,
@@ -320,37 +332,80 @@ export class TelegramHistorialMedicoService {
       }
 
       const state = this.userStates.get(chatId);
-      if (!state) return;
+      if (!state || state.step !== currentStep) {
+        this.logger.warn(`[${chatId}] Estado no válido o paso incorrecto`);
+        return;
+      }
 
       // Guardar la respuesta actual
-      state.historialData[currentStep] =
+      state.historialData[currentStep.replace("awaiting_", "")] =
         msg.text === "ninguno" || msg.text === "ninguna" ? null : msg.text;
 
       // Avanzar al siguiente paso
+      let nextStepFunction: (() => Promise<void>) | null = null;
+      let nextStepName: string | null = null;
+
       try {
         switch (currentStep) {
-          case "diagnostico":
-            await this.solicitarTratamiento(chatId);
+          // case "diagnostico":
+          //   await this.solicitarTratamiento(chatId);
+          //   break;
+          // case "tratamiento":
+          //   await this.solicitarNombreMedico(chatId);
+          //   break;
+          // case "nombreMedico":
+          //   await this.solicitarEspecialidadMedico(chatId);
+          //   break;
+          // case "especialidadMedico":
+          //   await this.solicitarCentroMedico(chatId);
+          //   break;
+          // case "centroMedico":
+          //   await this.solicitarDescripcion(chatId);
+          //   break;
+          // case "descripcion":
+          //   await this.solicitarCompartible(chatId);
+          //   break;
+          case "awaiting_diagnostico":
+            nextStepFunction = () => this.solicitarTratamiento(chatId);
+            nextStepName = "awaiting_tratamiento";
             break;
-          case "tratamiento":
-            await this.solicitarNombreMedico(chatId);
+          case "awaiting_tratamiento":
+            nextStepFunction = () => this.solicitarNombreMedico(chatId);
+            nextStepName = "awaiting_nombreMedico";
             break;
-          case "nombreMedico":
-            await this.solicitarEspecialidadMedico(chatId);
+          case "awaiting_nombreMedico":
+            nextStepFunction = () => this.solicitarEspecialidadMedico(chatId);
+            nextStepName = "awaiting_especialidadMedico";
             break;
-          case "especialidadMedico":
-            await this.solicitarCentroMedico(chatId);
+          case "awaiting_especialidadMedico":
+            nextStepFunction = () => this.solicitarCentroMedico(chatId);
+            nextStepName = "awaiting_centroMedico";
             break;
-          case "centroMedico":
-            await this.solicitarDescripcion(chatId);
+          case "awaiting_centroMedico":
+            nextStepFunction = () => this.solicitarDescripcion(chatId);
+            nextStepName = "awaiting_descripcion";
             break;
-          case "descripcion":
-            await this.solicitarCompartible(chatId);
+          case "awaiting_descripcion":
+            nextStepFunction = () => this.solicitarCompartible(chatId);
+            // No hay nextStepName porque solicitarCompartible maneja el final con callbacks
             break;
+        }
+        if (nextStepFunction) {
+          state.step = nextStepName; // Actualizar el estado al siguiente paso ANTES de llamar a la función
+          this.userStates.set(chatId, state); // Guardar el estado actualizado
+          await nextStepFunction();
+        } else if (currentStep === "awaiting_descripcion") {
+          // solicitarCompartible fue llamado, no actualizamos el step aquí,
+          // se maneja dentro de solicitarCompartible o al guardar.
+        } else {
+          this.logger.error(
+            `[${chatId}] Paso desconocido o sin continuación: ${currentStep}`
+          );
+          await this.handleError(chatId);
         }
       } catch (error) {
         this.logger.error(
-          `Error en paso ${currentStep}: ${error.message}`,
+          `[${chatId}] Error en el paso ${currentStep}: ${error.message}`,
           error.stack
         );
         await this.handleError(chatId);

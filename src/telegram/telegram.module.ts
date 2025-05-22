@@ -79,7 +79,6 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
     TelegramHistorialMedicoService,
     // AppointmentService,
 
-
     {
       provide: "TELEGRAM_BOT",
       useFactory: (configService: ConfigService) => {
@@ -163,6 +162,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         "TELEGRAM_BOT",
         "USER_STATES_MAP",
         ReminderService, // Inyectar directamente ReminderService, no el repositorio
+        TelegramHistorialMedicoService, // Inyectar el servicio aquí
       ],
     },
 
@@ -171,11 +171,12 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
       provide: AppointmentCommands,
       useFactory: (
         appointmentService: AppointmentService,
-        bot: TelegramBot
+        bot: TelegramBot,
+        userSatesMap: Map<number, any>
       ) => {
-        return new AppointmentCommands(appointmentService, bot);
+        return new AppointmentCommands(appointmentService, bot, userSatesMap);
       },
-      inject: [AppointmentService, "TELEGRAM_BOT"],
+      inject: [AppointmentService, "TELEGRAM_BOT", "USER_STATES_MAP"],
     },
 
     // Asegúrate de que AppointmentService esté configurado correctamente
@@ -243,8 +244,6 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
           userStates,
           bot
         );
-
-        
 
         return service;
       },
