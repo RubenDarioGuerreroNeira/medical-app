@@ -45,6 +45,15 @@ export const AppDataSource = new DataSource({
         }
       : false,
 
+       extra: {
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? {
+            rejectUnauthorized: false,
+          }
+        : undefined,
+  },
+
   entities: ["src/Entities/*.entity{.ts,.js}"],
   migrations: ["src/migrations/*{.ts,.js}"],
 
