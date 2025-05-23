@@ -62,6 +62,14 @@ import { TelegramModule } from "./telegram/telegram.module";
         TelegramHistorialMedico,
       ],
       synchronize: process.env.NODE_ENV !== "production",
+      extra: {
+        ssl:
+          process.env.NODE_ENV === "production"
+            ? {
+                rejectUnauthorized: false, // Important for services like Render
+              }
+            : undefined, // No SSL in development unless specifically configured
+      },
     }),
 
     MailerModule.forRootAsync({

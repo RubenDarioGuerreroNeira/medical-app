@@ -38,13 +38,6 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? {
-          rejectUnauthorized: false,
-        }
-      : false,
-
   extra: {
     ssl:
       process.env.NODE_ENV === "production"
@@ -54,10 +47,10 @@ export const AppDataSource = new DataSource({
         : undefined,
   },
 
-  // entities: ["src/Entities/*.entity{.ts,.js}"],
-  // migrations: ["src/migrations/*{.ts,.js}"],
-  entities: ["dist/**/*.entity{.ts,.js}"],
-  migrations: ["dist/migrations/*{.ts,.js}"],
+  entities: ["src/Entities/*.entity{.ts,.js}"],
+  migrations: ["src/migrations/*{.ts,.js}"],
+  // entities: ["dist/**/*.entity{.ts,.js}"],
+  // migrations: ["dist/migrations/*{.ts,.js}"],
 
   synchronize: false,
   logging: true,
