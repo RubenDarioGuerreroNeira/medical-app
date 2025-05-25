@@ -102,66 +102,67 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     try {
-      let canInitializeBot = true;
+      // let canInitializeBot = true;
 
-      // Verificar si ya hay otra instancia del bot ejecutándose
-      // Si TelegramService ya inició una instancia, no iniciaremos otra
-      try {
-        const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
-        const tempBot = new TelegramBot(token, { polling: false });
-        const updates = await tempBot.getUpdates({ limit: 1, timeout: 0 });
+      // // Verificar si ya hay otra instancia del bot ejecutándose
+      // // Si TelegramService ya inició una instancia, no iniciaremos otra
+      // try {
+      //   const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+      //   const tempBot = new TelegramBot(token, { polling: false });
+      //   const updates = await tempBot.getUpdates({ limit: 1, timeout: 0 });
 
-        // Si hay actualizaciones pendientes, probablemente ya hay un bot activo
-        if (updates && updates.length > 0) {
-          this.logger.log(
-            "Se detectó otra instancia del bot activa. No se iniciará el polling en TelegramBotService."
-          );
-          canInitializeBot = false;
-        }
-      } catch (error) {
-        // Si hay un error al verificar, continuamos con la inicialización normal
-        this.logger.warn(
-          "Error al verificar instancias existentes del bot:",
-          error
-        );
-      }
+      //   // Si hay actualizaciones pendientes, probablemente ya hay un bot activo
+      //   if (updates && updates.length > 0) {
+      //     this.logger.log(
+      //       "Se detectó otra instancia del bot activa. No se iniciará el polling en TelegramBotService."
+      //     );
+      //     canInitializeBot = false;
+      //   }
+      // } catch (error) {
+      //   // Si hay un error al verificar, continuamos con la inicialización normal
+      //   this.logger.warn(
+      //     "Error al verificar instancias existentes del bot:",
+      //     error
+      //   );
+      // }
 
-      // Verificar conexión a Redis antes de continuar (si está habilitado)
-      if (this.redis && canInitializeBot) {
-        try {
-          await this.redis.ping();
+      // // Verificar conexión a Redis antes de continuar (si está habilitado)
+      // if (this.redis && canInitializeBot) {
+      //   try {
+      //     await this.redis.ping();
 
-          const lockAcquired = await this.acquireLock(30000);
-          if (!lockAcquired) {
-            this.logger.warn("Otra instancia del bot ya está ejecutándose.");
-            canInitializeBot = false;
-          } else {
-            this.isLockHolder = true;
-            // Inicio el intervalo de renovacion del lock
-            this.startLockRenewal();
-          }
-        } catch (error) {
-          this.logger.error("Error connecting to Redis:", error);
-          // En desarrollo, continuamos sin Redis
-          if (this.isDevelopment) {
-            this.logger.warn("Continuing without Redis in development mode");
-          } else {
-            throw error;
-          }
-        }
-      } else if (!this.redis) {
-        // Redis está deshabilitado, continuamos sin verificar lock
-        this.logger.log("Initializing bot without Redis lock");
-      }
+      //     const lockAcquired = await this.acquireLock(30000);
+      //     if (!lockAcquired) {
+      //       this.logger.warn("Otra instancia del bot ya está ejecutándose.");
+      //       canInitializeBot = false;
+      //     } else {
+      //       this.isLockHolder = true;
+      //       // Inicio el intervalo de renovacion del lock
+      //       this.startLockRenewal();
+      //     }
+      //   } catch (error) {
+      //     this.logger.error("Error connecting to Redis:", error);
+      //     // En desarrollo, continuamos sin Redis
+      //     if (this.isDevelopment) {
+      //       this.logger.warn("Continuing without Redis in development mode");
+      //     } else {
+      //       throw error;
+      //     }
+      //   }
+      // } else if (!this.redis) {
+      //   // Redis está deshabilitado, continuamos sin verificar lock
+      //   this.logger.log("Initializing bot without Redis lock");
+      // }
 
-      if (canInitializeBot) {
-        await this.initializeBot();
-      } else {
-        // Crear una instancia del bot sin polling para poder usarla en otros servicios
-        const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
-        this.bot = new TelegramBot(token, { polling: false });
-        this.logger.log("Bot inicializado sin polling (modo pasivo)");
-      }
+      // if (canInitializeBot) {
+      //   await this.initializeBot();
+      // } else {
+      //   // Crear una instancia del bot sin polling para poder usarla en otros servicios
+      //   const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+      //   this.bot = new TelegramBot(token, { polling: false });
+      //   this.logger.log("Bot inicializado sin polling (modo pasivo)");
+      // }
+      this.logger.log("Bot inicializado sin polling (modo pasivo)");
     } catch (error) {
       this.logger.error("Error during initialization:", error);
       if (this.redis && this.isLockHolder) {
@@ -318,7 +319,6 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-
   private async initializePollingBot(token: string) {
     try {
       this.bot = new TelegramBot(token, {
@@ -370,8 +370,6 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       this.logger.error("Error de webhook:", error);
     });
   }
-
-
 
   private async handlePollingError(error: Error): Promise<void> {
     this.logger.error(`Error de polling: ${error.message}`);

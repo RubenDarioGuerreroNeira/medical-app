@@ -12,6 +12,7 @@ import { TelegramWebhookController } from "./telegramWebhook.controller";
 import { MedicationReminder } from "../Entities/MedicationReminder.entity";
 import { MedicalAppointment } from "src/Entities/MedicalAppointment.entity";
 import { TelegramHistorialMedico } from "../Entities/TelegramHistorialMedico.entity";
+import { EmergencyInfo } from "src/Entities/EmergencyInfo.entity";
 
 // Servicios de utilidad que se mantienen
 import { GeminiAIService } from "src/Gemini/gemini.service";
@@ -33,6 +34,7 @@ import { Repository } from "typeorm";
 import { ReminderService } from "./reminder.service";
 import { TelegramContactService } from "./services/telegram-contact.service";
 import { TelegramLabResultsService } from "./services/telegram-lab-results.service";
+import { EmergencyInfoService } from "./services/emergency-info.service";
 
 // apis
 import { HealthCentersService } from "./colombia/api-servicios-medicos-colombia.service";
@@ -52,6 +54,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
       MedicationReminder,
       MedicalAppointment,
       TelegramHistorialMedico,
+      EmergencyInfo,
     ]),
     ScheduleModule.forRoot(),
     HttpModule.register({
@@ -78,6 +81,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
 
     TelegramHistorialMedicoService,
     // AppointmentService,
+    EmergencyInfoService, // <-- Agrega aquí
 
     {
       provide: "TELEGRAM_BOT",
@@ -223,7 +227,8 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         // colombiaService: TelegramColombiaService,
         appointmentCommands: AppointmentCommands,
         userStates: Map<number, any>,
-        bot: TelegramBot
+        bot: TelegramBot,
+        emergencyInfoService: EmergencyInfoService // <-- Agrega aquí
       ) => {
         const service = new TelegramService(
           configService,
@@ -242,7 +247,8 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
           appointmentCommands,
           // telegramHistorialMedicoService,
           userStates,
-          bot
+          bot,
+          emergencyInfoService // <-- Y pásalo aquí
         );
 
         return service;
@@ -262,7 +268,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         AppointmentCommands,
         "USER_STATES_MAP",
         "TELEGRAM_BOT",
-        ReminderService,
+        EmergencyInfoService, // <-- Agrega aquí
       ],
     },
   ],
@@ -278,6 +284,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
     AppointmentCommands,
     AppointmentService,
     TelegramHistorialMedicoService,
+    EmergencyInfoService, // <-- Agrega aquí
   ],
 })
 export class TelegramModule {}

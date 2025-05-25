@@ -49,8 +49,6 @@ export const AppDataSource = new DataSource({
 
   entities: ["src/Entities/*.entity{.ts,.js}"],
   migrations: ["src/migrations/*{.ts,.js}"],
-  // entities: ["dist/**/*.entity{.ts,.js}"],
-  // migrations: ["dist/migrations/*{.ts,.js}"],
 
   synchronize: false,
   logging: true,

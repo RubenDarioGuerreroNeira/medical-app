@@ -99,6 +99,8 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
 - **Recordatorios de Citas Médicas**: Configuración y gestión de recordatorios para citas médicas programadas
 - **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
 - **Interpretación de Resultados de Laboratorio**: Procesamiento automático de resultados de laboratorio y visualización en formato texto
+**Informacion de Emergencia Médica**: 
+ Permite a los usuarios configurar y almacenar datos médicos críticos (como alergias, condiciones preexistentes, medicamentos actuales) y un contacto de emergencia. Esta información es vital para situaciones de primeros auxilios y se puede generar un código de acceso para que personal médico autorizado la consulte rápidamente."
 
 ### Próximas Funcionalidades
 

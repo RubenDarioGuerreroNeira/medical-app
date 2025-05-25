@@ -55,7 +55,12 @@ export class TelegramMenuService extends TelegramBaseService {
             callback_data: "historial_medico",
           },
         ],
-
+        [
+          {
+            text: "🚑 Info de Emergencia (Primeros Auxilios)",
+            callback_data: "menu_emergencia", // Usar el callback_data que abre el menú de emergencia
+          },
+        ],
         [
           {
             text: "📞 Contacto con el Desarrollador",
@@ -73,20 +78,23 @@ export class TelegramMenuService extends TelegramBaseService {
 
       const welcomeMessage =
         `¡Hola ${userName}! 👋\n\n` +
-        `Bienvenido a tu Asistente Médico Virtual 🏥\n\n` +
-        `Te puedo ayudar con:\n` +
-        `• 💊 Encontrar farmacias cercanas a tu ubicación\n` +
-        `• 🏥 Localizar centros médicos próximos a ti\n` +
+        `Bienvenido a tu Asistente Médico Virtual 🏥\n\n\n` +
+        `Te puedo ayudar con:\n\n` +
+        `• 💊 Encontrar farmacias cercanas a tu ubicación\n\n` +
+        `• 🏥 Localizar centros médicos próximos a ti\n\n` +
         `• 🤖 Consultar información sobre medicamentos con IA\n` +
-        `  (puedes escribir o enviar una foto del medicamento)\n` +
-        `• ⏰ Programar y gestionar recordatorios para tus tratamientos médicos\n` +
-        `• 📊 Exportar tus recordatorios de medicamentos en PDF o CSV\n` +
-        `• 📅 Agendar y administrar tus citas médicas\n` +
-        `• 📋 Crear y mantener tu historial médico personal\n` +
-        `• 📱 Compartir información médica con tus profesionales de salud\n` +
-        `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n` +
+        `  (puedes escribir o enviar una foto del medicamento)\n\n` +
+        `• ⏰ Programar y gestionar recordatorios para tus tratamientos médicos\n\n` +
+        `• 📊 Exportar tus recordatorios de medicamentos en PDF o CSV\n\n` +
+        `• 📅 Agendar y administrar tus citas médicas\n\n` +
+        `• 📋 Crear y mantener tu historial médico personal\n\n` +
+        `• 📱 Compartir información médica con tus profesionales de salud\n\n` +
+        `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n\n` +
+        `• 🚑 Acceder a información de emergencia y primeros auxilios\n\n` +
         `• 🧪 Interpretar resultados de laboratorio (envía texto o foto y recibe una interpretación automática)\n\n` +
-        `¿En qué puedo ayudarte hoy?\n\n` +
+        `• 📞 Contactar al desarrollador para soporte o sugerencias\n\n` +
+        `\n` +
+        `¿En qué puedo ayudarte hoy?\n\n\n` +
         `Selecciona una opción del menú:`;
 
       await this.bot.sendMessage(chatId, welcomeMessage, {

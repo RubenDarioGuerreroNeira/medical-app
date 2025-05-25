@@ -14,6 +14,7 @@ import { RecetaMedica } from "./Entities/RecetaMedica.entity";
 import { NotaMedica } from "./Entities/NotaMedica.entity";
 import { MedicalAppointment } from "./Entities/MedicalAppointment.entity";
 import { TelegramHistorialMedico } from "./Entities/TelegramHistorialMedico.entity";
+import { EmergencyInfo } from "./Entities/EmergencyInfo.entity";
 
 import { UsuariosModule } from "./usuarios/usuarios.module";
 import { MedicosModule } from "./medicos/medicos.module";
@@ -44,11 +45,11 @@ import { TelegramModule } from "./telegram/telegram.module";
 
     TypeOrmModule.forRoot({
       type: "postgres",
-      host: process.env.DB_HOST /*|| "localhost",*/,
-      port: parseInt(process.env.DB_PORT) /* || 5432,*/,
-      username: process.env.DB_USERNAME /* || "postgres",*/,
-      password: process.env.DB_PASSWORD /* || "2980",*/,
-      database: process.env.DB_NAME /* || "citas",*/,
+      host: process.env.DB_HOST ,
+      port: parseInt(process.env.DB_PORT) ,
+      username: process.env.DB_USERNAME ,
+      password: process.env.DB_PASSWORD ,
+      database: process.env.DB_NAME ,
       entities: [
         Usuario,
         Medico,
@@ -60,6 +61,7 @@ import { TelegramModule } from "./telegram/telegram.module";
         MedicationReminder,
         MedicalAppointment,
         TelegramHistorialMedico,
+        EmergencyInfo,
       ],
       synchronize: process.env.NODE_ENV !== "production",
       extra: {

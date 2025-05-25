@@ -12,6 +12,7 @@ import { TelegramColombiaService } from "../colombia/telegram-colombia.service";
 import { AppointmentCommands } from "./appointment.commands.service";
 import { TelegramHistorialMedicoService } from "../services/telegram-historial-medico.service";
 import { TelegramLabResultsService } from "./telegram-lab-results.service";
+import { EmergencyInfoService } from "./emergency-info.service";
 
 @Injectable()
 export class TelegramService {
@@ -35,7 +36,8 @@ export class TelegramService {
     // private colombiaService: TelegramColombiaService,
     private appointmentCommands: AppointmentCommands,
     @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
-    @Inject("TELEGRAM_BOT") private bot: TelegramBot
+    @Inject("TELEGRAM_BOT") private bot: TelegramBot,
+    private emergencyInfoService: EmergencyInfoService // <-- Agrega aquí
   ) {
     this.initializeBot();
     // this.appointmentCommands.setupCommands();
@@ -58,6 +60,9 @@ export class TelegramService {
   private setupHandlers(): void {
     this.bot.onText(/\/start/, (msg) => this.handleStartCommand(msg));
     this.bot.onText(/\/help/, (msg) => this.handleHelpCommand(msg));
+    this.bot.onText(/\/emergencia/, (msg) =>
+      this.emergencyInfoService.mostrarMenuEmergencia(msg.chat.id)
+    );
 
     // Comandos de Historial Médico (movidos desde TelegramHistorialMedicoService)
     this.bot.onText(/\/historialmedico/, (msg) =>
@@ -403,6 +408,24 @@ export class TelegramService {
           break;
         // }
 
+        case "menu_emergencia":
+          await this.emergencyInfoService.mostrarMenuEmergencia(chatId);
+          break;
+        case "configurar_emergencia":
+          await this.emergencyInfoService.iniciarConfiguracionEmergencia(
+            chatId
+          );
+          break;
+        case "ver_emergencia":
+          await this.emergencyInfoService.mostrarInformacionEmergencia(chatId);
+          break;
+        case "generar_codigo_emergencia":
+          await this.emergencyInfoService.generarCodigoAccesoEmergencia(chatId);
+          break;
+        case "crear_tarjeta_emergencia":
+          await this.emergencyInfoService.crearTarjetaEmergencia(chatId);
+          break;
+
         // await this.bot.answerCallbackQuery(callbackQuery.id);
 
         default:
@@ -434,6 +457,15 @@ export class TelegramService {
     const userState = this.userStates.get(chatId);
     try {
       // 1. Flujos activos basados en userState
+
+      if (
+        userState &&
+        userState.currentOperation === "configure_emergency_info"
+      ) {
+        await this.emergencyInfoService.handleConfigStep(msg);
+        return;
+      }
+
       if (userState) {
         const operation = userState.currentOperation;
         if (
@@ -445,22 +477,9 @@ export class TelegramService {
           return;
         }
         if (operation === "create_historial_medico") {
-          // Asumiendo que TelegramHistorialMedicoService ha sido refactorizado para tener handleUserInput
-          // await this.historialMedicoService.handleUserInput(msg);
-          // Si no, el listener 'once' en TelegramHistorialMedicoService lo manejará.
-          // Por ahora, se deja que el listener 'once' de HistorialMedico lo maneje si aún existe.
-          // Si se elimina el listener 'once' de HistorialMedico, descomentar la línea de arriba y asegurarse
-          // de que TelegramHistorialMedicoService expone handleUserInput.
           return;
         }
         if (operation === "create_reminder") {
-          // TelegramReminderService usa onReplyToMessage para sus pasos.
-          // Si se refactoriza para usar un handleUserInput, se llamaría aquí.
-          // Ejemplo:
-          // if (userState.step === 'awaiting_medication_name' && msg.text) {
-          //     await this.reminderService.processMedicationNameInput(chatId, msg.text);
-          //     return;
-          // }
         }
         // Añadir otros currentOperation para otros servicios (LabResults, AI si dejan de usar onReplyToMessage)
       }
