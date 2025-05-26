@@ -6,6 +6,18 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
+export enum BloodType {
+  A = "A",
+  B = "B",
+  AB = "AB",
+  O = "O",
+}
+
+export enum RhFactor {
+  POSITIVE = "Positivo",
+  NEGATIVE = "Negativo",
+}
+
 @Entity("emergency_info")
 export class EmergencyInfo {
   @PrimaryGeneratedColumn()
@@ -37,4 +49,16 @@ export class EmergencyInfo {
 
   @UpdateDateColumn({ nullable: true })
   updatedAt: Date;
+
+  @Column({ type: "boolean", default: false })
+  tieneSeguro: boolean;
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  seguro: string;
+
+  @Column({ type: "enum", enum: BloodType, nullable: true })
+  bloodType: BloodType;
+
+  @Column({ type: "enum", enum: RhFactor, nullable: true })
+  rhFactor: RhFactor;
 }

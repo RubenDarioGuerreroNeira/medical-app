@@ -4,15 +4,27 @@ import { Repository } from "typeorm";
 import * as TelegramBot from "node-telegram-bot-api";
 import { MedicationReminder } from "../../Entities/MedicationReminder.entity";
 import { EmergencyInfo } from "../../Entities/EmergencyInfo.entity";
+import { BloodType, RhFactor } from "../../Entities/EmergencyInfo.entity";
 
 // Interfaz para el estado de configuración de emergencia
 interface EmergencyConfigState {
   currentOperation: "configure_emergency_info";
-  step: "awaiting_allergies" | "awaiting_conditions" | "awaiting_contact";
+  step:
+    | "awaiting_allergies"
+    | "awaiting_conditions"
+    | "awaiting_contact"
+    | "awaiting_tiene_seguro"
+    | "awaiting_seguro"
+    | "awaiting_blood_type"
+    | "awaiting_rh_factor";
   data: {
     allergies?: string;
     conditions?: string;
     emergencyContact?: string;
+    tieneSeguro?: boolean;
+    seguro?: string | null; // Puede ser null si no tiene seguro
+    bloodType?: BloodType;
+    rhFactor?: RhFactor;
   };
 }
 
@@ -88,6 +100,18 @@ export class EmergencyInfoService {
     );
   }
 
+  private async requestNextStep(
+    chatId: number,
+    message: string
+  ): Promise<void> {
+    await this.bot.sendMessage(chatId, message, {
+      reply_markup: {
+        force_reply: true,
+        selective: true,
+      },
+    });
+  }
+
   public async handleConfigStep(msg: TelegramBot.Message): Promise<void> {
     const chatId = msg.chat.id;
     const text = msg.text;
@@ -101,6 +125,9 @@ export class EmergencyInfoService {
     }
 
     try {
+      let nextQuestion = "";
+      let nextStep: EmergencyConfigState["step"] | "done" = "done";
+
       switch (state.step) {
         case "awaiting_allergies":
           if (text.toLowerCase() !== "ninguna" && !hasAlphanumeric.test(text)) {
@@ -108,25 +135,16 @@ export class EmergencyInfoService {
               chatId,
               "❌ El texto para alergias parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna'."
             );
-            // Re-solicitar para mantener el force_reply y guiar al usuario
-            await this.bot.sendMessage(
+            await this.requestNextStep(
               chatId,
-              "Por favor, ingresa tus alergias conocidas (escribe 'ninguna' si no tienes):",
-              { reply_markup: { force_reply: true, selective: true } }
+              "Por favor, ingresa tus alergias conocidas (escribe 'ninguna' si no tienes):"
             );
-            return; // No avanzar al siguiente paso
+            return;
           }
-
           state.data.allergies = text;
-          state.step = "awaiting_conditions";
-          this.userStates.set(chatId, state);
-          await this.bot.sendMessage(
-            chatId,
-            "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' si no tienes):",
-            {
-              reply_markup: { force_reply: true, selective: true },
-            }
-          );
+          nextStep = "awaiting_conditions";
+          nextQuestion =
+            "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' si no tienes):";
           break;
 
         case "awaiting_conditions":
@@ -135,45 +153,137 @@ export class EmergencyInfoService {
               chatId,
               "❌ El texto para condiciones médicas parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna'."
             );
-            // Re-solicitar para mantener el force_reply y guiar al usuario
-            await this.bot.sendMessage(
+            await this.requestNextStep(
               chatId,
-              "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' si no tienes):",
-              { reply_markup: { force_reply: true, selective: true } }
+              "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' si no tienes):"
             );
-            return; // No avanzar al siguiente paso
+            return;
           }
           state.data.conditions = text;
-          state.step = "awaiting_contact";
-          this.userStates.set(chatId, state);
+          nextStep = "awaiting_tiene_seguro";
+          nextQuestion = "¿Tienes seguro médico? (Responde 'si' o 'no')";
+          break;
 
-          await this.bot.sendMessage(
-            chatId,
-            "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono):",
-            {
-              reply_markup: { force_reply: true, selective: true },
-            }
-          );
+        case "awaiting_tiene_seguro":
+          if (text.toLowerCase() !== "si" && text.toLowerCase() !== "no") {
+            await this.bot.sendMessage(
+              chatId,
+              "❌ Respuesta inválida. Por favor, responde 'si' o 'no'."
+            );
+            await this.requestNextStep(
+              chatId,
+              "¿Tienes seguro médico? (Responde 'si' o 'no')"
+            );
+            return;
+          }
+          state.data.tieneSeguro = text.toLowerCase() === "si";
+          if (state.data.tieneSeguro) {
+            nextStep = "awaiting_seguro";
+            nextQuestion =
+              "Ingresa el nombre de tu compañía de seguros (escribe 'ninguno' si prefieres no decirlo):";
+          } else {
+            state.data.seguro = null; // Asegurarse de que sea null si no tiene
+            nextStep = "awaiting_blood_type";
+            nextQuestion =
+              "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)";
+          }
+          break;
+
+        case "awaiting_seguro":
+          if (text.toLowerCase() !== "ninguno" && !hasAlphanumeric.test(text)) {
+            await this.bot.sendMessage(
+              chatId,
+              "❌ El nombre de la compañía de seguros parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre válido o escribe 'ninguno'."
+            );
+            await this.requestNextStep(
+              chatId,
+              "Ingresa el nombre de tu compañía de seguros (escribe 'ninguno' si prefieres no decirlo):"
+            );
+            return;
+          }
+          state.data.seguro = text.toLowerCase() === "ninguno" ? null : text;
+          nextStep = "awaiting_blood_type";
+          nextQuestion =
+            "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)";
+          break;
+
+        case "awaiting_blood_type":
+          const upperCaseTextBlood = text.toUpperCase();
+          if (
+            upperCaseTextBlood !== "no se" &&
+            !Object.values(BloodType).includes(upperCaseTextBlood as BloodType)
+          ) {
+            await this.bot.sendMessage(
+              chatId,
+              "❌ Tipo de sangre inválido. Por favor, ingresa A, B, AB, O, o 'no se'."
+            );
+            await this.requestNextStep(
+              chatId,
+              "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)"
+            );
+            return;
+          }
+          state.data.bloodType =
+            upperCaseTextBlood === "no se"
+              ? undefined
+              : (upperCaseTextBlood as BloodType);
+          nextStep = "awaiting_rh_factor";
+          nextQuestion =
+            "¿Cuál es tu factor Rh? (Positivo, Negativo) (escribe 'no se' si no lo conoces)";
+          break;
+
+        case "awaiting_rh_factor":
+          const userInputRh = text.toLowerCase();
+          let rhFactorToStore: RhFactor | undefined = undefined;
+
+          if (userInputRh === "positivo") {
+            rhFactorToStore = RhFactor.POSITIVE;
+          } else if (userInputRh === "negativo") {
+            rhFactorToStore = RhFactor.NEGATIVE;
+          } else if (userInputRh === "no se") {
+            rhFactorToStore = undefined;
+          } else {
+            // Entrada inválida
+            await this.bot.sendMessage(
+              chatId,
+              "❌ Factor Rh inválido. Por favor, ingresa 'Positivo', 'Negativo', o 'no se'."
+            );
+            await this.requestNextStep(
+              chatId,
+              "¿Cuál es tu factor Rh? (Positivo, Negativo) (escribe 'no se' si no lo conoces)"
+            );
+            return; // Importante salir aquí para no continuar con una entrada inválida
+          }
+
+          state.data.rhFactor = rhFactorToStore;
+          nextStep = "awaiting_contact";
+          nextQuestion =
+            "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono, escribe 'ninguno' si no deseas agregarlo):";
           break;
 
         case "awaiting_contact":
-          if (!hasAlphanumeric.test(text)) {
+          if (text.toLowerCase() !== "ninguno" && !hasAlphanumeric.test(text)) {
             await this.bot.sendMessage(
               chatId,
               "❌ El texto para el contacto de emergencia parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre y número válidos."
             );
-            // Re-solicitar para mantener el force_reply y guiar al usuario
-            await this.bot.sendMessage(
+            await this.requestNextStep(
               chatId,
-              "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono):",
-              { reply_markup: { force_reply: true, selective: true } }
+              "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono, escribe 'ninguno' si no deseas agregarlo):"
             );
-            return; // No avanzar al siguiente paso
+            return;
           }
-          state.data.emergencyContact = text;
+          state.data.emergencyContact =
+            text.toLowerCase() === "ninguno" ? undefined : text;
+          nextStep = "done";
+          break;
+      }
+
+      if (nextStep === "done") {
+        if (state.step === "awaiting_contact") {
+          // Solo guardar si el último paso fue el contacto
           await this.guardarInformacionEmergencia(chatId, state.data);
           this.userStates.delete(chatId); // Limpiar estado al finalizar
-
           await this.bot.sendMessage(
             chatId,
             "✅ Información de emergencia guardada correctamente.\n\n" +
@@ -197,7 +307,11 @@ export class EmergencyInfoService {
               },
             }
           );
-          break;
+        }
+      } else {
+        state.step = nextStep;
+        this.userStates.set(chatId, state);
+        await this.requestNextStep(chatId, nextQuestion);
       }
     } catch (error) {
       this.logger.error(
@@ -252,6 +366,16 @@ export class EmergencyInfoService {
       message += `*Condiciones médicas:* ${
         emergencyInfo.conditions || "Ninguna"
       }\n\n`;
+      message += `*Tiene seguro médico:* ${
+        emergencyInfo.tieneSeguro ? "Sí" : "No"
+      }\n`;
+      if (emergencyInfo.tieneSeguro && emergencyInfo.seguro) {
+        message += `*Compañía de seguros:* ${emergencyInfo.seguro}\n`;
+      }
+      message += `*Tipo de sangre:* ${
+        emergencyInfo.bloodType || "No se conoce"
+      }\n`;
+      message += `*Factor Rh:* ${emergencyInfo.rhFactor || "No se conoce"}\n\n`;
       message += `*Contacto de emergencia:* ${
         emergencyInfo.emergencyContact || "No especificado"
       }\n\n`;
@@ -356,24 +480,20 @@ export class EmergencyInfoService {
         where: { chatId: chatId.toString() },
       });
 
-      // const now = new Date();
-
       if (!emergencyInfo) {
-        // Crear nueva entrada
         emergencyInfo = new EmergencyInfo();
-        emergencyInfo.userId = chatId.toString(); // Asumiendo que userId es lo mismo que chatId para EmergencyInfo
+        emergencyInfo.userId = chatId.toString();
         emergencyInfo.chatId = chatId.toString();
-        // emergencyInfo.createdAt = now; // <-- Asigna la fecha de creación
-      } /*else {
-        emergencyInfo.updatedAt = now; // <-- Actualiza la fecha de modificación
-      }*/
+      }
 
-      // Actualizar datos
       emergencyInfo.allergies = userData.allergies;
       emergencyInfo.conditions = userData.conditions;
       emergencyInfo.emergencyContact = userData.emergencyContact;
+      emergencyInfo.tieneSeguro = userData.tieneSeguro ?? false; // Default to false if undefined
+      emergencyInfo.seguro = userData.seguro ?? null;
+      emergencyInfo.bloodType = userData.bloodType;
+      emergencyInfo.rhFactor = userData.rhFactor;
 
-      // Guardar en la base de datos
       await this.emergencyInfoRepository.save(emergencyInfo);
 
       this.logger.log(
