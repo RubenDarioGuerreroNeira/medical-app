@@ -27,25 +27,25 @@ export class TelegramMenuService extends TelegramBaseService {
         // ],
         [
           {
-            text: "🩺 Preguntas sobre medicamentos",
+            text: "🩺 Preguntar Acerca de Medicamentos",
             callback_data: "consulta_medica",
           },
         ],
         [
           {
-            text: "🙋‍♂️ Recordatorio\n\nde tratamiento(s) medicos",
+            text: "🙋‍♂️ Recordatorio\n\nde Tratamiento(s) Medicos",
             callback_data: "recordatorios",
           },
         ],
         [
           {
-            text: "📲 Recordatorio\nde cita(s) médica(s)",
+            text: "📲 Recordatorio\nde Cita(s) Médica(s)",
             callback_data: "recordatorio_cita_medica",
           },
         ],
         [
           {
-            text: "📊 Interpretar resultados de laboratorio",
+            text: "📊 Interpretar Resultados de Laboratorio",
             callback_data: "interpretar_resultados",
           },
         ],

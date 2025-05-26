@@ -100,7 +100,7 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
 - **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
 - **Interpretación de Resultados de Laboratorio**: Procesamiento automático de resultados de laboratorio y visualización en formato texto
 **Informacion de Emergencia Médica**: 
- Permite a los usuarios configurar y almacenar datos médicos críticos (como alergias, condiciones preexistentes, medicamentos actuales) y un contacto de emergencia. Esta información es vital para situaciones de primeros auxilios y se puede generar un código de acceso para que personal médico autorizado la consulte rápidamente."
+ Permite a los usuarios configurar y almacenar datos médicos críticos (como alergias, condiciones preexistentes, medicamentos actuales),Tipo de Sangre, Factor,contacto de emergencia (Nombre y Numeros telefonicos ), a demás si el usuario posee una Póliza de Seguro Médico,. Esta información es vital para situaciones de primeros auxilios y se puede generar un código de acceso para que personal médico autorizado la consulte rápidamente."
 
 ### Próximas Funcionalidades
 
