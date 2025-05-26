@@ -484,6 +484,7 @@ export class EmergencyInfoService {
         emergencyInfo = new EmergencyInfo();
         emergencyInfo.userId = chatId.toString();
         emergencyInfo.chatId = chatId.toString();
+        emergencyInfo.createdAt = new Date();
       }
 
       emergencyInfo.allergies = userData.allergies;
