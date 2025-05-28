@@ -101,6 +101,8 @@ El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nues
 - **Interpretación de Resultados de Laboratorio**: Procesamiento automático de resultados de laboratorio y visualización en formato texto
 **Informacion de Emergencia Médica**: 
  Permite a los usuarios configurar y almacenar datos médicos críticos (como alergias, condiciones preexistentes, medicamentos actuales),Tipo de Sangre, Factor,contacto de emergencia (Nombre y Numeros telefonicos ), a demás si el usuario posee una Póliza de Seguro Médico,. Esta información es vital para situaciones de primeros auxilios y se puede generar un código de acceso para que personal médico autorizado la consulte rápidamente."
+ **Genera Código QR**:
+ Con tu Información Médica en caso de que necesites Primeros Auxilios, al escanearlo las personas o el personal médico que te presten primeros auxilios podran saber de tus alergias, tratamientos, si posees o no Seguro Médico, Nombre de la Compañía , Nombre y Número de Telefono de la Persona de Contacto
 
 ### Próximas Funcionalidades
 

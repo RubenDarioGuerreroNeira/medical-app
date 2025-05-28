@@ -33,7 +33,7 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
-            text: "🙋‍♂️ Recordatorio\n\nde Tratamiento(s) Medicos",
+            text: "🙋‍♂️ Recordatorio\n\nde Tratamiento(s) Médicos",
             callback_data: "recordatorios",
           },
         ],
@@ -91,6 +91,7 @@ export class TelegramMenuService extends TelegramBaseService {
         `• 📱 Compartir información médica con tus profesionales de salud\n\n` +
         `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n\n` +
         `• 🚑 Acceder a información de emergencia y primeros auxilios\n\n` +
+        `• 🏣 Genera Código QR con la Info Médica para que pueda usarse en caso de necesitar primeros auxilios\n\n` +
         `• 🧪 Interpretar resultados de laboratorio (envía texto o foto y recibe una interpretación automática)\n\n` +
         `• 📞 Contactar al desarrollador para soporte o sugerencias\n\n` +
         `\n` +

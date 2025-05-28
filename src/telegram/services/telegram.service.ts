@@ -40,7 +40,6 @@ export class TelegramService {
     private emergencyInfoService: EmergencyInfoService // <-- Agrega aquí
   ) {
     this.initializeBot();
-    // this.appointmentCommands.setupCommands();
   }
 
   private async initializeBot(): Promise<void> {
@@ -58,7 +57,15 @@ export class TelegramService {
   }
 
   private setupHandlers(): void {
-    this.bot.onText(/\/start/, (msg) => this.handleStartCommand(msg));
+    this.bot.onText(/\/start(?: (.+))?/, (msg, match) =>
+      this.handleStartCommand(msg, match)
+    );
+
+    // modifico el comando start para que capture el codigo de emergencia
+    // this.bot.onText(/\/start (.+)/, (msg, match) => {
+    //   this.handleStartCommand(msg, match);
+    // });
+    // this.bot.onText(/\/start/, (msg) => this.handleStartCommand(msg));
     this.bot.onText(/\/help/, (msg) => this.handleHelpCommand(msg));
     this.bot.onText(/\/emergencia/, (msg) =>
       this.emergencyInfoService.mostrarMenuEmergencia(msg.chat.id)
@@ -134,6 +141,17 @@ export class TelegramService {
               chatId
             )
           );
+      }
+
+      // manejo de generar codigo QR
+      if (data === "descargar_tarjeta_pdf") {
+        await this.emergencyInfoService.enviarTarjetaEmergenciaPDF(chatId);
+        await this.bot.sendMessage(
+          chatId,
+          "✅ Su código QR en PDF ya fue generado satisfactoriamente. Puedes observarlo en la línea de arriba del menú principal que te voy a mostrar."
+        );
+        await this.menuService.mostrarMenuPrincipal(chatId);
+        return;
       }
 
       // Manejo global de "menu_principal"
@@ -507,9 +525,28 @@ export class TelegramService {
       );
     }
   }
-  private async handleStartCommand(msg: TelegramBot.Message): Promise<void> {
-    this.userStates.delete(msg.chat.id); // Limpiar estado previo
-    await this.menuService.mostrarMenuPrincipal(msg.chat.id);
+  private async handleStartCommand(
+    msg: TelegramBot.Message,
+    match: RegExpMatchArray | null
+  ): Promise<void> {
+    const chatId = msg.chat.id;
+    this.userStates.delete(chatId); // Limpiar estado previo
+    const payload = match && match[1] ? match[1].trim() : null;
+
+    if (payload) {
+      // Asumimos que el payload es un código de acceso para información de emergencia
+      // En una aplicación más compleja, podrías tener diferentes tipos de payloads
+      const infoMostrada =
+        await this.emergencyInfoService.mostrarInformacionPorCodigoAcceso(
+          chatId,
+          payload
+        );
+      if (infoMostrada) {
+        return; // Si se mostró la info de emergencia, no mostramos el menú principal inmediatamente.
+      }
+    }
+
+    await this.menuService.mostrarMenuPrincipal(chatId);
   }
 
   private async handleHelpCommand(msg: TelegramBot.Message): Promise<void> {
