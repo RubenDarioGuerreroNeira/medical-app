@@ -738,7 +738,7 @@ export class EmergencyInfoService {
     }
   }
 
-  async enviarTarjetaEmergenciaPDF(chatId: number): Promise<void> {
+  async enviarTarjetaEmergenciaPDF(chatId: number): Promise<boolean> {
     try {
       const pdfBuffer = await this.generarTarjetaEmergenciaPDF(chatId);
       if (pdfBuffer) {
@@ -753,11 +753,13 @@ export class EmergencyInfoService {
             contentType: "application/pdf",
           }
         );
+        return true;
       } else {
         await this.bot.sendMessage(
           chatId,
           "❌ No se pudo generar la tarjeta de emergencia.  Asegúrate de haber configurado tu información y generado un código de acceso."
         );
+        return false;
       }
     } catch (error) {
       this.logger.error(
@@ -767,6 +769,7 @@ export class EmergencyInfoService {
         chatId,
         "❌ Ocurrió un error al enviar la tarjeta de emergencia. Por favor, intenta nuevamente."
       );
+      return false;
     }
   }
 

@@ -145,12 +145,16 @@ export class TelegramService {
 
       // manejo de generar codigo QR
       if (data === "descargar_tarjeta_pdf") {
-        await this.emergencyInfoService.enviarTarjetaEmergenciaPDF(chatId);
-        await this.bot.sendMessage(
-          chatId,
-          "✅ Su código QR en PDF ya fue generado satisfactoriamente. Puedes observarlo en la línea de arriba del menú principal que te voy a mostrar."
-        );
-        await this.menuService.mostrarMenuPrincipal(chatId);
+        const pdfEnviado =
+          await this.emergencyInfoService.enviarTarjetaEmergenciaPDF(chatId);
+        if (pdfEnviado) {
+          await this.bot.sendMessage(
+            chatId,
+            "✅ Su código QR en PDF ya fue generado satisfactoriamente. Puedes observarlo en la línea de arriba del menú principal que te voy a mostrar."
+          );
+        }
+        // El mensaje de error (si no se pudo generar) ya se envía desde enviarTarjetaEmergenciaPDF
+        await this.menuService.mostrarMenuPrincipal(chatId); // Mostrar menú principal en ambos casos
         return;
       }
 
