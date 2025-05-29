@@ -48,37 +48,39 @@ export class EmergencyInfoService {
     await this.bot.sendMessage(
       chatId,
       "🚨 *Información de Emergencia Médica* 🚨\n\n" +
-        "Configura tu información médica crítica para que esté disponible para las personas que te presten primeros auxilios  EN CASO DE EMERGENCIA.",
+        "Configura tu información médica crítica para que esté disponible mediante un código QR ,para que este disponible para  las personas que te presten primeros auxilios  EN CASO DE EMERGENCIA.\n\n" +
+        "Siguiente paso es configurar tu información médica.\n\n" +
+        "Si ya la tienes Configurada solo observa la información de emergencia en caso de emergencia.",
       {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "⚕️ Configurar información médica",
+                text: "1-⚕️ Configurar información médica",
                 callback_data: "configurar_emergencia",
               },
             ],
+
+            // [
+            //   {
+            //     text: "2-🔐 Generar código de acceso de emergencia",
+            //     callback_data: "generar_codigo_emergencia",
+            //   },
+            // ],
+
+            // [
+            //   {
+            //     text: "3-⬇️ Descargar  QR que contiene Inf vital (PDF)",
+            //     callback_data: "descargar_tarjeta_pdf",
+            //   },
+            // ],
             [
               {
                 text: "🔍 Ver mi información de emergencia",
                 callback_data: "ver_emergencia",
               },
             ],
-            [
-              {
-                text: "🔐 Generar código de acceso de emergencia",
-                callback_data: "generar_codigo_emergencia",
-              },
-            ],
-
-            [
-              {
-                text: "⬇️ Descargar código QR que contiene Inf vital (PDF)",
-                callback_data: "descargar_tarjeta_pdf",
-              },
-            ],
-
             [
               {
                 text: "🔙 Volver al menú principal",
@@ -311,16 +313,24 @@ export class EmergencyInfoService {
           await this.bot.sendMessage(
             chatId,
             "✅ Información de emergencia guardada correctamente.\n\n" +
-              "Puedes acceder a ella en cualquier momento desde el menú de emergencia.",
+              "Puedes acceder a ella en cualquier momento desde el menú de emergencia.\n\n" +
+              "Siguiente paso es generar un código de acceso para que pueda ser Generado el QR que Contendra tu info de emergencia.",
             {
               reply_markup: {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver al menú de emergencia",
-                      callback_data: "menu_emergencia",
+                      text: "2-🔐 Generar código de acceso de emergencia",
+                      callback_data: "generar_codigo_emergencia",
                     },
                   ],
+
+                  // [
+                  //   {
+                  //     text: "🔙 Volver al menú de emergencia",
+                  //     callback_data: "menu_emergencia",
+                  //   },
+                  // ],
                   [
                     {
                       text: "🏠 Volver al menú principal",
@@ -457,15 +467,16 @@ export class EmergencyInfoService {
         "🔐 *Código de Acceso de Emergencia*\n\n" +
           `Tu nuevo código es: *${accessCode}*\n\n` +
           "Este código permite a personal médico acceder a tu información crítica en caso de emergencia.\n" +
-          "Compártelo solo con personas de confianza o guárdalo en tu billetera/cartera.",
+          "Compártelo solo con personas de confianza o guárdalo en tu billetera/cartera/ o pegalo detras de tu Documentación de Identidad.\n" +
+          "El Siguiente paso es Descargarlo ",
         {
           parse_mode: "Markdown",
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: "📱 Crear tarjeta de emergencia",
-                  callback_data: "crear_tarjeta_emergencia",
+                  text: "3-⬇️ Descargar  QR que contiene Inf vital (PDF)",
+                  callback_data: "descargar_tarjeta_pdf",
                 },
               ],
               [
@@ -630,19 +641,6 @@ export class EmergencyInfoService {
           parse_mode: "Markdown",
         }
       );
-
-      // Opcional: Enviar un QR Code
-      // Podrías usar una librería como 'qrcode' para generar la URL del bot
-      // const qr = require('qrcode');
-      // const botUrl = `https://t.me/${botUsername}`;
-      // try {
-      //   const qrImage = await qr.toDataURL(botUrl);
-      //   const imageBuffer = Buffer.from(qrImage.split(",")[1], 'base64');
-      //   await this.bot.sendPhoto(chatId, imageBuffer, { caption: "Escanea este QR para acceder al bot." });
-      // } catch (qrError) {
-      //   this.logger.error(`Error generando QR para tarjeta de emergencia: ${qrError.message}`);
-      //   await this.bot.sendMessage(chatId, "No se pudo generar el código QR para la tarjeta en este momento.");
-      // }
     } catch (error) {
       this.logger.error(
         `Error al crear tarjeta de emergencia: ${error.message}`
@@ -716,7 +714,7 @@ export class EmergencyInfoService {
           "Escanea este código para ver la información médica que el usuario registró.\nEs vital para primeros auxilios y se accede por el bot de Telegram.",
           { align: "center" }
         );
-        doc.moveDown(15);
+      doc.moveDown(15);
 
       // Finalizar el documento
       doc.end();
