@@ -154,7 +154,10 @@ export class TelegramService {
           );
         }
         // El mensaje de error (si no se pudo generar) ya se envía desde enviarTarjetaEmergenciaPDF
-        await this.menuService.mostrarMenuPrincipal(chatId); // Mostrar menú principal en ambos casos
+        setTimeout(async () => {
+          await this.menuService.mostrarMenuPrincipal(chatId); // Mostrar menú principal en ambos casos
+        }, 3000);
+
         return;
       }
 
