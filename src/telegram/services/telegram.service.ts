@@ -143,6 +143,21 @@ export class TelegramService {
           );
       }
 
+      // Manejar callback para marcar medicamento como tomado
+      if (data.startsWith("mark_taken_")) {
+        const reminderId = parseInt(data.split("_")[2]);
+        await this.reminderService.handleMarkAsTaken(chatId, reminderId);
+        // await this.bot.answerCallbackQuery(callbackQuery.id); // Ya se hace al inicio
+        return;
+      }
+
+      // Manejar callback para mostrar estadísticas de medicamentos
+      if (data === "estadisticas_medicamentos") {
+        await this.reminderService.mostrarEstadisticasMedicamentos(chatId);
+        // await this.bot.answerCallbackQuery(callbackQuery.id); // Ya se hace al inicio
+        return;
+      }
+
       // manejo de generar codigo QR
       if (data === "descargar_tarjeta_pdf") {
         const pdfEnviado =

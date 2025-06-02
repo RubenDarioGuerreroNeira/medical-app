@@ -121,6 +121,63 @@ export class ReminderService {
     return savedReminder;
   }
 
+  //********************** */
+  async markMedicationAsTaken(
+    reminderId: number,
+    takenAt: Date = new Date()
+  ): Promise<MedicationReminder> {
+    const reminder = await this.reminderRepository.findOne({
+      where: { id: reminderId },
+    });
+    if (!reminder) {
+      throw new NotFoundException(
+        `Recordatorio con ID ${reminderId} no encontrado`
+      );
+    }
+    if (!reminder.timesTaken) {
+      reminder.timesTaken = [];
+    }
+    reminder.timesTaken.push(takenAt);
+    reminder.lastTaken = takenAt; // Actualizar también el campo existente
+    return this.reminderRepository.save(reminder);
+  }
+
+  async getMedicationStats(
+    chatId: number,
+    period: "week" | "month" = "week"
+  ): Promise<{ medicationName: string; takenCount: number }[]> {
+    const reminders = await this.getUserReminders(chatId); // Asumiendo que tienes este método
+    const stats: { medicationName: string; takenCount: number }[] = [];
+    const now = moment();
+    let startDate;
+
+    if (period === "week") {
+      startDate = moment().subtract(7, "days").startOf("day");
+    } else {
+      // month
+      startDate = moment().subtract(1, "month").startOf("day");
+    }
+
+    for (const reminder of reminders) {
+      const takenCount = reminder.timesTaken
+        ? reminder.timesTaken.filter((t) =>
+            moment(t).isBetween(startDate, now, undefined, "[]")
+          ).length
+        : 0;
+
+      if (takenCount > 0 || reminders.length === 1) {
+        // Mostrar si tiene tomas o es el único recordatorio
+        stats.push({
+          medicationName: reminder.medicationName,
+          takenCount: takenCount,
+        });
+      }
+    }
+    return stats;
+  }
+
+  //----------------------
+
   // Método para obtener la zona horaria del usuario
   private getUserTimezone(chatId: number): string | null {
     try {

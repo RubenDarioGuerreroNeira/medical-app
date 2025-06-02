@@ -1,3 +1,4 @@
+// import { timeStamp } from "console";
 import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("medication_reminder")
@@ -40,4 +41,11 @@ export class MedicationReminder {
 
   @Column({ type: "timestamp", nullable: true })
   lastTaken: Date;
+
+  @Column({
+    type: "simple-array",
+    nullable: true,
+    default: () => "'{}'",
+  })
+  timesTaken: Date[]; // Aqui se Guarda las Fechas en las que se tomo el medicamento
 }

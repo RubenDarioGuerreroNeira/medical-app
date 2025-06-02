@@ -63,7 +63,8 @@ export class TelegramNotificationService {
             [
               {
                 text: " ✅ Tomado",
-                callback_data: `menu_principal`,
+                // callback_data: `menu_principal`,
+                callback_data: `mark_taken_${reminder.id}`,
               },
             ],
           ],

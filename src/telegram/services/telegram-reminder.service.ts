@@ -37,31 +37,37 @@ export class TelegramReminderService {
           inline_keyboard: [
             [
               {
-                text: "➕ Crear nuevo recordatorio(s) tratamiento",
+                text: "➕ Crear Recordatorio(s) tratamiento",
                 callback_data: "crear_recordatorio",
               },
             ],
             [
               {
-                text: " ✏ Ver ó Editar recordatorio(s) tratamiento",
+                text: " ✏ Ver ó Editar Recordatorio(s)",
                 callback_data: "ver_recordatorios",
               },
             ],
             [
               {
-                text: "🗑 Elimina  recordatorio(s) tratamiento",
+                text: "🗑 Elimina Recordatorio(s)",
                 callback_data: "eliminar_recordatorio",
               },
             ],
             [
               {
-                text: "📊 Exportar recordatorios",
+                text: "📊 Estadísticas de Medicamentos",
+                callback_data: "estadisticas_medicamentos",
+              },
+            ],
+            [
+              {
+                text: "📲 Exportar recordatorios",
                 callback_data: "exportar_recordatorios",
               },
             ],
             [
               {
-                text: "🔙 Volver al menú principal",
+                text: "🔙 Volver al Menú Principal",
                 callback_data: "menu_principal",
               },
             ],
@@ -69,6 +75,95 @@ export class TelegramReminderService {
         },
       }
     );
+  }
+
+  async handleMarkAsTaken(chatId: number, reminderId: number): Promise<void> {
+    try {
+      const reminder = await this.reminderService.markMedicationAsTaken(
+        reminderId
+      );
+      await this.bot.sendMessage(
+        chatId,
+        `✅ "${reminder.medicationName}" marcado como tomado.`
+      );
+      // Opcional: Podrías intentar editar el mensaje original de la notificación para quitar los botones.
+    } catch (error) {
+      this.logger.error(
+        `Error al marcar como tomado (chatId: ${chatId}, reminderId: ${reminderId}): ${error.message}`,
+        error.stack
+      );
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Error al marcar el medicamento como tomado."
+      );
+    }
+  }
+
+  async mostrarEstadisticasMedicamentos(chatId: number): Promise<void> {
+    try {
+      const statsSemana = await this.reminderService.getMedicationStats(
+        chatId,
+        "week"
+      );
+
+      if (statsSemana.length === 0) {
+        await this.bot.sendMessage(
+          chatId,
+          "No hay datos de medicamentos tomados en la última semana para mostrar estadísticas.\n\n" +
+            "Asegúrate de marcar tus medicamentos como 'tomados' cuando recibas los recordatorios.",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "🔙 Volver al menú Recordatorios",
+                    callback_data: "recordatorios",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+        return;
+      }
+
+      let message = "📊 *Estadísticas  Medicamentos (Últimos 7 días):*\n\n";
+      statsSemana.forEach((stat) => {
+        message += `💊 ${this.escapeMarkdown(stat.medicationName)}: Tomado ${
+          stat.takenCount
+        } veces\n`;
+      });
+
+      await this.bot.sendMessage(chatId, message, {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: [
+            // Podrías añadir botones para ver estadísticas mensuales o de otros periodos
+            // [{ text: "Ver estadísticas del último mes", callback_data: "stats_month" }],
+            [
+              {
+                text: "🔙 Volver Menú Recordatorios",
+                callback_data: "recordatorios",
+              },
+            ],
+          ],
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error al mostrar estadísticas (chatId: ${chatId}): ${error.message}`,
+        error.stack
+      );
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Error al cargar las estadísticas de medicamentos."
+      );
+    }
+  }
+  protected escapeMarkdown(text: string): string {
+    if (!text) return "";
+    // Escapa caracteres especiales de Markdown V2
+    return text.replace(/[_*\~`>#+\-=|{}.!]/g, "\\$&");
   }
 
   async iniciarCreacionRecordatorio(chatId: number): Promise<void> {
@@ -111,19 +206,19 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "✏️ Editar recordatorio existente",
+                      text: "✏️ Editar Recordatorio Existente",
                       callback_data: `edit_reminder_${existingReminder.id}`,
                     },
                   ],
                   [
                     {
-                      text: "➕ Crear uno nuevo de todos modos",
+                      text: "➕ Crear uno Nuevo",
                       callback_data: `continue_create_${nombreMedicamento}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -165,7 +260,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -212,13 +307,13 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver a edición",
+                      text: "🔙 Volver a Edición",
                       callback_data: `edit_reminder_${reminderId}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -239,13 +334,13 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver a edición",
+                      text: "🔙 Volver a Edición",
                       callback_data: `edit_reminder_${reminderId}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -268,7 +363,7 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -296,7 +391,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -343,13 +438,13 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver a edición",
+                      text: "🔙 Volver a Edición",
                       callback_data: `edit_reminder_${reminderId}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -370,13 +465,13 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver a edición",
+                      text: "🔙 Volver a Edición",
                       callback_data: `edit_reminder_${reminderId}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -415,7 +510,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -480,7 +575,7 @@ export class TelegramReminderService {
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -501,13 +596,13 @@ export class TelegramReminderService {
                 inline_keyboard: [
                   [
                     {
-                      text: "🔙 Volver a edición",
+                      text: "🔙 Volver a Edición",
                       callback_data: `edit_reminder_${reminderId}`,
                     },
                   ],
                   [
                     {
-                      text: "🔙 Volver al menú de recordatorios",
+                      text: "🔙 Volver al Menú Recordatorios",
                       callback_data: "recordatorios",
                     },
                   ],
@@ -530,7 +625,7 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -600,13 +695,13 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver a edición",
+                  text: "🔙 Volver a Edición",
                   callback_data: `edit_reminder_${reminderId}`,
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú de recordatorios",
+                  text: "🔙 Volver al Menú Recordatorios",
                   callback_data: "recordatorios",
                 },
               ],
@@ -627,13 +722,13 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver a edición",
+                  text: "🔙 Volver a Edición",
                   callback_data: `edit_reminder_${reminderId}`,
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú de recordatorios",
+                  text: "🔙 Volver al Menú Recordatorios",
                   callback_data: "recordatorios",
                 },
               ],
@@ -769,13 +864,13 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver a edición",
+                  text: "🔙 Volver a Edición",
                   callback_data: `edit_reminder_${reminderId}`,
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú de recordatorios",
+                  text: "🔙 Volver al Menú Recordatorios",
                   callback_data: "recordatorios",
                 },
               ],
@@ -796,13 +891,13 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver a edición",
+                  text: "🔙 Volver a Edición",
                   callback_data: `edit_reminder_${reminderId}`,
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú de recordatorios",
+                  text: "🔙 Volver al Menú Recordatorios",
                   callback_data: "recordatorios",
                 },
               ],
@@ -829,7 +924,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -909,13 +1004,13 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "➕ Crear nuevo recordatorio(s) Zona Horaria America/Caracas ",
+                    text: "➕ Crear Recordatorio-(Zona Horaria America/Caracas)",
                     callback_data: "crear_recordatorio",
                   },
                 ],
                 [
                   {
-                    text: "🔙 Volver al menú de recordatorios",
+                    text: "🔙 Volver al Menú Recordatorios",
                     callback_data: "recordatorios",
                   },
                 ],
@@ -945,7 +1040,7 @@ export class TelegramReminderService {
       // Agregar botón para volver
       inlineKeyboard.push([
         {
-          text: "🔙 Volver al menú de recordatorios",
+          text: "🔙 Volver al Menú Recordatorios",
           callback_data: "recordatorios",
         },
       ]);
@@ -1300,13 +1395,13 @@ export class TelegramReminderService {
               ],
               [
                 {
-                  text: " 📄 Volver al menu recordatorios médicos",
+                  text: " 📄 Volver al Menu Recordatorios Médicos",
                   callback_data: "recordatorios",
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1329,11 +1424,11 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
                 {
-                  text: " Volver al menu recordatorios médicos",
+                  text: " Volver Menu Recordatorios Médicos",
                   callback_data: "recordatorios",
                 },
               ],
@@ -1360,11 +1455,11 @@ export class TelegramReminderService {
           inline_keyboard: [
             [
               {
-                text: "✅ Si guardar",
+                text: "✅ Si Guardar",
                 callback_data: `save_to_history_${savedReminder.id} `,
               },
               {
-                text: "❌ No guardar",
+                text: "❌ No Guardar",
                 callback_data: `no_save_history_${savedReminder.id}`, // Incluir información necesaria
               },
             ],
@@ -1430,14 +1525,14 @@ export class TelegramReminderService {
               ],
               [
                 {
-                  text: " 📄 Volver al menu recordatorios médicos",
+                  text: " 📄 Volver al Menu Recordatorios Médicos",
                   callback_data: "recordatorios",
                 },
               ],
 
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1460,11 +1555,11 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
                 {
-                  text: " Volver al menu recordatorios médicos",
+                  text: " Volver al Menu Recordatorios Médicos",
                   callback_data: "recordatorios",
                 },
               ],
@@ -1519,20 +1614,20 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "➕ Crear nuevo recordatorio(s)",
+                    text: "➕ Crear Nuevo Recordatorio(s)",
                     callback_data: "crear_recordatorio",
                   },
                 ],
                 [
                   {
-                    text: "🗑 Eliminar recordatorio(s)",
+                    text: "🗑 Eliminar Recordatorio(s)",
                     callback_data: "eliminar_recordatorio",
                   },
                 ],
 
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -1566,19 +1661,19 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "➕ Crear nuevo recordatorio(s)",
+                  text: "➕ Crear Nuevo Recordatorio",
                   callback_data: "crear_recordatorio",
                 },
               ],
               [
                 {
-                  text: "❌ Eliminar recordatorio(s)",
+                  text: "❌ Eliminar Recordatorio",
                   callback_data: "eliminar_recordatorio",
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1662,7 +1757,7 @@ export class TelegramReminderService {
               [{ text: "Frecuencia", callback_data: "edit_frequency" }],
               [
                 {
-                  text: "🔙 Volver al menu principal",
+                  text: "🔙 Volver al Menu Principal",
                   callback_data: "recordatorios",
                 },
               ],
@@ -1696,19 +1791,19 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "➕ Crear recordatorio(s) tratamiiento",
+                    text: "➕ Crear Recordatorio Tratamiiento",
                     callback_data: "crear_recordatorio",
                   },
                 ],
                 [
                   {
-                    text: "✏ Editar recordatorio(s) tratamiiento",
+                    text: "✏ Editar Recordatorio(s) Tratamiiento",
                     callback_data: "editar_recordatorio_medico",
                   },
                 ],
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -1774,14 +1869,14 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "✏ Editar recordatorio(s) tratamiento",
+                    text: "✏ Editar Recordatorio Tratamiento",
                     callback_data: "editar_recordatorio_medico",
                   },
                 ],
 
                 [
                   {
-                    text: "📋 Ver mis recordatorio(s)",
+                    text: "📋 Ver  Recordatorio(s)",
                     callback_data: "ver_recordatorios",
                   },
                 ],
@@ -1804,7 +1899,7 @@ export class TelegramReminderService {
       // Mensaje de confirmación con detalles del recordatorio eliminado
       await this.bot.sendMessage(
         chatId,
-        `✅ *Recordatorio eliminado correctamente*\n\n` +
+        `✅ *Recordatorio Eliminado Correctamente*\n\n` +
           `Se ha eliminado el recordatorio:\n` +
           `💊 Medicamento: ${reminder.medicationName}\n` +
           `⏰ Hora: ${reminder.reminderTime}`,
@@ -1814,13 +1909,13 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "📋 Ver mis recordatorio(s)",
+                  text: "📋 Ver Recordatorio(s)",
                   callback_data: "ver_recordatorios",
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1841,7 +1936,7 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1887,7 +1982,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "🔙 Volver al menú principal",
+                    text: "🔙 Volver al Menú Principal",
                     callback_data: "menu_principal",
                   },
                 ],
@@ -1908,7 +2003,7 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -1943,7 +2038,7 @@ export class TelegramReminderService {
             ],
             [
               {
-                text: "🔙 Volver al menú de recordatorios",
+                text: "🔙 Volver al Menú Recordatorios",
                 callback_data: "recordatorios",
               },
             ],
@@ -2018,7 +2113,7 @@ export class TelegramReminderService {
               ],
               [
                 {
-                  text: "🔙 Volver al menú principal",
+                  text: "🔙 Volver al Menú Principal",
                   callback_data: "menu_principal",
                 },
               ],
@@ -2180,7 +2275,7 @@ export class TelegramReminderService {
       {
         reply_markup: {
           keyboard: [
-            [{ text: "Compartir contacto", request_contact: true }],
+            [{ text: "Compartir Contacto", request_contact: true }],
             [{ text: "Cancelar" }],
           ],
           one_time_keyboard: true,
