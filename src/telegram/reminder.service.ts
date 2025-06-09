@@ -18,10 +18,10 @@ import TelegramBot from "node-telegram-bot-api";
 @Injectable()
 export class ReminderService {
   private readonly logger = new Logger(ReminderService.name);
-  private readonly soundEffects = {
-    reminder: "https://example.com/sounds/medical-alert.mp3",
-    success: "https://example.com/sounds/success.mp3",
-  };
+  // private readonly soundEffects = {
+  //   reminder: "https://example.com/sounds/medical-alert.mp3",
+  //   success: "https://example.com/sounds/success.mp3",
+  // };
 
   constructor(
     @InjectRepository(MedicationReminder)
@@ -74,11 +74,28 @@ export class ReminderService {
       dosage,
       reminderTime,
       daysOfWeek,
-      // timezone = "America/Caracas",
-      //uso la zona horaria del usuario
-      timezone = this.getUserTimezone(chatId) || "America/Caracas",
+      // timezone = this.getUserTimezone(chatId) || "America/Caracas",
+      timezone: providedTimezone,
     } = reminderData;
 
+    let finalTimezone: string;
+
+    if (providedTimezone) {
+      // Si se proveyó una timezone en reminderData, la usamos.
+      finalTimezone = providedTimezone;
+    } else {
+      // Si no, intentamos obtener la timezone guardada del usuario.
+      const userSavedTimezone = await this.getUserTimezone(chatId);
+      if (userSavedTimezone) {
+        finalTimezone = userSavedTimezone;
+      } else {
+        // Si no hay timezone guardada y no se proveyó, usamos el valor por defecto.
+        finalTimezone = "America/Caracas";
+      }
+    }
+    this.logger.log(
+      `usando el timezone para el recordatorio: ${finalTimezone}`
+    );
     // valido que los días de la semana sean correctos
     if (!this.validateDaysOfWeek(daysOfWeek) || daysOfWeek.length === 0) {
       throw new Error("Los Días deben estar entre 0(Domingo y 6 (Sabado)");
@@ -110,7 +127,7 @@ export class ReminderService {
       dosage,
       reminderTime: normalizedTime, // Usar el formato normalizado
       daysOfWeek,
-      timezone,
+      timezone: finalTimezone,
       createdAt: new Date(),
       isActive: true,
       type: "medication",
@@ -176,18 +193,27 @@ export class ReminderService {
     return stats;
   }
 
-  //----------------------
-
   // Método para obtener la zona horaria del usuario
-  private getUserTimezone(chatId: number): string | null {
+  private async getUserTimezone(chatId: number): Promise<string | null> {
     try {
-      // Aquí podrías implementar lógica para obtener la zona horaria guardada del usuario
-      // Por ejemplo, consultando una tabla de preferencias de usuario
-      // Por ahora, devolvemos null para usar el valor predeterminado
+      // Intenta obtener la zona horaria del recordatorio activo más recientemente
+      const recentReminder = await this.reminderRepository.findOne({
+        where: { chatId: chatId.toString(), isActive: true },
+        order: { createdAt: "DESC" },
+      });
+      if (recentReminder && recentReminder.timezone) {
+        this.logger.log(
+          `Fallback: Obteniendo zona horaria del recordatorio más reciente para ${chatId}: ${recentReminder.timezone}`
+        );
+        return recentReminder.timezone;
+      }
+      // por ahora mantenemos la logica simple de devolver null
+      // ya que la UI (TelegramService ) se encargará de solicitar la zona horaria del usuario
+
       return null;
     } catch (error) {
       this.logger.error(
-        `Error al obtener zona horaria del usuario: ${error.message}`
+        `Error al intentar obtener zona horaria del usuario: ${error.message}`
       );
       return null;
     }

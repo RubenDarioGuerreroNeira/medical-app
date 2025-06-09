@@ -30,7 +30,7 @@ export class TelegramReminderService {
   async mostrarMenuRecordatorios(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "🕒 *Recordatorios de Medicamentos*\n\nPuedes programar recordatorios para tomar tus medicamentos a tiempo. Zona Horaria: Caracas ",
+      "🕒 *Recordatorios de Medicamentos*\n\nPuedes programar recordatorios para tomar tus medicamentos a tiempo.",
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -1086,10 +1086,11 @@ export class TelegramReminderService {
     });
   }
 
-  // uso zona horaria local o le pregunto al usuario cual usar
+  // Se Solicitara la Zona horaria Explicitamente
   private async solicitarHoraRecordatorio(
     chatId: number,
     nombreMedicamento: string,
+    // _nombreMedicamento: string,
     dosis: string
   ): Promise<void> {
     // Obtener o detectar la zona horaria del usuario
@@ -1097,16 +1098,31 @@ export class TelegramReminderService {
       (await this.detectUserTimezone(chatId)) || "America/Caracas";
 
     // Guardar la zona horaria en el estado del usuario
-    const userState = this.userStates.get(chatId) || {
-      step: "",
-      reminderData: {},
-    };
-    userState.reminderData = {
-      ...userState.reminderData,
-      medicationName: nombreMedicamento,
-      dosage: dosis,
-      timezone: userTimezone,
-    };
+    // const userState = this.userStates.get(chatId) || {
+    //   step: "",
+    //   reminderData: {},
+    // };
+    // userState.reminderData = {
+    //   ...userState.reminderData,
+    //   medicationName: nombreMedicamento,
+    //   dosage: dosis,
+    //   timezone: userTimezone,
+    // };
+    const userState = this.userStates.get(chatId);
+    if (!userState || !userState.reminderData) {
+      this.logger.error(
+        `[${chatId}] Estado de usuario no encontrado o reminderData ausente en solicitarHoraRecordatorio`
+      );
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error, por favor intenta crear el recordatorio de nuevo."
+      );
+      this.userStates.delete(chatId);
+      return;
+    }
+    // El nombre del medicamento ya debe estar en userState.reminderData.medicationName
+    userState.reminderData.dosage = dosis;
+    // La timezone se pedirá después de la hora.
     this.userStates.set(chatId, userState);
 
     const message = await this.bot.sendMessage(
@@ -1132,25 +1148,185 @@ export class TelegramReminderService {
           "Formato de hora incorrecto. Por favor, usa el formato HH:MM AM/PM (ejemplos: 08:30 AM, 02:45 PM)."
         );
         await this.solicitarHoraRecordatorio(chatId, nombreMedicamento, dosis);
+        // Re-solicitar la hora usando los datos originales
+        const originalState = this.userStates.get(chatId);
+        if (originalState && originalState.reminderData) {
+          await this.solicitarHoraRecordatorio(
+            chatId,
+            originalState.reminderData.medicationName,
+            originalState.reminderData.dosage
+          );
+        } else {
+          await this.bot.sendMessage(
+            chatId,
+            "❌ Error al reintentar. Por favor, comienza de nuevo."
+          );
+          this.userStates.delete(chatId);
+        }
         return;
       }
 
       const horaRecordatorio = msg.text;
 
       // Actualizar el estado del usuario con la hora
-      const state = this.userStates.get(chatId);
-      if (state) {
-        state.reminderData.reminderTime = horaRecordatorio;
-        this.userStates.set(chatId, state);
+      // const state = this.userStates.get(chatId);
+      // if (state) {
+      //   state.reminderData.reminderTime = horaRecordatorio;
+      //   this.userStates.set(chatId, state);
+      // }
+
+      // // Continuar con la solicitud de frecuencia
+      // await this.solicitarFrecuenciaRecordatorio(
+      //   chatId,
+      //   nombreMedicamento,
+      //   dosis,
+      //   horaRecordatorio
+      // );
+      const currentState = this.userStates.get(chatId);
+      if (currentState && currentState.reminderData) {
+        currentState.reminderData.reminderTime = horaRecordatorio;
+        currentState.step = "awaiting_timezone"; // Nuevo paso
+        this.userStates.set(chatId, currentState);
+        await this.solicitarZonaHoraria(chatId); // Llamar al nuevo método
+      } else {
+        this.logger.error(
+          `[${chatId}] Estado de usuario no encontrado al procesar hora.`
+        );
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
+        );
+        this.userStates.delete(chatId);
+      }
+    });
+  }
+
+  private async solicitarZonaHoraria(chatId: number): Promise<void> {
+    const message = await this.bot.sendMessage(
+      chatId,
+      "🌍 Por favor, ingresa tu zona horaria.\n\n" +
+        "Puedes escribir el nombre de una ciudad principal como:\n" +
+        "• `Caracas`\n" +
+        "• `Bogota`\n" +
+        "• `Brasilia`\n" +
+        "• `Santiago`\n" +
+        "• `Buenos Aires`\n" +
+        "• `Madrid`\n\n" +
+        "O ingresa la zona horaria completa (ej: `America/New_York`).\n" +
+        "Si tu zona horaria no está en la lista, puedes escribirla directamente o consultar la lista completa en:\n" +
+        "https://en.wikipedia.org/wiki/List_of_tz_database_time_zones",
+      
+
+      {
+        // parse_mode: "Markdown",
+        reply_markup: {
+          force_reply: true,
+          selective: true,
+          inline_keyboard: [
+            [
+              { text: "Caracas", callback_data: "tz_America/Caracas" },
+              { text: "Bogotá", callback_data: "tz_America/Bogota" },
+            ],
+            [
+              { text: "Brasilia", callback_data: "tz_America/Sao_Paulo" }, // Sao_Paulo es una zona común para Brasil
+              { text: "Santiago", callback_data: "tz_America/Santiago" },
+            ],
+            [
+              {
+                text: "Buenos Aires",
+                callback_data: "tz_America/Argentina/Buenos_Aires",
+              },
+              { text: "Madrid", callback_data: "tz_Europe/Madrid" },
+            ],
+            // Puedes añadir una fila para "Otra (escribir)" si quieres ser más explícito
+            // [
+            //   { text: "Otra (escribir)", callback_data: "tz_type_other" } // Este callback no haría nada, solo es visual
+            // ]
+          ],
+          // Aún mantenemos force_reply si queremos que el usuario pueda escribir
+          // pero para botones inline, no es estrictamente necesario a menos que
+          // queramos forzar una respuesta si no se presiona un botón.
+          // Por ahora, lo quitamos para priorizar los botones.
+          // Si el usuario escribe, el onReplyToMessage lo capturará.
+          // force_reply: true,
+          // selective: true,
+        },
+      }
+    );
+
+    this.bot.onReplyToMessage(chatId, message.message_id, async (msg) => {
+      if (!msg.text) return;
+      const userState = this.userStates.get(chatId);
+      if (!userState || !userState.reminderData) {
+        this.logger.error(
+          `[${chatId}] Estado de usuario no encontrado al procesar zona horaria.`
+        );
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
+        );
+        this.userStates.delete(chatId);
+        return;
       }
 
-      // Continuar con la solicitud de frecuencia
-      await this.solicitarFrecuenciaRecordatorio(
-        chatId,
-        nombreMedicamento,
-        dosis,
-        horaRecordatorio
-      );
+      if (moment.tz.zone(msg.text)) {
+        // Validar si la zona horaria es válida
+        userState.reminderData.timezone = msg.text;
+        this.userStates.set(chatId, userState);
+        await this.solicitarFrecuenciaRecordatorio(
+          chatId,
+          userState.reminderData.medicationName,
+          userState.reminderData.dosage,
+          userState.reminderData.reminderTime
+        );
+      } else {
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Zona horaria inválida. Intenta de nuevo."
+        );
+        await this.solicitarZonaHoraria(chatId); // Re-prompt
+      }
+      const userInput = msg.text.trim().toLowerCase();
+      let timezoneToSave: string | null = null;
+
+      // Mapa de ciudades comunes a zonas horarias TZ
+      const commonTimezoneMap: { [key: string]: string } = {
+        caracas: "America/Caracas",
+        bogota: "America/Bogota",
+        bogotá: "America/Bogota",
+        brasilia: "America/Sao_Paulo", // O America/Brasilia si es más preciso para el caso de uso
+        santiago: "America/Santiago",
+        "buenos aires": "America/Argentina/Buenos_Aires",
+        madrid: "Europe/Madrid",
+        // Puedes añadir más ciudades comunes aquí
+      };
+
+      if (commonTimezoneMap[userInput]) {
+        timezoneToSave = commonTimezoneMap[userInput];
+      } else if (moment.tz.zone(msg.text.trim())) {
+        // Intenta validar la entrada del usuario tal cual
+        timezoneToSave = msg.text;
+      } else if (moment.tz.zone(msg.text)) {
+        // intenta validar la entrada del usuario
+        timezoneToSave = msg.text;
+      }
+
+      if (timezoneToSave) {
+        userState.reminderData.timezone = timezoneToSave;
+        this.userStates.set(chatId, userState);
+        await this.solicitarFrecuenciaRecordatorio(
+          chatId,
+          userState.reminderData.medicationName,
+          userState.reminderData.dosage,
+          userState.reminderData.reminderTime
+        );
+      } else {
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Zona horaria inválida. Intenta de nuevo con una ciudad de la lista o el formato completo (ej: America/New_York)."
+        );
+        await this.solicitarZonaHoraria(chatId); // Re-prompt
+      }
     });
   }
 
@@ -1170,23 +1346,38 @@ export class TelegramReminderService {
     }
   }
 
-  private async solicitarFrecuenciaRecordatorio(
+  async solicitarFrecuenciaRecordatorio(
     chatId: number,
     nombreMedicamento: string,
     dosis: string,
     horaRecordatorio: string
   ): Promise<void> {
     // Actualizar el estado del usuario con la dosis y la hora
-    const userState = this.userStates.get(chatId) || {
-      step: "",
-      reminderData: {},
-    };
-    userState.reminderData = {
-      ...userState.reminderData,
-      medicationName: nombreMedicamento,
-      dosage: dosis,
-      reminderTime: horaRecordatorio,
-    };
+    // const userState = this.userStates.get(chatId) || {
+    //   step: "",
+    //   reminderData: {},
+    // };
+    // userState.reminderData = {
+    //   ...userState.reminderData,
+    //   medicationName: nombreMedicamento,
+    //   dosage: dosis,
+    //   reminderTime: horaRecordatorio,
+    // };
+
+    const userState = this.userStates.get(chatId);
+    if (!userState || !userState.reminderData) {
+      this.logger.error(
+        `[${chatId}] Estado de usuario no encontrado al solicitar frecuencia.`
+      );
+      await this.bot.sendMessage(
+        chatId,
+        "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
+      );
+      this.userStates.delete(chatId);
+      return;
+    }
+    // medicationName, dosage, reminderTime y timezone ya deberian estar en userState.reminderData
+    userState.step = "awaiting_frequency";
     this.userStates.set(chatId, userState);
 
     await this.bot.sendMessage(
@@ -1361,7 +1552,8 @@ export class TelegramReminderService {
       // Obtener la dosis y zona horaria del estado del usuario
       const userState = this.userStates.get(chatId);
       const dosage = userState?.reminderData?.dosage || "Dosis no especificada";
-      const timezone = userState?.reminderData?.timezone || "America/Caracas";
+      // const timezone = userState?.reminderData?.timezone || "America/Caracas";
+      const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Ahora debería ser el valor por defecto
       const reminderId = userState?.reminderData?.reminderId;
 
       // Actualizar el recordatorio con el nuevo día de la semana
@@ -1383,7 +1575,9 @@ export class TelegramReminderService {
           `💊 Medicamento: ${nombreMedicamento}\n` +
           `📊 Dosis: ${dosage}\n` +
           `⏰ Hora: ${horaRecordatorio}\n` +
-          `🔄 Frecuencia: Una vez por semana (${nombreDia})\n\n`, // Usar nombreDia
+          // `🔄 Frecuencia: Una vez por semana (${nombreDia})\n\n`, // Usar nombreDia
+          `🔄 Frecuencia: Una vez por semana (${nombreDia})\n` +
+          `🌍 Zona Horaria: ${timezone}\n\n`,
         {
           reply_markup: {
             inline_keyboard: [
@@ -1492,7 +1686,8 @@ export class TelegramReminderService {
       // Obtener la dosis y zona horaria del estado del usuario
       const userState = this.userStates.get(chatId);
       const dosage = userState?.reminderData?.dosage || "Dosis no especificada";
-      const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Usar Bogotá como predeterminado para Colombia
+      // const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Usar Bogotá como predeterminado para Colombia
+      const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Ahora debería venir del estado del usuario
 
       const savedReminder = await this.reminderService.createReminder(chatId, {
         medicationName: nombreMedicamento,
@@ -1513,7 +1708,9 @@ export class TelegramReminderService {
           `💊 Medicamento: ${nombreMedicamento}\n` +
           `📊 Dosis: ${dosage}\n` +
           `⏰ Hora: ${horaRecordatorio}\n` +
-          `🔄 Frecuencia: ${frecuenciaText}\n\n`,
+          // `🔄 Frecuencia: ${frecuenciaText}\n\n`,
+          `🔄 Frecuencia: ${frecuenciaText}\n` +
+          `🌍 Zona Horaria: ${timezone}\n\n`,
         {
           reply_markup: {
             inline_keyboard: [

@@ -33,13 +33,13 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
-            text: "🙋‍♂️ Recordatorio\n\nde Tratamiento(s) Médicos",
+            text: "⏰ Recordatorios de Medicamentos",
             callback_data: "recordatorios",
           },
         ],
         [
           {
-            text: "📲 Recordatorio\nde Cita(s) Médica(s)",
+            text: "📲 Recordatorio\nde Cita(s) ",
             callback_data: "recordatorio_cita_medica",
           },
         ],
@@ -63,7 +63,7 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
-            text: "📞 Contacto con el Desarrollador",
+            text: "📞 Contacto con Desarrollador",
             callback_data: "contacto",
           },
         ],

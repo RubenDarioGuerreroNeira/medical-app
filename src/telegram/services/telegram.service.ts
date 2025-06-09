@@ -143,6 +143,39 @@ export class TelegramService {
           );
       }
 
+      // Manejar callbacks de selección de zona horaria
+      if (data.startsWith("tz_")) {
+        const selectedTimezone = data.substring("tz_".length);
+        const state = this.userStates.get(chatId);
+
+        if (state && state.reminderData) {
+          state.reminderData.timezone = selectedTimezone;
+          // El siguiente paso después de la zona horaria es la frecuencia
+          state.step = "awaiting_frequency"; // Asegúrate que este sea el nombre correcto del paso
+          this.userStates.set(chatId, state);
+
+          // Llamar al método que solicita la frecuencia en TelegramReminderService
+          await this.reminderService.solicitarFrecuenciaRecordatorio(
+            chatId,
+            state.reminderData.medicationName,
+            state.reminderData.dosage,
+            state.reminderData.reminderTime
+          );
+        } else {
+          this.errorHandler.handleServiceError(
+            this.bot,
+            new Error(
+              `Estado no encontrado o reminderData ausente para callback de timezone: ${data}`
+            ),
+            "handleCallbackQuery_Timezone",
+            chatId
+          );
+        }
+        return;
+      }
+
+      //----------------------
+
       // Manejar callback para marcar medicamento como tomado
       if (data.startsWith("mark_taken_")) {
         const reminderId = parseInt(data.split("_")[2]);
