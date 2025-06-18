@@ -31,6 +31,13 @@ import { RecetaMedicaModule } from "./receta-medica/receta-medica.module";
 import { CacheModule } from "@nestjs/cache-manager";
 import { TelegramModule } from "./telegram/telegram.module";
 
+//graphQL
+import { GraphQLModule } from "@nestjs/graphql";
+import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
+import { join } from "path";
+import { AppResolver } from "./app.resolver";
+import { ReminderResolver } from "./telegram/reminder.resolver";
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,14 +49,22 @@ import { TelegramModule } from "./telegram/telegram.module";
       ttl: 60000, // tiempo de vida en milisegundos
       max: 100, //max numero de items en cache
     }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), "src/schema.gql"),
+      sortSchema: true,
+      playground: process.env.NODE_ENV !== "production",
+      debug: process.env.NODE_ENV !== "production",
+      // context: ({ req }) => ({ req }),
+    }),
 
     TypeOrmModule.forRoot({
       type: "postgres",
-      host: process.env.DB_HOST ,
-      port: parseInt(process.env.DB_PORT) ,
-      username: process.env.DB_USERNAME ,
-      password: process.env.DB_PASSWORD ,
-      database: process.env.DB_NAME ,
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT),
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       entities: [
         Usuario,
         Medico,
@@ -110,6 +125,6 @@ import { TelegramModule } from "./telegram/telegram.module";
     RecetaMedicaModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppResolver, ReminderResolver],
 })
 export class AppModule {}
