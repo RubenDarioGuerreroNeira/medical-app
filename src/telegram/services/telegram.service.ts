@@ -177,10 +177,21 @@ export class TelegramService {
       //----------------------
 
       // Manejar callback para marcar medicamento como tomado
+      // if (data.startsWith("mark_taken_")) {
+      //   const reminderId = parseInt(data.split("_")[2]);
+      //   await this.reminderService.handleMarkAsTaken(chatId, reminderId);
+      //   // await this.bot.answerCallbackQuery(callbackQuery.id); // Ya se hace al inicio
+      //   return;
+      // }
+
       if (data.startsWith("mark_taken_")) {
         const reminderId = parseInt(data.split("_")[2]);
-        await this.reminderService.handleMarkAsTaken(chatId, reminderId);
-        // await this.bot.answerCallbackQuery(callbackQuery.id); // Ya se hace al inicio
+        const originalMessageId = callbackQuery.message?.message_id; // Obtener el ID del mensaje
+        await this.reminderService.handleMarkAsTaken(
+          chatId,
+          reminderId,
+          originalMessageId
+        );
         return;
       }
 

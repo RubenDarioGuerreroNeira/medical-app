@@ -145,13 +145,15 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         bot: TelegramBot,
         userStatesMap: Map<number, any>,
         reminderService: ReminderService,
-        historialMedicoService: TelegramHistorialMedicoService
+        historialMedicoService: TelegramHistorialMedicoService,
+        menusService: TelegramMenuService
       ) => {
         const service = new TelegramReminderService(
           bot,
           userStatesMap,
           reminderService,
-          historialMedicoService
+          historialMedicoService,
+          menusService
         );
 
         // Verificar que reminderService es la instancia correcta
@@ -165,8 +167,9 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
       inject: [
         "TELEGRAM_BOT",
         "USER_STATES_MAP",
-        ReminderService, // Inyectar directamente ReminderService, no el repositorio
-        TelegramHistorialMedicoService, // Inyectar el servicio aquí
+        ReminderService, // Inyectar directamente ReminderService
+        TelegramHistorialMedicoService,
+        TelegramMenuService,
       ],
     },
 

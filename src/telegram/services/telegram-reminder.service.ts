@@ -4,7 +4,7 @@ import { ReminderService } from "../reminder.service";
 // Por esta importación
 import { CreateTelegramHistorialMedicoDto } from "../../telegram-historial-medico/dto/create-telegram-historial-medico.dto";
 import { TelegramHistorialMedicoService } from "./telegram-historial-medico.service";
-
+import { TelegramMenuService } from "./telegram-menu.service";
 import * as PDFDocument from "pdfkit";
 import * as fs from "fs";
 import * as path from "path";
@@ -22,7 +22,8 @@ export class TelegramReminderService {
     @Inject("USER_STATES_MAP") userStatesMap: Map<number, any>,
     @Inject(forwardRef(() => ReminderService))
     private reminderService: ReminderService,
-    private historialMedicoService: TelegramHistorialMedicoService
+    private historialMedicoService: TelegramHistorialMedicoService,
+    private menusService: TelegramMenuService
   ) {
     this.userStates = userStatesMap;
   }
@@ -77,20 +78,63 @@ export class TelegramReminderService {
     );
   }
 
-  async handleMarkAsTaken(chatId: number, reminderId: number): Promise<void> {
+  async handleMarkAsTaken(
+    chatId: number,
+    reminderId: number,
+    originalMessageId: number
+  ): Promise<void> {
     try {
       const reminder = await this.reminderService.markMedicationAsTaken(
         reminderId
       );
+
+      //
+      // 1. Enviar mensaje de confirmación
+
       await this.bot.sendMessage(
         chatId,
-        `✅ "${reminder.medicationName}" marcado como tomado.`
+        // `✅ "${reminder.medicationName}" marcado como tomado.`
+
+        // Opcional: Podrías intentar editar el mensaje original de la notificación para quitar los botones.
+        `✅ "${this.escapeMarkdown(
+          reminder.medicationName
+        )}" marcado como tomado.`
+        // Considera usar { parse_mode: "MarkdownV2" } si escapeMarkdown está ajustado para ello
       );
-      // Opcional: Podrías intentar editar el mensaje original de la notificación para quitar los botones.
+      // 2. Editar el mensaje original para quitar los botones (si se proporciona el ID)
+      if (originalMessageId) {
+        try {
+          await this.bot.editMessageReplyMarkup(
+            { inline_keyboard: [] }, // Teclado vacío para remover los botones
+            { chat_id: chatId, message_id: originalMessageId }
+          );
+        } catch (editError) {
+          this.logger.warn(
+            `[${chatId}] No se pudo editar el mensaje original del recordatorio ${reminderId}: ${
+              (editError as Error).message
+            }`
+          );
+          // No es crítico, continuar.
+        }
+      }
+
+      // 3. Esperar 3 segundos
+      const delayInMilliseconds = 3000;
+      await new Promise((resolve) => setTimeout(resolve, delayInMilliseconds));
+
+      // 4. Redirigir al menú principal
+      this.logger.log(
+        `[${chatId}] Redirigiendo al menú principal después de marcar medicamento como tomado.`
+      );
+      await this.menusService.mostrarMenuPrincipal(chatId);
     } catch (error) {
       this.logger.error(
-        `Error al marcar como tomado (chatId: ${chatId}, reminderId: ${reminderId}): ${error.message}`,
-        error.stack
+        // `Error al marcar como tomado (chatId: ${chatId}, reminderId: ${reminderId}): ${error.message}`,
+        // error.stack
+        `Error al marcar como tomado (chatId: ${chatId}, reminderId: ${reminderId}): ${
+          (error as Error).message
+        }`,
+        (error as Error).stack
       );
       await this.bot.sendMessage(
         chatId,
@@ -160,10 +204,16 @@ export class TelegramReminderService {
       );
     }
   }
+  // protected escapeMarkdown(text: string): string {
+  //   if (!text) return "";
+  //   // Escapa caracteres especiales de Markdown V2
+  //   return text.replace(/[_*\~`>#+\-=|{}.!]/g, "\\$&");
+  // }
+
   protected escapeMarkdown(text: string): string {
     if (!text) return "";
     // Escapa caracteres especiales de Markdown V2
-    return text.replace(/[_*\~`>#+\-=|{}.!]/g, "\\$&");
+    return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
   }
 
   async iniciarCreacionRecordatorio(chatId: number): Promise<void> {
@@ -227,6 +277,12 @@ export class TelegramReminderService {
             }
           );
           return;
+        }
+
+        const currentState = this.userStates.get(chatId);
+        if (currentState) {
+          currentState.reminderData.medicationName = nombreMedicamento;
+          this.userStates.set(chatId, currentState);
         }
 
         // Si no existe, continuar con el flujo normal
@@ -425,9 +481,9 @@ export class TelegramReminderService {
         if (!msg.text) return;
 
         try {
-          // Actualizar el recordatorio
+          // Actualizar Dosis
           await this.reminderService.updateReminder(reminderId, {
-            medicationName: msg.text,
+            dosage: msg.text,
           });
 
           await this.bot.sendMessage(
@@ -1082,6 +1138,23 @@ export class TelegramReminderService {
       if (!msg.text) return;
 
       const dosis = msg.text;
+
+      // Guardar la dosis en el estado del usuario
+      const currentState = this.userStates.get(chatId);
+      if (!currentState || !currentState.reminderData) {
+        this.logger.error(
+          `[${chatId}] Estado de usuario no encontrado o reminderData ausente al procesar dosis.`
+        );
+        await this.bot.sendMessage(
+          chatId,
+          "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
+        );
+        this.userStates.delete(chatId);
+        return;
+      }
+      currentState.reminderData.dosage = dosis;
+      this.userStates.set(chatId, currentState);
+
       await this.solicitarHoraRecordatorio(chatId, nombreMedicamento, dosis);
     });
   }
@@ -1215,7 +1288,6 @@ export class TelegramReminderService {
         "O ingresa la zona horaria completa (ej: `America/New_York`).\n" +
         "Si tu zona horaria no está en la lista, puedes escribirla directamente o consultar la lista completa en:\n" +
         "https://en.wikipedia.org/wiki/List_of_tz_database_time_zones",
-      
 
       {
         // parse_mode: "Markdown",
