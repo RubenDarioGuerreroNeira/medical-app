@@ -60,15 +60,24 @@ import { caCert } from "./ssl-config";
     //   // context: ({ req }) => ({ req }),
     // }),
 
+    // GraphQLModule.forRoot<ApolloDriverConfig>({
+    //   driver: ApolloDriver,
+    //   autoSchemaFile:
+    //     process.env.NODE_ENV !== "production"
+    //       ? join(process.cwd(), "src/schema.gql")
+    //       : false, // evita generación en producción
+
+    //   sortSchema: false,
+    //   playground: false,
+    //   debug: false,
+    // }),
+
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile:
-        process.env.NODE_ENV !== "production"
-          ? join(process.cwd(), "src/schema.gql")
-          : false, // evita generación en producción
+      autoSchemaFile: join(process.cwd(), "src/schema.gql"), // SIEMPRE genera el esquema
       sortSchema: false,
-      playground: false,
-      debug: false,
+      playground: process.env.NODE_ENV !== "production", // Playground solo en desarrollo
+      debug: process.env.NODE_ENV !== "production", // Debug solo en desarrollo
     }),
 
     TypeOrmModule.forRoot({
