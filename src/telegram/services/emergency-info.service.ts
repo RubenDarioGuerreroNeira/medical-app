@@ -7,7 +7,8 @@ import { EmergencyInfo } from "../../Entities/EmergencyInfo.entity";
 import { BloodType, RhFactor } from "../../Entities/EmergencyInfo.entity";
 import * as QRCode from "qrcode";
 import * as PDFDocument from "pdfkit";
-
+// import PDFDocument from "pdfkit";
+import { PassThrough } from "stream";
 // Interfaz para el estado de configuración de emergencia
 interface EmergencyConfigState {
   currentOperation: "configure_emergency_info";
@@ -652,62 +653,38 @@ export class EmergencyInfoService {
     }
   }
 
-  async generarTarjetaEmergenciaPDF(chatId: number): Promise<Buffer | null> {
+  //------------------------
+  async generarTarjetaEmergenciaPDF(
+    chatId: number
+  ): Promise<PassThrough | null> {
     try {
       const emergencyInfo = await this.obtenerInformacionEmergencia(chatId);
-
-      if (!emergencyInfo || !emergencyInfo.accessCode) {
-        return null;
-      }
-
+      if (!emergencyInfo || !emergencyInfo.accessCode) return null;
       const botUsername = (await this.bot.getMe()).username;
-      if (!botUsername) {
-        this.logger.error(
-          "No se pudo obtener el username del bot para la tarjeta de emergencia."
-        );
-        return null;
-      }
+      if (!botUsername) return null;
 
       const deepLinkUrl = `https://t.me/${botUsername}?start=${emergencyInfo.accessCode}`;
       const qrCodeData = await QRCode.toDataURL(deepLinkUrl);
 
-      // Crear un nuevo documento PDF
-      const doc = new PDFDocument({ size: "A6", margin: 20 }); // Tamaño A6 (105 x 148 mm)
-
-      // Buffer para almacenar el PDF
-      const buffers: Buffer[] = [];
-      doc.on("data", buffers.push.bind(buffers));
-      doc.on("end", () => {});
-
-      // Agregar contenido al PDF
-      doc.fontSize(16).text(`QR de Inf. Médica del Paciente`, {
-        align: "center",
-      });
-      doc.moveDown();
-
-      // doc.fontSize(12).text(`Nombre: ${botUsername}`, { align: "left" }); // Reemplazar con el nombre real del usuario si está disponible
-      // doc.text(`Código de Acceso: ${emergencyInfo.accessCode}`, {
-      //   align: "left",
-      // });
-      // doc.moveDown(2);
+      // Usa la clase así:
+      const doc = new PDFDocument({ size: "A6", margin: 20 });
+      const stream = new PassThrough();
+      doc.pipe(stream);
 
       doc
+        .fontSize(16)
+        .text(`QR de Inf. Médica del Paciente`, { align: "center" });
+      doc.moveDown();
+      doc
         .fontSize(10)
-        .text("QR Generado por el Bot de Telegram @CitasMedicBot"),
-        { align: "left" };
+        .text("QR Generado por el Bot de Telegram @CitasMedicBot", {
+          align: "left",
+        });
       doc.moveDown(2);
-
-      // Agregar el código QR
-      const qrCodeX = (doc.page.width - 100) / 2; // Centrar el QR
-
-      // centro el Código
-      if (doc.y > doc.page.height - 150) {
-        doc.addPage();
-      }
-
+      const qrCodeX = (doc.page.width - 100) / 2;
+      if (doc.y > doc.page.height - 150) doc.addPage();
       doc.image(qrCodeData, qrCodeX, doc.y, { width: 100 });
       doc.moveDown(10);
-
       doc
         .fontSize(10)
         .text(
@@ -715,19 +692,9 @@ export class EmergencyInfoService {
           { align: "center" }
         );
       doc.moveDown(15);
-
-      // Finalizar el documento
       doc.end();
 
-      return new Promise<Buffer>((resolve, reject) => {
-        doc.on("end", () => {
-          const pdfData = Buffer.concat(buffers);
-          resolve(pdfData);
-        });
-        doc.on("error", (err) => {
-          reject(err);
-        });
-      });
+      return stream;
     } catch (error) {
       this.logger.error(
         `Error al generar tarjeta de emergencia PDF: ${error.message}`
@@ -736,13 +703,14 @@ export class EmergencyInfoService {
     }
   }
 
+  //---
   async enviarTarjetaEmergenciaPDF(chatId: number): Promise<boolean> {
     try {
-      const pdfBuffer = await this.generarTarjetaEmergenciaPDF(chatId);
-      if (pdfBuffer) {
+      const pdfStream = await this.generarTarjetaEmergenciaPDF(chatId);
+      if (pdfStream) {
         await this.bot.sendDocument(
           chatId,
-          pdfBuffer,
+          pdfStream,
           {
             caption: "Tu tarjeta de emergencia médica en formato PDF.",
           },
@@ -770,6 +738,8 @@ export class EmergencyInfoService {
       return false;
     }
   }
+
+  //
 
   async mostrarInformacionPorCodigoAcceso(
     chatId: number, // El chatId de la persona que escaneó el QR
