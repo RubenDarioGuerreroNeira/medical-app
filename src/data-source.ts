@@ -1,7 +1,6 @@
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
-import * as fs from "fs";
-import { join } from "path";
+import { caCert } from "./ssl-config";
 
 dotenv.config();
 
@@ -20,7 +19,7 @@ export const AppDataSource = new DataSource({
           {
             // rejectUnauthorized: true,
             rejectUnauthorized: false,
-            ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+            ca: caCert,
             // ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
           }
         : undefined,

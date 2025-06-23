@@ -38,7 +38,7 @@ import { join } from "path";
 import { AppResolver } from "./app.resolver";
 import { ReminderResolver } from "./telegram/reminder.resolver";
 // maneja el el archivo de certificacion ca.pem
-import * as fs from "fs";
+import { caCert } from "./ssl-config";
 
 @Module({
   imports: [
@@ -100,7 +100,7 @@ import * as fs from "fs";
                 // configura ssl para aiven
                 // rejectUnauthorized: true,
                 rejectUnauthorized: false,
-                ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+                ca: caCert,
                 // ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
               }
             : undefined, // No SSL in development unless specifically configured
