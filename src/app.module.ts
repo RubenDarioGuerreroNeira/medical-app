@@ -51,13 +51,24 @@ import * as fs from "fs";
       ttl: 60000, // tiempo de vida en milisegundos
       max: 100, //max numero de items en cache
     }),
+    // GraphQLModule.forRoot<ApolloDriverConfig>({
+    //   driver: ApolloDriver,
+    //   autoSchemaFile: join(process.cwd(), "src/schema.gql"),
+    //   sortSchema: true,
+    //   playground: process.env.NODE_ENV !== "production",
+    //   debug: process.env.NODE_ENV !== "production",
+    //   // context: ({ req }) => ({ req }),
+    // }),
+
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), "src/schema.gql"),
-      sortSchema: true,
-      playground: process.env.NODE_ENV !== "production",
-      debug: process.env.NODE_ENV !== "production",
-      // context: ({ req }) => ({ req }),
+      autoSchemaFile:
+        process.env.NODE_ENV !== "production"
+          ? join(process.cwd(), "src/schema.gql")
+          : false, // evita generación en producción
+      sortSchema: false,
+      playground: false,
+      debug: false,
     }),
 
     TypeOrmModule.forRoot({
