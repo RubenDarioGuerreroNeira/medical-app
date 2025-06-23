@@ -83,9 +83,9 @@ import * as fs from "fs";
       synchronize: process.env.NODE_ENV !== "production",
       extra: {
         ssl:
-          process.env.NODE_ENV === "production" ||
-          process.env.DB_SSL_ENABLED === "true"
-            ? {
+          process.env.NODE_ENV === "production"
+            ? // process.env.DB_SSL_ENABLED === "true"
+              {
                 // configura ssl para aiven
                 rejectUnauthorized: true,
                 // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),

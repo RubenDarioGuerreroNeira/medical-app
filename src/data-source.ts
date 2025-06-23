@@ -15,9 +15,9 @@ export const AppDataSource = new DataSource({
 
   extra: {
     ssl:
-      process.env.NODE_ENV === "production" ||
-      process.env.DB_SSL_ENABLED === "true"
-        ? {
+      process.env.NODE_ENV === "production"
+        ? // process.env.DB_SSL_ENABLED === "true"
+          {
             rejectUnauthorized: true,
             // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
             ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
