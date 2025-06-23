@@ -20,7 +20,7 @@ export const AppDataSource = new DataSource({
           {
             rejectUnauthorized: true,
             // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
-            ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
+            // ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
           }
         : undefined,
   },
