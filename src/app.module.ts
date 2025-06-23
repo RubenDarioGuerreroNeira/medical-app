@@ -87,7 +87,8 @@ import * as fs from "fs";
             ? // process.env.DB_SSL_ENABLED === "true"
               {
                 // configura ssl para aiven
-                rejectUnauthorized: true,
+                // rejectUnauthorized: true,
+                rejectUnauthorized: false,
                 // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
                 ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
               }
