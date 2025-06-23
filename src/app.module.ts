@@ -88,7 +88,8 @@ import * as fs from "fs";
             ? {
                 // configura ssl para aiven
                 rejectUnauthorized: true,
-                ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+                // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+                ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
               }
             : undefined, // No SSL in development unless specifically configured
       },

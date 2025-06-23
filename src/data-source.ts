@@ -19,7 +19,8 @@ export const AppDataSource = new DataSource({
       process.env.DB_SSL_ENABLED === "true"
         ? {
             rejectUnauthorized: true,
-            ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+            // ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
+            ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
           }
         : undefined,
   },
