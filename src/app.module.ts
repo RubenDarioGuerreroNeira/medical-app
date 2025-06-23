@@ -37,6 +37,8 @@ import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { join } from "path";
 import { AppResolver } from "./app.resolver";
 import { ReminderResolver } from "./telegram/reminder.resolver";
+// maneja el el archivo de certificacion ca.pem
+import * as fs from "fs";
 
 @Module({
   imports: [
@@ -81,9 +83,12 @@ import { ReminderResolver } from "./telegram/reminder.resolver";
       synchronize: process.env.NODE_ENV !== "production",
       extra: {
         ssl:
-          process.env.NODE_ENV === "production"
+          process.env.NODE_ENV === "production" ||
+          process.env.DB_SSL_ENABLED === "true"
             ? {
-                rejectUnauthorized: false, // Important for services like Render
+                // configura ssl para aiven
+                rejectUnauthorized: true,
+                ca: fs.readFileSync(join(process.cwd(), "ca.pem")).toString(),
               }
             : undefined, // No SSL in development unless specifically configured
       },

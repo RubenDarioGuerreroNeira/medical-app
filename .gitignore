@@ -1,9 +1,12 @@
-# compiled output
-/dist
+# Dependencies
 /node_modules
+
+# Build output
+/dist
 /build
-.env
-*.txt
+
+# GraphQL Schema (auto-generated)
+src/schema.gql
 
 # Logs
 logs
@@ -14,12 +17,20 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Environment variables
+.env*
+!.env.example
+
 # OS
 .DS_Store
 
 # Tests
 /coverage
 /.nyc_output
+
+# SSL Certificates
+# No subir certificados de seguridad al repositorio
+*.pem
 
 # IDEs and editors
 /.idea
@@ -37,13 +48,6 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
 # temp directory
 .temp
 .tmp
@@ -57,3 +61,7 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .qodo
+
+
+# texto
+*.txt
