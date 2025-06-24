@@ -51,26 +51,6 @@ import { caCert } from "./ssl-config";
       ttl: 60000, // tiempo de vida en milisegundos
       max: 100, //max numero de items en cache
     }),
-    // GraphQLModule.forRoot<ApolloDriverConfig>({
-    //   driver: ApolloDriver,
-    //   autoSchemaFile: join(process.cwd(), "src/schema.gql"),
-    //   sortSchema: true,
-    //   playground: process.env.NODE_ENV !== "production",
-    //   debug: process.env.NODE_ENV !== "production",
-    //   // context: ({ req }) => ({ req }),
-    // }),
-
-    // GraphQLModule.forRoot<ApolloDriverConfig>({
-    //   driver: ApolloDriver,
-    //   autoSchemaFile:
-    //     process.env.NODE_ENV !== "production"
-    //       ? join(process.cwd(), "src/schema.gql")
-    //       : false, // evita generación en producción
-
-    //   sortSchema: false,
-    //   playground: false,
-    //   debug: false,
-    // }),
 
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -104,13 +84,11 @@ import { caCert } from "./ssl-config";
       extra: {
         ssl:
           process.env.NODE_ENV === "production"
-            ? // process.env.DB_SSL_ENABLED === "true"
-              {
+            ? {
                 // configura ssl para aiven
-                // rejectUnauthorized: true,
+
                 rejectUnauthorized: false,
                 ca: caCert,
-                // ca: fs.readFileSync(join(process.cwd(), "ca.pem")),
               }
             : undefined, // No SSL in development unless specifically configured
       },
