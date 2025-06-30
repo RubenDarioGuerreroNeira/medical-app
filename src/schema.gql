@@ -2,15 +2,35 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-input CreateMedicationReminderInput {
+type MedicationReminder {
+  id: ID!
+  medicationName: String!
+  dosage: String!
+  reminderTime: String!
+
   """Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)"""
   daysOfWeek: [Int!]!
-  dosage: String!
-  medicationName: String!
-
-  """Time in HH:MM format"""
-  reminderTime: String!
   timezone: String
+  isActive: Boolean!
+
+  """Timestamp of when the medication was last marked as taken"""
+  lastTaken: DateTime
+
+  """Telegram Chat ID associated with this reminder"""
+  chatId: String!
+
+  """User ID associated with this reminder (from Telegram)"""
+  userId: String!
+  createdAt: DateTime!
+
+  """Timestamp of the last update to the reminder"""
+  updatedAt: DateTime
+
+  """Type of reminder (e.g., medication, appointment)"""
+  type: String!
+
+  """List of timestamps when the medication was marked as taken"""
+  timesTaken: [DateTime!]
 }
 
 """
@@ -18,57 +38,40 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type MedicationReminder {
-  """Telegram Chat ID associated with this reminder"""
-  chatId: String!
-  createdAt: DateTime!
-
-  """Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)"""
-  daysOfWeek: [Int!]!
-  dosage: String!
-  id: ID!
-  isActive: Boolean!
-
-  """Timestamp of when the medication was last marked as taken"""
-  lastTaken: DateTime
-  medicationName: String!
-  reminderTime: String!
-
-  """List of timestamps when the medication was marked as taken"""
-  timesTaken: [DateTime!]
-  timezone: String
-
-  """Type of reminder (e.g., medication, appointment)"""
-  type: String!
-
-  """Timestamp of the last update to the reminder"""
-  updatedAt: DateTime
-
-  """User ID associated with this reminder (from Telegram)"""
-  userId: String!
+type Query {
+  sayHello: String!
+  reminderById(id: Int!): MedicationReminder
+  myReminders: [MedicationReminder!]!
 }
 
 type Mutation {
   createMedicationReminder(input: CreateMedicationReminderInput!): MedicationReminder!
+  updateMedicationReminder(id: Int!, input: UpdateMedicationReminderInput!): MedicationReminder
   deleteMedicationReminder(id: Int!): Boolean!
   markMedicationTaken(id: Int!): MedicationReminder
-  updateMedicationReminder(id: Int!, input: UpdateMedicationReminderInput!): MedicationReminder
 }
 
-type Query {
-  myReminders: [MedicationReminder!]!
-  reminderById(id: Int!): MedicationReminder
-  sayHello: String!
+input CreateMedicationReminderInput {
+  medicationName: String!
+  dosage: String!
+
+  """Time in HH:MM format"""
+  reminderTime: String!
+
+  """Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)"""
+  daysOfWeek: [Int!]!
+  timezone: String
 }
 
 input UpdateMedicationReminderInput {
-  """Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)"""
-  daysOfWeek: [Int!]
-  dosage: String
-  isActive: Boolean
   medicationName: String
+  dosage: String
 
   """Time in HH:MM format"""
   reminderTime: String
+
+  """Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)"""
+  daysOfWeek: [Int!]
   timezone: String
+  isActive: Boolean
 }
