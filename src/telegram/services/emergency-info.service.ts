@@ -46,19 +46,26 @@ export class EmergencyInfoService {
   ) {}
 
   async mostrarMenuEmergencia(chatId: number): Promise<void> {
+    // await this.bot.sendMessage(
+    //   chatId,
+    //   "🚨 *Información de Emergencia Médica* 🚨\n\n" +
+    //     "Configura tu información médica crítica para que esté disponible mediante un código QR ,para que este disponible para  las personas que te presten primeros auxilios  EN CASO DE EMERGENCIA.\n\n" +
+    //     "Siguiente paso es configurar tu información médica.\n\n" +
+    //     "Si ya la tienes Configurada solo observa la información de emergencia en caso de emergencia.",
+
     await this.bot.sendMessage(
       chatId,
-      "🚨 *Información de Emergencia Médica* 🚨\n\n" +
-        "Configura tu información médica crítica para que esté disponible mediante un código QR ,para que este disponible para  las personas que te presten primeros auxilios  EN CASO DE EMERGENCIA.\n\n" +
-        "Siguiente paso es configurar tu información médica.\n\n" +
-        "Si ya la tienes Configurada solo observa la información de emergencia en caso de emergencia.",
+      "🚨 *Tu Tarjeta de Emergencia QR* 🚨\n\n" +
+        "Esta función te permite crear una tarjeta digital con un *código QR*. En caso de una emergencia, el personal de primeros auxilios puede escanearlo para acceder a tu información médica vital (alergias, tipo de sangre, persona que pueda ser contactada, Inf sobre Póliza de Seguro .) y ayudarte de forma más segura y rápida.\n\n" +
+        "¿Qué deseas hacer?",
       {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "1-⚕️ Configurar información médica",
+                // text: "1-⚕️ Configurar información médica",
+                text: "✅ Crear / Actualizar mi Tarjeta QR",
                 callback_data: "configurar_emergencia",
               },
             ],
@@ -70,12 +77,12 @@ export class EmergencyInfoService {
             //   },
             // ],
 
-            // [
-            //   {
-            //     text: "3-⬇️ Descargar  QR que contiene Inf vital (PDF)",
-            //     callback_data: "descargar_tarjeta_pdf",
-            //   },
-            // ],
+            [
+              {
+                text: "3-⬇️ Descargar  QR (PDF)",
+                callback_data: "descargar_tarjeta_pdf",
+              },
+            ],
             [
               {
                 text: "🔍 Ver mi información de emergencia",
@@ -84,7 +91,7 @@ export class EmergencyInfoService {
             ],
             [
               {
-                text: "🔙 Volver al menú principal",
+                text: "🔙 Volver",
                 callback_data: "menu_principal",
               },
             ],
@@ -326,12 +333,6 @@ export class EmergencyInfoService {
                     },
                   ],
 
-                  // [
-                  //   {
-                  //     text: "🔙 Volver al menú de emergencia",
-                  //     callback_data: "menu_emergencia",
-                  //   },
-                  // ],
                   [
                     {
                       text: "🏠 Volver al menú principal",

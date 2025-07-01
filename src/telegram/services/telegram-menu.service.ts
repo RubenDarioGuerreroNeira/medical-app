@@ -57,7 +57,7 @@ export class TelegramMenuService extends TelegramBaseService {
         ],
         [
           {
-            text: "🚑 Info de Emergencia (Primeros Auxilios)",
+            text: "🚑 Crear ó Descargar Qr Emergencia",
             callback_data: "menu_emergencia", // Usar el callback_data que abre el menú de emergencia
           },
         ],
@@ -82,17 +82,17 @@ export class TelegramMenuService extends TelegramBaseService {
         `Te puedo ayudar con:\n\n` +
         `• 💊 Encontrar farmacias cercanas a tu ubicación\n\n` +
         `• 🏥 Localizar centros médicos próximos a ti\n\n` +
-        `• 🤖 Consultar información sobre medicamentos con IA\n` +
-        `  (puedes escribir o enviar una foto del medicamento)\n\n` +
-        `• ⏰ Programar y gestionar recordatorios para tus tratamientos médicos\n\n` +
+        `🤖 *Consultas con IA:*\n` +
+        `   Pregunta sobre medicamentos o interpreta resultados de laboratorio.\n\n` +
+        `• ⏰ Recordatorios de tratamientos médicos*\n` +
+        ` No olvides nunca más una dosis\n\n ` +
         `• 📊 Exportar tus recordatorios de medicamentos en PDF o CSV\n\n` +
         `• 📅 Agendar y administrar tus citas médicas\n\n` +
         `• 📋 Crear y mantener tu historial médico personal\n\n` +
         `• 📱 Compartir información médica con tus profesionales de salud\n\n` +
         `• 🔔 Recibir alertas personalizadas sobre tus medicamentos\n\n` +
-        `• 🚑 Acceder a información de emergencia y primeros auxilios\n\n` +
-        `• 🏣 Genera Código QR con la Info Médica para que pueda usarse en caso de necesitar primeros auxilios\n\n` +
-        `• 🧪 Interpretar resultados de laboratorio (envía texto o foto y recibe una interpretación automática)\n\n` +
+        `• 🚑 *Tarjeta de Emergencia con QR:*\n` +
+        `   *¡IMPORTANTE!* Crea un código QR con tu información médica vital. En una emergencia, los paramédicos pueden escanearlo para ayudarte mejor.\n\n` +
         `• 📞 Contactar al desarrollador para soporte o sugerencias\n\n` +
         `\n` +
         `¿En qué puedo ayudarte hoy?\n\n\n` +

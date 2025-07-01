@@ -204,11 +204,6 @@ export class TelegramReminderService {
       );
     }
   }
-  // protected escapeMarkdown(text: string): string {
-  //   if (!text) return "";
-  //   // Escapa caracteres especiales de Markdown V2
-  //   return text.replace(/[_*\~`>#+\-=|{}.!]/g, "\\$&");
-  // }
 
   protected escapeMarkdown(text: string): string {
     if (!text) return "";
@@ -751,7 +746,7 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver a Edición",
+                  text: "✏ Volver a Edición",
                   callback_data: `edit_reminder_${reminderId}`,
                 },
               ],
@@ -1094,12 +1089,28 @@ export class TelegramReminderService {
       });
 
       // Agregar botón para volver
-      inlineKeyboard.push([
-        {
-          text: "🔙 Volver al Menú Recordatorios",
-          callback_data: "recordatorios",
-        },
-      ]);
+      inlineKeyboard.push(
+        [
+          {
+            text: " ✔ Crear Recordatorio(s)",
+            callback_data: "recordatorios",
+          },
+        ],
+
+        [
+          {
+            text: " ❌ Eliminar Recordatorio(s)",
+            callback_data: "eliminar_recordatorio",
+          },
+        ],
+
+        [
+          {
+            text: "🔙 Menú Principal",
+            callback_data: "menu_principal",
+          },
+        ]
+      );
 
       await this.bot.sendMessage(chatId, message, {
         parse_mode: "Markdown",
@@ -1170,17 +1181,6 @@ export class TelegramReminderService {
     const userTimezone =
       (await this.detectUserTimezone(chatId)) || "America/Caracas";
 
-    // Guardar la zona horaria en el estado del usuario
-    // const userState = this.userStates.get(chatId) || {
-    //   step: "",
-    //   reminderData: {},
-    // };
-    // userState.reminderData = {
-    //   ...userState.reminderData,
-    //   medicationName: nombreMedicamento,
-    //   dosage: dosis,
-    //   timezone: userTimezone,
-    // };
     const userState = this.userStates.get(chatId);
     if (!userState || !userState.reminderData) {
       this.logger.error(
@@ -1241,20 +1241,6 @@ export class TelegramReminderService {
 
       const horaRecordatorio = msg.text;
 
-      // Actualizar el estado del usuario con la hora
-      // const state = this.userStates.get(chatId);
-      // if (state) {
-      //   state.reminderData.reminderTime = horaRecordatorio;
-      //   this.userStates.set(chatId, state);
-      // }
-
-      // // Continuar con la solicitud de frecuencia
-      // await this.solicitarFrecuenciaRecordatorio(
-      //   chatId,
-      //   nombreMedicamento,
-      //   dosis,
-      //   horaRecordatorio
-      // );
       const currentState = this.userStates.get(chatId);
       if (currentState && currentState.reminderData) {
         currentState.reminderData.reminderTime = horaRecordatorio;
@@ -1315,13 +1301,6 @@ export class TelegramReminderService {
             //   { text: "Otra (escribir)", callback_data: "tz_type_other" } // Este callback no haría nada, solo es visual
             // ]
           ],
-          // Aún mantenemos force_reply si queremos que el usuario pueda escribir
-          // pero para botones inline, no es estrictamente necesario a menos que
-          // queramos forzar una respuesta si no se presiona un botón.
-          // Por ahora, lo quitamos para priorizar los botones.
-          // Si el usuario escribe, el onReplyToMessage lo capturará.
-          // force_reply: true,
-          // selective: true,
         },
       }
     );
@@ -1405,7 +1384,7 @@ export class TelegramReminderService {
   // Método para detectar la zona horaria del usuario
   private async detectUserTimezone(chatId: number): Promise<string | null> {
     try {
-      // Aquí podrías implementar lógica para:
+      //implementar lógica para:
       // 1. Verificar si el usuario ya tiene una zona horaria guardada
       // 2. Detectar la zona horaria basada en la ubicación del usuario (si está disponible)
       // 3. Preguntar al usuario su ubicación o zona horaria
@@ -1424,18 +1403,6 @@ export class TelegramReminderService {
     dosis: string,
     horaRecordatorio: string
   ): Promise<void> {
-    // Actualizar el estado del usuario con la dosis y la hora
-    // const userState = this.userStates.get(chatId) || {
-    //   step: "",
-    //   reminderData: {},
-    // };
-    // userState.reminderData = {
-    //   ...userState.reminderData,
-    //   medicationName: nombreMedicamento,
-    //   dosage: dosis,
-    //   reminderTime: horaRecordatorio,
-    // };
-
     const userState = this.userStates.get(chatId);
     if (!userState || !userState.reminderData) {
       this.logger.error(
@@ -1615,7 +1582,7 @@ export class TelegramReminderService {
     nombreMedicamento: string,
     horaRecordatorio: string,
     diaSemana: number,
-    nombreDia: string // Agrega este parámetro
+    nombreDia: string
   ): Promise<any> {
     try {
       // Crear array con solo el día seleccionado
@@ -1653,6 +1620,12 @@ export class TelegramReminderService {
         {
           reply_markup: {
             inline_keyboard: [
+              [
+                {
+                  text: "⭐ ¡IMPORTANTE! Configura tu QR de Emergencia",
+                  callback_data: "configurar_emergencia",
+                },
+              ],
               [
                 {
                   text: " 📋Quieres Crear el Historial Médico ?",
@@ -2060,7 +2033,7 @@ export class TelegramReminderService {
               inline_keyboard: [
                 [
                   {
-                    text: "➕ Crear Recordatorio Tratamiiento",
+                    text: "➕ Crear Recordatorio Tratamiento",
                     callback_data: "crear_recordatorio",
                   },
                 ],
@@ -2086,7 +2059,7 @@ export class TelegramReminderService {
       // Crear teclado con los recordatorios existentes
       const inlineKeyboard = reminders.map((reminder) => [
         {
-          text: `🗑️ ${reminder.medicationName} - ${reminder.reminderTime}`,
+          text: ` ${reminder.medicationName} - ${reminder.reminderTime}`,
           callback_data: `delete_reminder_${reminder.id}`,
         },
       ]);
@@ -2094,8 +2067,8 @@ export class TelegramReminderService {
       // Agregar botón para volver
       inlineKeyboard.push([
         {
-          text: "🔙 Cancelar",
-          callback_data: "ver_recordatorios",
+          text: "🔙 Volver Menu Recordatorios",
+          callback_data: "recordatorios",
         },
       ]);
 
@@ -2178,8 +2151,14 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "📋 Ver Recordatorio(s)",
+                  text: "📋 Ver ó Editar Recordatorio(s)",
                   callback_data: "ver_recordatorios",
+                },
+              ],
+              [
+                {
+                  text: " ❌ Eliminar otro(s) Recordatorio",
+                  callback_data: "eliminar_recordatorio",
                 },
               ],
               [
@@ -2249,6 +2228,13 @@ export class TelegramReminderService {
           {
             reply_markup: {
               inline_keyboard: [
+                [
+                  {
+                    text: "⭐ ¡IMPORTANTE! Configura tu QR de Emergencia",
+                    callback_data: "configurar_emergencia",
+                  },
+                ],
+
                 [
                   {
                     text: "🔙 Volver al Menú Principal",
@@ -2332,8 +2318,8 @@ export class TelegramReminderService {
             inline_keyboard: [
               [
                 {
-                  text: "📋 Menú de Recordatorios",
-                  callback_data: "recordatorios",
+                  text: "📋 Crear Recordatorio",
+                  callback_data: "crear_recordatorio",
                 },
               ],
               [

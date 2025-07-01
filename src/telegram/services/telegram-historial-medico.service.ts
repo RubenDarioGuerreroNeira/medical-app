@@ -125,8 +125,8 @@ export class TelegramHistorialMedicoService {
 
       await this.bot.sendMessage(
         chatId,
-        "📝 *Registro de Consulta Médica* 📝\n\n" +
-          "Vamos a registrar tu consulta médica paso a paso.\n" +
+        "📝 *Registro de Historial Médico* 📝\n\n" +
+          "Vamos a registrar tu historial médico paso a paso.\n" +
           "Puedes cancelar en cualquier momento enviando /cancelar.",
         { parse_mode: "Markdown" }
       );
@@ -178,7 +178,7 @@ export class TelegramHistorialMedicoService {
   }
 
   private async solicitarNombreMedico(chatId: number): Promise<void> {
-    this.logger.log(`[${chatId}] Solicitar nombre del médico`);
+    this.logger.log(`[${chatId}] Solicitar nombre del médico que preescribio`);
     await this.bot.sendMessage(
       chatId,
       "👨‍⚕️ Por favor, ingresa el nombre del médico:\n" +
@@ -215,7 +215,7 @@ export class TelegramHistorialMedicoService {
   }
 
   private async solicitarCentroMedico(chatId: number): Promise<void> {
-    this.logger.log(`[${chatId}] Solicitar centro médico`);
+    this.logger.log(`[${chatId}] Solicitar centro médico donde fue atentido`);
     await this.bot.sendMessage(
       chatId,
       "🏥 Por favor, ingresa el nombre del centro médico:\n" +
@@ -348,23 +348,7 @@ export class TelegramHistorialMedicoService {
       try {
         switch (currentStep) {
           // case "diagnostico":
-          //   await this.solicitarTratamiento(chatId);
-          //   break;
-          // case "tratamiento":
-          //   await this.solicitarNombreMedico(chatId);
-          //   break;
-          // case "nombreMedico":
-          //   await this.solicitarEspecialidadMedico(chatId);
-          //   break;
-          // case "especialidadMedico":
-          //   await this.solicitarCentroMedico(chatId);
-          //   break;
-          // case "centroMedico":
-          //   await this.solicitarDescripcion(chatId);
-          //   break;
-          // case "descripcion":
-          //   await this.solicitarCompartible(chatId);
-          //   break;
+
           case "awaiting_diagnostico":
             nextStepFunction = () => this.solicitarTratamiento(chatId);
             nextStepName = "awaiting_tratamiento";
@@ -648,7 +632,7 @@ export class TelegramHistorialMedicoService {
         historial.fechaConsulta
       ).toLocaleDateString();
 
-      let mensaje = `📋 *Detalle de Consulta Médica*\n\n`;
+      let mensaje = `📋 *Detalle de CRegistro Historial Médico*\n\n`;
       mensaje += `📅 *Fecha:* ${fechaConsulta}\n`;
       mensaje += `🔍 *Diagnóstico:* ${historial.diagnostico}\n`;
 
