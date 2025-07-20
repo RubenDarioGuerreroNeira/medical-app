@@ -10,16 +10,15 @@ import {
   HttpCode,
   ParseUUIDPipe,
 } from "@nestjs/common";
+import { Request } from "express";
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from "@nestjs/swagger";
 import { UsuariosService } from "./usuarios.service";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
-import { LoginDto } from "./dto/login-dto";
 import { Roles, Usuario } from "../Entities/Usuarios.entity";
 import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
-import { UseGuards } from "@nestjs/common";
+import { UseGuards, Req } from "@nestjs/common";
 import { RequireRoles } from "../Guard/Decorator";
-import { LoginResponseDto } from "./dto/login-response.dto";
 import { PaginatedUsuariosResponseDto } from "./dto/paginated-usuarios-response.dto";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
 
@@ -56,7 +55,7 @@ export class UsuariosController {
     return this.usuariosService.findAll();
   }
 
-  @ApiOperation({ summary: "Obtener un Usuario" })
+  @ApiOperation({ summary: "Obtener un Usuario por ID" })
   @ApiResponse({
     status: 200,
     description: "Usuario obtenido correctamente.",
@@ -87,9 +86,12 @@ export class UsuariosController {
   @Patch(":id")
   update(
     @Param("id", ParseUUIDPipe) usuarioId: string,
-    @Body() updateUsuarioDto: UpdateUsuarioDto
+    @Body() updateUsuarioDto: UpdateUsuarioDto,
+    @Req() req: Request // Inyectamos el objeto Request de Express
   ): Promise<Usuario> {
-    return this.usuariosService.update(usuarioId, updateUsuarioDto);
+    // El objeto 'req.user' es añadido por JwtAuthGuard.
+    // Gracias a la extensión de tipos, TypeScript ahora lo reconoce sin errores.
+    return this.usuariosService.update(usuarioId, updateUsuarioDto, req.user);
   }
 
   @ApiOperation({ summary: "Eliminar Usuario" })
@@ -105,45 +107,5 @@ export class UsuariosController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param("id", ParseUUIDPipe) usuarioId: string): Promise<void> {
     return this.usuariosService.remove(usuarioId);
-  }
-
-  @ApiOperation({ summary: "Login" })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({
-    status: 200,
-    description: "Login exitoso, devuelve token.",
-    type: LoginResponseDto,
-  })
-  @ApiResponse({ status: 401, description: "Credenciales inválidas." })
-  @Post("login")
-  @HttpCode(HttpStatus.OK)
-  login(@Body() loginDto: LoginDto): Promise<{ token: string }> {
-    return this.usuariosService.login(loginDto);
-  }
-
-  // --- NOTA SOBRE LOS SIGUIENTES ENDPOINTS ---
-  // Los endpoints como 'recovery', 'restorePassword', 'generateToken', 'decodeToken'
-  // a menudo se mueven a un controlador más específico, como `auth.controller.ts`,
-  // para separar las responsabilidades de la gestión de usuarios (CRUD) de la autenticación.
-  // Por ahora, los dejamos aquí refactorizados.
-
-  // ... (implementación refactorizada de los otros endpoints si es necesario) ...
-  // Ejemplo de cómo se vería 'recovery' refactorizado:
-  @ApiOperation({ summary: "Recuperar contraseña" })
-  @ApiResponse({
-    status: 200,
-    description: "Usuario recuperado correctamente",
-    type: Usuario,
-  })
-  @ApiResponse({
-    status: 400,
-    description: "Usuario no recuperado",
-  })
-  @Post("recovery")
-  @HttpCode(HttpStatus.OK)
-  async recovery(@Body() datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
-    // La lógica de devolver solo el email se mantiene, pero sin el try-catch.
-    // El servicio lanzará NotFoundException si el usuario no existe.
-    return this.usuariosService.recoveryUser(datos);
   }
 }

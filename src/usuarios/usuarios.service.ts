@@ -1,24 +1,19 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
-import { LoginDto } from "./dto/login-dto";
 import { Usuario } from "../Entities/Usuarios.entity";
 import { Medico } from "../Entities/Medico.entity";
 import { Roles } from "../Entities/Usuarios.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
-import * as crypto from "crypto";
-import { JwtService } from "@nestjs/jwt";
-import { MailerService } from "@nestjs-modules/mailer";
-import { MailerService as MailServicio } from "../Mail/mailService";
-import { AuthService } from "../auth/auth.service";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
 
 @Injectable()
@@ -27,12 +22,7 @@ export class UsuariosService {
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Medico)
-    private medicoRepository: Repository<Medico>,
-
-    private readonly mailerService: MailerService,
-    private readonly servicioMail: MailServicio,
-    private readonly jwtService: JwtService,
-    private readonly authService: AuthService
+    private medicoRepository: Repository<Medico>
   ) {}
 
   async validatePassword(
@@ -40,24 +30,6 @@ export class UsuariosService {
     hashedPassword: string
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
-  }
-  // creo el usuario y verifco la identidad enviando un token al email
-  // envio el email de bienvenida
-
-  async validaUsuario(datos: CreateUsuarioDto): Promise<Usuario> {
-    try {
-      const usuario = await this.usuarioRepository.findOneBy({
-        apellido: datos.apellido,
-        fecha_nacimiento: datos.fecha_nacimiento,
-      });
-
-      if (!usuario) {
-        throw new NotFoundException("Usuario no Encontrado");
-      }
-      return usuario;
-    } catch (error) {
-      throw new error();
-    }
   }
 
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
@@ -86,33 +58,6 @@ export class UsuariosService {
 
     const nuevoUsuario = await this.usuarioRepository.save(usuario);
 
-    if (nuevoUsuario.rol === Roles.MEDICO) {
-      const nuevoMedico = await this.medicoRepository.save({
-        usuario: nuevoUsuario,
-        especialidad: createUsuarioDto.especialidad,
-        horario_disponible: createUsuarioDto.horario_disponible,
-      });
-      await this.medicoRepository.save(nuevoMedico);
-    }
-
-    const token = await this.authService.generateToken({
-      email: nuevoUsuario.email,
-      rol: nuevoUsuario.rol,
-    });
-
-    // estan hecha spero no he implementado la config del email
-
-    //  Envio Token  al email
-    // await this.servicioMail.sendVerificationMail(
-    //   nuevoUsuario.email,
-    //   nuevoUsuario.nombre,
-    //   token
-    // );
-    // // Envio Email de Bienvenida
-    // await this.servicioMail.sendWelcomeMail(
-    //   nuevoUsuario.email,
-    //   nuevoUsuario.nombre
-    // );
     delete nuevoUsuario.contrasena;
     return nuevoUsuario;
   }
@@ -151,10 +96,26 @@ export class UsuariosService {
     return user;
   }
 
+  /**
+   * Busca un usuario por email para propósitos de autenticación.
+   * A diferencia de `findOne`, este método SÍ devuelve la contraseña.
+   * @param email El email del usuario a buscar.
+   */
+  async findOneByEmailForAuth(email: string): Promise<Usuario | undefined> {
+    return this.usuarioRepository.findOne({ where: { email } });
+  }
+
   async update(
     usuarioId: string,
-    updateUsuarioDto: UpdateUsuarioDto
+    updateUsuarioDto: UpdateUsuarioDto,
+    authenticatedUser: { id: string; rol: Roles }
   ): Promise<Usuario> {
+    if (
+      authenticatedUser.rol !== Roles.ADMIN &&
+      authenticatedUser.id !== usuarioId
+    ) {
+      throw new ForbiddenException("No autorizado para realizar esta acción");
+    }
     const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
     if (!usuario) {
       throw new NotFoundException(
@@ -216,78 +177,6 @@ export class UsuariosService {
       throw new NotFoundException(
         `Usuario con ID '${usuarioId}' no encontrado.`
       );
-    }
-  }
-
-  async login(logindto: LoginDto): Promise<{ token: string }> {
-    const { email, password } = logindto;
-
-    const usuario = await this.usuarioRepository.findOneBy({ email: email });
-    if (!usuario) {
-      throw new UnauthorizedException("Credenciales inválidas.");
-    }
-
-    const passValid = await bcrypt.compare(
-      logindto.password,
-      usuario.contrasena
-    );
-    if (!passValid) {
-      throw new UnauthorizedException("Credenciales inválidas.");
-    }
-
-    const token = this.jwtService.sign({
-      email: usuario.email,
-      rol: usuario.rol,
-    });
-
-    return { token };
-  }
-
-  async recoveryUser(datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
-    try {
-      const usuario = await this.validaUsuario(datos);
-      return {
-        email: usuario.email,
-      } as Partial<Usuario>;
-    } catch (error) {
-      throw new error();
-    }
-  }
-
-  async restorePassword(datos: CreateUsuarioDto): Promise<Partial<Usuario>> {
-    try {
-      const usuario = await this.validaUsuario(datos);
-      const hashh = await bcrypt.hash(datos.contrasena, 10);
-
-      await this.usuarioRepository.update(usuario.id, {
-        contrasena: hashh,
-      });
-
-      return {
-        email: usuario.email,
-        contrasena: hashh,
-      } as Partial<Usuario>;
-    } catch (error) {
-      throw new error();
-    }
-  }
-
-  async generateToken(email: string, rol: Roles): Promise<string> {
-    try {
-      const payload = { email, rol };
-      const token = this.jwtService.sign(payload);
-      return token;
-    } catch (error) {
-      throw new error();
-    }
-  }
-
-  async decodeToken(token: string) {
-    try {
-      const decodedToken = this.authService.decodeToken(token);
-      return decodedToken;
-    } catch (error) {
-      throw new error();
     }
   }
 } // fin
