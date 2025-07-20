@@ -36,7 +36,7 @@ export interface PaginatedResult<T> {
     page: number;
     limit: number;
     totalPages: number;
-    hasNextPAge: boolean;
+    hasNextPage: boolean;
     hasPreviousPage: boolean;
   };
 }

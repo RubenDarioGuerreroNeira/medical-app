@@ -1,23 +1,23 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateCitaDto } from './dto/create-cita.dto';
-import { UpdateCitaDto } from './dto/update-cita.dto';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { CreateCitaDto } from "./dto/create-cita.dto";
+import { UpdateCitaDto } from "./dto/update-cita.dto";
+import { HttpException, HttpStatus } from "@nestjs/common";
 
-import { Cita } from '../Entities/Cita.entity';
-import { EstadoCita } from '../Entities/Cita.entity';
-import { Usuario } from '../Entities/Usuarios.entity';
-import { Roles } from '../Entities/Usuarios.entity';
-import { Medico } from '../Entities/Medico.entity';
-import { HistorialMedico } from 'src/Entities/HistorialMedico.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { PaginationDto, PaginatedResult } from 'src/Dto Pagination/Pagination';
-import { isMainThread } from 'worker_threads';
-import { GetCitasRangoFechaDto } from 'src/Dto Pagination/getCitasRangoFecha';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject } from '@nestjs/common';
-import { log } from 'console';
+import { Cita } from "../Entities/Cita.entity";
+import { EstadoCita } from "../Entities/Cita.entity";
+import { Usuario } from "../Entities/Usuarios.entity";
+import { Roles } from "../Entities/Usuarios.entity";
+import { Medico } from "../Entities/Medico.entity";
+import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
+import { isMainThread } from "worker_threads";
+import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
+import { Cache } from "cache-manager";
+import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { Inject } from "@nestjs/common";
+import { log } from "console";
 
 @Injectable()
 export class CitasService {
@@ -32,7 +32,7 @@ export class CitasService {
     @InjectRepository(Medico)
     private medicoRepository: Repository<Medico>,
     @InjectRepository(HistorialMedico)
-    private historialMedicoRepository: Repository<HistorialMedico>,
+    private historialMedicoRepository: Repository<HistorialMedico>
   ) {}
 
   async verificaMedico(medico_id: string): Promise<Medico> {
@@ -42,7 +42,7 @@ export class CitasService {
       });
 
       if (!medico) {
-        throw new BadRequestException('Médico no encontrado');
+        throw new BadRequestException("Médico no encontrado");
       }
       return medico;
     } catch (error) {
@@ -50,7 +50,7 @@ export class CitasService {
         throw error;
       }
       throw new BadRequestException(
-        'Error al Verificar Disponibilidad de la Cita',
+        "Error al Verificar Disponibilidad de la Cita"
       );
     }
   }
@@ -61,7 +61,7 @@ export class CitasService {
 
     if (fechaCita.getTime() <= fechaActual.getTime()) {
       throw new BadRequestException(
-        'La fecha y hora de la cita debe ser mayor a la fecha actual',
+        "La fecha y hora de la cita debe ser mayor a la fecha actual"
       );
     }
 
@@ -71,17 +71,17 @@ export class CitasService {
           fecha_hora: datosCita.fecha_hora,
           medico: { id: datosCita.medico_id },
         },
-        relations: ['medico'],
+        relations: ["medico"],
       });
       if (bCita) {
-        throw new BadRequestException('Cita ya Existe');
+        throw new BadRequestException("Cita ya Existe");
       }
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
       }
       throw new BadRequestException(
-        'Error al Verificar Disponibilidad de la Cita',
+        "Error al Verificar Disponibilidad de la Cita"
       );
     }
   }
@@ -94,7 +94,7 @@ export class CitasService {
         where: { id: createCitaDto.paciente_id, rol: Roles.PACIENTE },
       });
       if (!paciente) {
-        throw new BadRequestException('El paciente no existe');
+        throw new BadRequestException("El paciente no existe");
       }
 
       await this.verificaCita(createCitaDto);
@@ -119,8 +119,8 @@ export class CitasService {
     const [data, total] = await this.citasRepository.findAndCount({
       skip,
       take: limit,
-      relations: ['paciente', 'medico'],
-      order: { fecha_hora: 'DESC' },
+      relations: ["paciente", "medico"],
+      order: { fecha_hora: "DESC" },
     });
     const totalPages = Math.ceil(total / limit);
     return {
@@ -130,7 +130,7 @@ export class CitasService {
         page,
         limit,
         totalPages,
-        hasNextPAge: page < totalPages,
+        hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
       },
     };
@@ -184,7 +184,7 @@ export class CitasService {
       const bCita = await this.findOneCita(citaId);
       if (bCita.estado === EstadoCita.CANCELADA) {
         throw new BadRequestException(
-          `Cita ya estaba  cancelada con anterioridad `,
+          `Cita ya estaba  cancelada con anterioridad `
         );
       }
 
@@ -215,19 +215,19 @@ export class CitasService {
     try {
       const usuario = await this.usuarioRepository.findOne({
         where: { id: userId },
-        relations: ['roles'],
+        relations: ["roles"],
       });
       if (!usuario) {
-        throw new BadRequestException('Usuario no encontrado');
+        throw new BadRequestException("Usuario no encontrado");
       }
       if (usuario.rol !== Roles.MEDICO) {
-        throw new BadRequestException('No tienes permisos para cancelar citas');
+        throw new BadRequestException("No tienes permisos para cancelar citas");
       }
 
       const bCita = await this.findOneCita(citaId);
       if (bCita.estado === EstadoCita.CANCELADA) {
         throw new BadRequestException(
-          `Cita ya estaba  cancelada con anterioridad `,
+          `Cita ya estaba  cancelada con anterioridad `
         );
       }
 
@@ -243,7 +243,7 @@ export class CitasService {
   }
   async citasporMedico(
     medicoId: string,
-    paginationDto?: PaginationDto,
+    paginationDto?: PaginationDto
   ): Promise<PaginatedResult<Cita>> {
     try {
       const bMedico = await this.citasRepository.findOne({
@@ -258,9 +258,9 @@ export class CitasService {
       const skip = (page - 1) * limit;
 
       const [citas, total] = await this.citasRepository
-        .createQueryBuilder('cita')
-        .where('cita.medico_id = :medicoId', { medicoId })
-        .orderBy('cita.fecha_hora', 'DESC')
+        .createQueryBuilder("cita")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .orderBy("cita.fecha_hora", "DESC")
         .skip(skip)
         .take(limit)
         .getManyAndCount();
@@ -275,7 +275,7 @@ export class CitasService {
           page: page,
           limit: limit,
           totalPages: totalPages,
-          hasNextPAge: page < totalPages,
+          hasNextPage: page < totalPages,
           hasPreviousPage: page > 1,
         },
       };
@@ -284,7 +284,7 @@ export class CitasService {
         throw error;
       }
       if (error instanceof Error) {
-        throw new BadRequestException('Error al obtener citas de un medico');
+        throw new BadRequestException("Error al obtener citas de un medico");
       }
     }
   }
@@ -292,14 +292,14 @@ export class CitasService {
   async citadDelDiDeterminado(
     fecha: Date,
     medicoId: string,
-    paginationDto: PaginationDto,
+    paginationDto: PaginationDto
   ): Promise<PaginatedResult<Cita>> {
     try {
       if (!fecha) {
-        throw new BadRequestException('Fecha no puede ser nula');
+        throw new BadRequestException("Fecha no puede ser nula");
       }
       if (!medicoId) {
-        throw new BadRequestException('Medico no puede ser nulo');
+        throw new BadRequestException("Medico no puede ser nulo");
       }
 
       const bFecha = await this.citasRepository.findOne({
@@ -307,25 +307,25 @@ export class CitasService {
       });
 
       if (!bFecha) {
-        throw new BadRequestException('Fecha No existe');
+        throw new BadRequestException("Fecha No existe");
       }
 
       const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
 
       if (!bMedico) {
-        throw new BadRequestException('Medico no existe');
+        throw new BadRequestException("Medico no existe");
       }
 
       const { page = 1, limit = 10 } = paginationDto || {};
       const skip = (page - 1) * limit;
 
       const [citas, total] = await this.citasRepository
-        .createQueryBuilder('cita')
-        .leftJoinAndSelect('cita.paciente', 'paciente')
-        .leftJoinAndSelect('cita.medico', 'medico')
-        .where('cita.fecha_hora = :fecha', { fecha })
-        .andWhere('cita.medico_id=:medicoId', { medicoId })
-        .orderBy('cita.fecha_hora', 'DESC')
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.fecha_hora = :fecha", { fecha })
+        .andWhere("cita.medico_id=:medicoId", { medicoId })
+        .orderBy("cita.fecha_hora", "DESC")
         .getManyAndCount();
       const totalPages = Math.ceil(total / limit);
 
@@ -335,7 +335,7 @@ export class CitasService {
           page: page,
           limit: limit,
           totalPages: totalPages,
-          hasNextPAge: page < totalPages,
+          hasNextPage: page < totalPages,
           hasPreviousPage: page > 1,
           total: total,
         },
@@ -345,25 +345,25 @@ export class CitasService {
         throw error;
       }
       if (error instanceof Error) {
-        throw new BadRequestException('Error al obtener citas de un medico');
+        throw new BadRequestException("Error al obtener citas de un medico");
       }
     }
   }
 
   async citadMedicoRangoFechas(
     medicoId: string,
-    query: GetCitasRangoFechaDto,
+    query: GetCitasRangoFechaDto
   ): Promise<PaginatedResult<Cita>> {
     try {
       const { fecha, fechaFin, page = 1, limit = 10 } = query;
 
       if (!medicoId) {
-        throw new BadRequestException('El ID del médico es requerido');
+        throw new BadRequestException("El ID del médico es requerido");
       }
 
       const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
       if (!bMedico) {
-        throw new BadRequestException('Médico no encontrado');
+        throw new BadRequestException("Médico no encontrado");
       }
 
       const skip = (page - 1) * limit;
@@ -371,13 +371,13 @@ export class CitasService {
       const fechaFinal = new Date(fechaFin);
 
       const [citas, total] = await this.citasRepository
-        .createQueryBuilder('cita')
-        .leftJoinAndSelect('cita.paciente', 'paciente')
-        .leftJoinAndSelect('cita.medico', 'medico')
-        .where('cita.medico_id = :medicoId', { medicoId })
-        .andWhere('cita.fecha_hora >= :fechaInicio', { fechaInicio })
-        .andWhere('cita.fecha_hora <= :fechaFinal', { fechaFinal })
-        .orderBy('cita.fecha_hora', 'DESC')
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .andWhere("cita.fecha_hora >= :fechaInicio", { fechaInicio })
+        .andWhere("cita.fecha_hora <= :fechaFinal", { fechaFinal })
+        .orderBy("cita.fecha_hora", "DESC")
         .skip(skip)
         .take(limit)
         .getManyAndCount();
@@ -391,7 +391,7 @@ export class CitasService {
           page,
           limit,
           totalPages,
-          hasNextPAge: page < totalPages,
+          hasNextPage: page < totalPages,
           hasPreviousPage: page > 1,
         },
       };
@@ -399,21 +399,21 @@ export class CitasService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Error al obtener citas del médico');
+      throw new BadRequestException("Error al obtener citas del médico");
     }
   }
 
   async reprogramarCita(
     citaId: string,
     userId: string,
-    updateCitaDto: UpdateCitaDto,
+    updateCitaDto: UpdateCitaDto
   ): Promise<Cita> {
     try {
       const usuario = await this.citasRepository.findOne({
         where: { medico: { id: userId } },
       });
       if (!usuario) {
-        throw new BadRequestException('Usuario no encontrado');
+        throw new BadRequestException("Usuario no encontrado");
       }
       const bCita = await this.findOneCita(citaId);
       const citaModificada = await this.citasRepository.save({
@@ -425,7 +425,7 @@ export class CitasService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException('Error al Reprogramar Cita con el médico');
+      throw new BadRequestException("Error al Reprogramar Cita con el médico");
     }
   }
   //----------------- BUSQUEDA AVANZADAS
@@ -435,16 +435,16 @@ export class CitasService {
     statusCita: string,
     fecha: Date,
     medicoId: string,
-    paginationDto?: PaginationDto,
+    paginationDto?: PaginationDto
   ): Promise<PaginatedResult<Cita>> {
     try {
       if (!nombrePaciente || !statusCita || !fecha || !medicoId) {
-        throw new BadRequestException('Todos los campos son requeridos');
+        throw new BadRequestException("Todos los campos son requeridos");
       }
 
       const bMedico = await this.medicoRepository.findOneBy({ id: medicoId });
       if (!bMedico) {
-        throw new BadRequestException('Medico no existe');
+        throw new BadRequestException("Medico no existe");
       }
 
       const paciente = await this.usuarioRepository.findOne({
@@ -452,22 +452,22 @@ export class CitasService {
       });
 
       if (!paciente) {
-        throw new BadRequestException('El paciente no existe');
+        throw new BadRequestException("El paciente no existe");
       }
 
-      console.log('datos recibidos', paciente, bMedico, fecha);
+      console.log("datos recibidos", paciente, bMedico, fecha);
 
       const query = this.citasRepository
-        .createQueryBuilder('cita')
-        .leftJoinAndSelect('cita.paciente', 'paciente')
-        .leftJoinAndSelect('cita.medico', 'medico')
-        .where('cita.medico_id = :medicoId', { medicoId })
-        .andWhere('cita.paciente_id = :pacienteId', { pacienteId: paciente.id })
-        .andWhere('cita.estado = :statusCita', {
+        .createQueryBuilder("cita")
+        .leftJoinAndSelect("cita.paciente", "paciente")
+        .leftJoinAndSelect("cita.medico", "medico")
+        .where("cita.medico_id = :medicoId", { medicoId })
+        .andWhere("cita.paciente_id = :pacienteId", { pacienteId: paciente.id })
+        .andWhere("cita.estado = :statusCita", {
           statusCita: statusCita.toLowerCase(),
         }) // Conversión a minúsculas
-        .andWhere('cita.fecha_hora >= :fecha', { fecha })
-        .orderBy('cita.fecha_hora', 'DESC');
+        .andWhere("cita.fecha_hora >= :fecha", { fecha })
+        .orderBy("cita.fecha_hora", "DESC");
 
       const { page = 1, limit = 10 } = paginationDto || {};
       const skip = (page - 1) * limit;
@@ -476,10 +476,10 @@ export class CitasService {
         .take(limit)
         .getManyAndCount();
       const totalPages = Math.ceil(total / limit);
-      console.log('citas encontradas', citas);
+      console.log("citas encontradas", citas);
 
-      console.log('Consulta generada:', query.getSql());
-      console.log('Parámetros:', {
+      console.log("Consulta generada:", query.getSql());
+      console.log("Parámetros:", {
         medicoId,
         pacienteId: paciente.id,
         statusCita: statusCita.toLowerCase(),
@@ -493,7 +493,7 @@ export class CitasService {
           page,
           limit,
           totalPages,
-          hasNextPAge: page < totalPages,
+          hasNextPage: page < totalPages,
           hasPreviousPage: page > 1,
         },
       };
@@ -501,8 +501,8 @@ export class CitasService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      console.error('Error al obtener citas de un medico', error);
-      throw new BadRequestException('Error al obtener citas de un medico');
+      console.error("Error al obtener citas de un medico", error);
+      throw new BadRequestException("Error al obtener citas de un medico");
     }
   }
 } // fin

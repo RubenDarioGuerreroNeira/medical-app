@@ -6,136 +6,103 @@ import {
   Patch,
   Param,
   Delete,
-} from '@nestjs/common';
-import { HttpStatus, HttpException } from '@nestjs/common';
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
+} from "@nestjs/common";
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
-  ApiQuery,
   ApiBody,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+} from "@nestjs/swagger";
 
-import { MedicosService } from './medicos.service';
-import { CreateMedicoDto } from './dto/create-medico.dto';
-import { CreateUsuarioDto } from 'src/usuarios/dto/create-usuario.dto';
-import { UpdateMedicoDto } from './dto/update-medico.dto';
-import { Medico } from '../Entities/Medico.entity';
+import { MedicosService } from "./medicos.service";
+import { UpdateMedicoDto } from "./dto/update-medico.dto";
+import { Medico } from "../Entities/Medico.entity";
+import { CreateMedicoBodyDto } from "./dto/create-medico-body.dto";
+import { PaginatedMedicosResponseDto } from "./dto/paginated-medicos-response.dto";
+import { PaginatedResult } from "src/Dto Pagination/Pagination";
+import { Usuario } from "src/Entities/Usuarios.entity";
 
-interface MedicoInterface {
-  status: number;
-  mesagge: string;
-  data: any;
-}
-@ApiTags('Medicos')
-@Controller('medicos')
+@ApiTags("Medicos")
+@Controller("medicos")
 export class MedicosController {
   constructor(private readonly medicosService: MedicosService) {}
 
-  @ApiOperation({ summary: 'Crear un nuevo médico' })
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Crear un nuevo médico" })
+  @ApiBody({ type: CreateMedicoBodyDto })
   @ApiResponse({
-    status: 200,
-    description: 'Médico creado correctamente',
+    status: 201,
+    description: "Médico creado correctamente.",
     type: Medico,
   })
   @ApiResponse({
     status: 400,
-    description: 'Error al crear el médico',
+    description: "Error en los datos de entrada.",
   })
-  @Post()
-  async create(
-    @Body() requestBody: { usuario: CreateUsuarioDto; medico: CreateMedicoDto },
-  ) {
-    try {
-      const result = await this.medicosService.create(
-        requestBody.usuario,
-        requestBody.medico,
-      );
-      return {
-        status: 200,
-        mesagge: 'Médico creado correctamente',
-        data: result,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: error.message,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+  @ApiResponse({ status: 409, description: "El médico o usuario ya existe." })
+  async create(@Body() body: CreateMedicoBodyDto): Promise<Medico> {
+    return this.medicosService.create(body.usuario, body.medico);
   }
 
-  @ApiOperation({ summary: 'Obtener todos los médicos de la aplicación' })
+  @ApiOperation({ summary: "Obtener todos los médicos de la aplicación" })
   @ApiResponse({
     status: 200,
-    description: 'Médicos obtenidos correctamente',
-    type: Medico,
+    description: "Médicos obtenidos correctamente.",
+    type: PaginatedMedicosResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Error al obtener los médicos',
+    description: "Error al obtener los médicos",
   })
   @Get()
-  async findAll() {
-    try {
-      const result = await this.medicosService.findAll();
-      return {
-        status: 200,
-        mesagge: 'Medicos obtenidos correctamente',
-        data: result,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: error.message,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-  }
-  @Patch(':medicoId')
-  async update(
-    @Param('medicoId') medicoId: string,
-    @Body() updateMedicoDto: UpdateMedicoDto,
-  ) {
-    try {
-      const result = await this.medicosService.update(
-        medicoId,
-        updateMedicoDto,
-      );
-      return {
-        status: 200,
-        mesagge: 'Médico actualizado correctamente',
-        data: result,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: error.message,
-        },
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+  async findAll(): Promise<PaginatedResult<Usuario>> {
+    return this.medicosService.findAll();
   }
 
-  @Delete(':medicoId')
-  remove(@Param('medicoId') medicoId: string) {
-    return this.medicosService.remove(medicoId);
+  @Patch(":medicoId")
+  @ApiOperation({ summary: "Actualizar un médico" })
+  @ApiParam({
+    name: "medicoId",
+    description: "ID del médico (UUID)",
+    type: "string",
+  })
+  @ApiBody({ type: UpdateMedicoDto })
+  @ApiResponse({
+    status: 200,
+    description: "Médico actualizado correctamente.",
+    type: Medico,
+  })
+  @ApiResponse({ status: 404, description: "Médico no encontrado." })
+  @ApiResponse({ status: 400, description: "Datos de entrada inválidos." })
+  async update(
+    @Param("medicoId", ParseUUIDPipe) medicoId: string,
+    @Body() updateMedicoDto: UpdateMedicoDto
+  ): Promise<Medico> {
+    return this.medicosService.update(medicoId, updateMedicoDto);
+  }
+
+  @Delete(":medicoId")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Eliminar un médico" })
+  @ApiParam({
+    name: "medicoId",
+    description: "ID del médico (UUID)",
+    type: "string",
+  })
+  @ApiResponse({
+    status: 204,
+    description: "Médico eliminado correctamente.",
+  })
+  @ApiResponse({ status: 404, description: "Médico no encontrado." })
+  async remove(
+    @Param("medicoId", ParseUUIDPipe) medicoId: string
+  ): Promise<void> {
+    await this.medicosService.remove(medicoId);
   }
 
   // @Get(":id")
