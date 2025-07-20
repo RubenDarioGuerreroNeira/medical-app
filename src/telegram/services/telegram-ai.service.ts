@@ -21,33 +21,17 @@ export class TelegramAIService extends TelegramBaseService {
   }
 
   async iniciarConsultaMedica(chatId: number): Promise<void> {
-    const sentMessage = await this.bot.sendMessage(
+    await this.bot.sendMessage(
       chatId,
       "Por favor, escribe tu pregunta médica, Toma una foto de lo que deseas saber, ó Carga una foto desde tu galería:",
       {
-        reply_markup: {
-          force_reply: true,
-          selective: true,
-        },
+        // El reply_markup con force_reply ya no es necesario aquí,
+        // ya que el manejador principal se encargará de la respuesta.
       }
     );
-
-    this.bot.onReplyToMessage(chatId, sentMessage.message_id, async (msg) => {
-      if (msg.text) {
-        const waitingMessage = await this.bot.sendMessage(
-          chatId,
-          "🤔 Estoy analizando tu consulta, por favor espera un momento..."
-        );
-
-        await this.procesarPreguntaMedica(chatId, msg.text);
-        await this.bot.deleteMessage(chatId, waitingMessage.message_id);
-      } else if (msg.photo) {
-        await this.handleImageMessage(chatId, msg);
-      }
-    });
   }
 
-  private async procesarPreguntaMedica(
+   async procesarPreguntaMedica(
     chatId: number,
     pregunta: string
   ): Promise<void> {
@@ -83,6 +67,7 @@ export class TelegramAIService extends TelegramBaseService {
       await this.manejarErrorConsulta(chatId);
     }
   }
+
 
   async handleImageMessage(
     chatId: number,
@@ -155,7 +140,37 @@ export class TelegramAIService extends TelegramBaseService {
         mimeType
       );
 
-      await this.enviarResultadoAnalisisImagen(chatId, extractedText);
+      if (extractedText) {
+        // Consultar información médica automáticamente
+        const infoMedicamento =
+          await this.geminiService.generateMedicalResponse(extractedText);
+        await this.enviarRespuestaMedica(chatId, infoMedicamento, true);
+      } else {
+        await this.bot.sendMessage(
+          chatId,
+          "No se pudo extraer texto de la imagen."
+        );
+        await this.bot.sendMessage(
+          chatId,
+          "¿Deseas intentar con otra imagen o volver al menú principal?",
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "📷 Enviar otra imagen",
+                    callback_data: "consulta_medica",
+                  },
+                  {
+                    text: "🔙 Volver al menú principal",
+                    callback_data: "menu_principal",
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
     } catch (error) {
       this.logger.error("Error handling image message:", error);
 
@@ -188,7 +203,7 @@ export class TelegramAIService extends TelegramBaseService {
     }
   }
 
-  //--
+
   private async enviarRespuestaMedica(
     chatId: number,
     texto: string,
@@ -196,94 +211,25 @@ export class TelegramAIService extends TelegramBaseService {
   ): Promise<void> {
     const options: TelegramBot.SendMessageOptions = {
       parse_mode: "MarkdownV2",
+      reply_markup: esFinal
+        ? {
+            inline_keyboard: [
+              [
+                {
+                  text: "📝 Nueva consulta",
+                  callback_data: "consulta_medica",
+                },
+                {
+                  text: "🔙 Volver al menú principal",
+                  callback_data: "menu_principal",
+                },
+              ],
+            ],
+          }
+        : undefined,
     };
 
     await this.bot.sendMessage(chatId, texto, options);
-
-    // Si es el mensaje final, preguntar si desea hacer más consultas
-    if (esFinal) {
-      await this.bot.sendMessage(
-        chatId,
-        "¿Deseas hacer otra consulta o volver al menú principal?",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "📝 Nueva consulta",
-                  callback_data: "consulta_medica",
-                },
-                {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    }
-  }
-
-  private async enviarResultadoAnalisisImagen(
-    chatId: number,
-    texto: string
-  ): Promise<void> {
-    if (texto) {
-      await this.bot.sendMessage(
-        chatId,
-        "Texto extraído de la imagen:\n\n" + texto
-      );
-
-      // Preguntar si desea hacer más consultas
-      await this.bot.sendMessage(
-        chatId,
-        "¿Deseas hacer otra consulta o volver al menú principal?",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "📝 Nueva consulta",
-                  callback_data: "consulta_medica",
-                },
-                {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    } else {
-      await this.bot.sendMessage(
-        chatId,
-        "No se pudo extraer texto de la imagen."
-      );
-
-      // Preguntar si desea intentar con otra imagen
-      await this.bot.sendMessage(
-        chatId,
-        "¿Deseas intentar con otra imagen o volver al menú principal?",
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: "📷 Enviar otra imagen",
-                  callback_data: "consulta_medica",
-                },
-                {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
-                },
-              ],
-            ],
-          },
-        }
-      );
-    }
   }
 
   private async manejarErrorConsulta(chatId: number): Promise<void> {

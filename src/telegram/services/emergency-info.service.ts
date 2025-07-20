@@ -46,13 +46,6 @@ export class EmergencyInfoService {
   ) {}
 
   async mostrarMenuEmergencia(chatId: number): Promise<void> {
-    // await this.bot.sendMessage(
-    //   chatId,
-    //   "🚨 *Información de Emergencia Médica* 🚨\n\n" +
-    //     "Configura tu información médica crítica para que esté disponible mediante un código QR ,para que este disponible para  las personas que te presten primeros auxilios  EN CASO DE EMERGENCIA.\n\n" +
-    //     "Siguiente paso es configurar tu información médica.\n\n" +
-    //     "Si ya la tienes Configurada solo observa la información de emergencia en caso de emergencia.",
-
     await this.bot.sendMessage(
       chatId,
       "🚨 *Tu Tarjeta de Emergencia QR* 🚨\n\n" +
@@ -79,7 +72,7 @@ export class EmergencyInfoService {
 
             [
               {
-                text: "3-⬇️ Descargar  QR (PDF)",
+                text: "⬇️ Descargar  QR (PDF)",
                 callback_data: "descargar_tarjeta_pdf",
               },
             ],

@@ -77,67 +77,7 @@ export class GeminiAIService {
     }
   }
 
-  //   async extractTextFromImage(
-  //     imageBuffer: Buffer,
-  //     mimeType: string = "image/jpeg"
-  //   ): Promise<string> {
-  //     try {
-  //       const imagePart = {
-  //         inlineData: {
-  //           mimeType: mimeType, // Usamos el mimeType proporcionado, por defecto 'image/jpeg'
-  //           data: imageBuffer.toString("base64"),
-  //         },
-  //       } as Part;
-
-  //       const result = await this.model.generateContent([
-  //         "Extrae el texto de esta imagen.", // Prompt para extracción de texto
-  //         imagePart,
-  //       ]);
-
-  //       const responseText = result.response.text();
-  //       return responseText;
-  //     } catch (error) {
-  //       this.logger.error("Error al extraer texto de la imagen:", error);
-  //       throw new Error("No se pudo extraer el texto de la imagen."); // Lanza un error para que el controlador lo maneje
-  //     }
-  //   }
-  // }
-
-  //   async extractTextFromImage(
-  //     imageBuffer: Buffer,
-  //     mimeType: string
-  //   ): Promise<string> {
-  //     try {
-  //       // Usar el nuevo modelo gemini-1.5-flash en lugar de gemini-pro-vision
-
-  //       const prompt =
-  //         "Por favor, extrae y describe el texto que ves en esta imagen.";
-
-  //       const result = await this.model.generateContent([
-  //         prompt,
-  //         {
-  //           inlineData: {
-  //             data: imageBuffer.toString("base64"),
-  //             mimeType: mimeType,
-  //           },
-  //         },
-  //       ]);
-
-  //       const response = await result.response;
-  //       const text = response.text();
-
-  //       if (!text) {
-  //         throw new Error("No se pudo extraer el texto de la imagen.");
-  //       }
-
-  //       return text;
-  //     } catch (error) {
-  //       this.logger.error("Error al extraer texto de la imagen:", error);
-  //       throw new Error("No se pudo extraer el texto de la imagen.");
-  //     }
-  //   }
-  // }
-
+  
   async extractTextFromImage(
     imageBuffer: Buffer,
     mimeType: string

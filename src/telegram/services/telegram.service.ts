@@ -61,11 +61,7 @@ export class TelegramService {
       this.handleStartCommand(msg, match)
     );
 
-    // modifico el comando start para que capture el codigo de emergencia
-    // this.bot.onText(/\/start (.+)/, (msg, match) => {
-    //   this.handleStartCommand(msg, match);
-    // });
-    // this.bot.onText(/\/start/, (msg) => this.handleStartCommand(msg));
+
     this.bot.onText(/\/help/, (msg) => this.handleHelpCommand(msg));
     this.bot.onText(/\/emergencia/, (msg) =>
       this.emergencyInfoService.mostrarMenuEmergencia(msg.chat.id)
@@ -174,7 +170,6 @@ export class TelegramService {
         return;
       }
 
-
       // Manejar callback para marcar medicamento como tomado
 
       if (data.startsWith("mark_taken_")) {
@@ -251,7 +246,6 @@ export class TelegramService {
         await this.historialMedicoService.mostrarHistorialMedico(chatId);
         return;
       }
-      // Otros callbacks de historial médico que no son 'once' se añadirían aquí.
 
       //callback para cuando selecciono recordatorio semanal,
       // me muestra los dias de la semana para que seleccione el dia
@@ -406,7 +400,9 @@ export class TelegramService {
 
       switch (data) {
         case "consulta_medica":
-          this.userStates.delete(chatId);
+          this.userStates.set(chatId, {
+            currentOperation: "awaiting_medical_query",
+          });
           await this.aiService.iniciarConsultaMedica(chatId);
           break;
         case "solicitar_ubicacion_farmacia":
@@ -543,6 +539,27 @@ export class TelegramService {
         return;
       }
 
+      if (
+        userState &&
+        userState.currentOperation === "awaiting_medical_query"
+      ) {
+        // Limpiar el estado inmediatamente para evitar ejecuciones múltiples
+        this.userStates.delete(chatId);
+
+        if (msg.text) {
+          const waitingMessage = await this.bot.sendMessage(
+            chatId,
+            "🤔 Estoy analizando tu consulta, por favor espera un momento..."
+          );
+          await this.aiService.procesarPreguntaMedica(chatId, msg.text);
+          await this.bot.deleteMessage(chatId, waitingMessage.message_id);
+        } else if (msg.photo) {
+          await this.aiService.handleImageMessage(chatId, msg);
+        }
+        // Importante: Salir de la función para no caer en el manejador genérico de fotos de abajo
+        return;
+      }
+
       if (userState) {
         const operation = userState.currentOperation;
         if (
@@ -568,8 +585,8 @@ export class TelegramService {
       }
 
       if (msg.photo) {
-        // Si no hay un flujo activo esperando una foto, se asume que es para el servicio de IA.
-        // Idealmente, se establecería un estado como 'awaiting_ai_photo'.
+        // Este bloque ahora solo se ejecutará si el usuario envía una foto
+        // sin haber iniciado explícitamente una consulta (flujo no solicitado).
         await this.aiService.handleImageMessage(chatId, msg);
         return;
       }

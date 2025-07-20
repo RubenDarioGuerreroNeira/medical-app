@@ -18,18 +18,6 @@ export class TelegramHistorialMedicoService {
     private readonly historialMedicoService: HistorialMedicoDataService
   ) {}
 
-  // setupCommandHandlers(): void {
-  //   this.bot.onText(/\/historialmedico/, (msg) =>
-  //     this.handleHistorialMedicoCommand(msg)
-  //   );
-  //   this.bot.onText(/\/nuevohistorial/, (msg) =>
-  //     this.iniciarRegistroHistorialMedico(msg.chat.id)
-  //   );
-  //   this.bot.onText(/\/mishistoriales/, (msg) =>
-  //     this.mostrarHistorialMedico(msg.chat.id)
-  //   );
-  // }
-
   public async handleHistorialMedicoCommand(
     msg: TelegramBot.Message
   ): Promise<void> {
