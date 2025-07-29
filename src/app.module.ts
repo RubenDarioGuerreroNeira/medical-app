@@ -1,4 +1,4 @@
-import { Inject, Module } from "@nestjs/common";
+import { Inject, Module, MiddlewareConsumer, NestModule } from "@nestjs/common";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -39,6 +39,8 @@ import { AppResolver } from "./app.resolver";
 import { ReminderResolver } from "./telegram/reminder.resolver";
 // maneja el el archivo de certificacion ca.pem
 import { caCert } from "./ssl-config";
+// importa el middleware
+import { LoggerMiddleware } from "./common/middleware/logger.middleware";
 
 @Module({
   imports: [
@@ -132,4 +134,10 @@ import { caCert } from "./ssl-config";
   controllers: [AppController],
   providers: [AppService, AppResolver, ReminderResolver],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware) // aplicamos nuestro middleware
+      .forRoutes("*"); // aplicamos a todos los endpoints
+  }
+}
