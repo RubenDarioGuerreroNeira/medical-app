@@ -21,6 +21,7 @@ import { UseGuards, Req } from "@nestjs/common";
 import { RequireRoles } from "../Guard/Decorator";
 import { PaginatedUsuariosResponseDto } from "./dto/paginated-usuarios-response.dto";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
+import { RegisterUserDto } from "./dto/register-user.dto";
 
 @ApiTags("Usuarios")
 @Controller("usuarios")
@@ -40,6 +41,23 @@ export class UsuariosController {
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
     return this.usuariosService.create(createUsuarioDto);
+  }
+
+  @ApiOperation({ summary: "Registrar un nuevo usuario público (paciente)" })
+  @ApiBody({ type: RegisterUserDto })
+  @ApiResponse({
+    status: 201,
+    description: "Usuario registrado correctamente.",
+    type: Usuario,
+  })
+  @ApiResponse({ status: 400, description: "Datos de entrada inválidos." })
+  @ApiResponse({
+    status: 409,
+    description: "El correo electrónico ya está en uso.",
+  })
+  @Post("register")
+  register(@Body() registerUserDto: RegisterUserDto): Promise<Usuario> {
+    return this.usuariosService.register(registerUserDto);
   }
 
   @ApiOperation({ summary: "Obtener todos los Usuarios" })
@@ -82,7 +100,6 @@ export class UsuariosController {
     description: "Conflicto de datos (ej. email duplicado).",
   })
   @UseGuards(JwtAuthGuard)
-  @RequireRoles(Roles.PACIENTE)
   @Patch(":id")
   update(
     @Param("id", ParseUUIDPipe) usuarioId: string,

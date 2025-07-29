@@ -2,6 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -15,6 +17,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import * as bcrypt from "bcrypt";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
+import { RegisterUserDto } from "./dto/register-user.dto";
 
 @Injectable()
 export class UsuariosService {
@@ -30,6 +33,55 @@ export class UsuariosService {
     hashedPassword: string
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  async register(registerUserDto: RegisterUserDto): Promise<Usuario> {
+    const {
+      nombre,
+      apellido,
+      fecha_nacimiento,
+      genero,
+      direccion,
+      telefonoCelular,
+      telefonoContacto,
+      email,
+      contrasena,
+    } = registerUserDto;
+
+    // Verifica si el correo electrónico ya existe
+    const existingUser = await this.usuarioRepository.findOneBy({ email });
+    if (existingUser) {
+      throw new ConflictException("El correo electrónico ya está registrado.");
+    }
+
+    // Hashea la contraseña
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+    // Crea el usuario
+    const newUser = this.usuarioRepository.create({
+      nombre,
+      apellido,
+      fecha_nacimiento,
+      genero,
+      direccion,
+      telefonoCelular,
+      telefonoContacto,
+      email,
+      contrasena: hashedPassword,
+      rol: Roles.PACIENTE, // Por defecto
+    });
+
+    // Guarda el usuario
+    try {
+      const usuario = await this.usuarioRepository.save(newUser);
+      delete usuario.contrasena;
+      return usuario;
+    } catch (e) {
+      throw new HttpException(
+        "Error al crear el usuario",
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   async create(createUsuarioDto: CreateUsuarioDto): Promise<Usuario> {
