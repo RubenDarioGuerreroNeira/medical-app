@@ -50,6 +50,7 @@ import { LoggerMiddleware } from "./common/middleware/logger.middleware";
     }),
     TelegramModule,
     CacheModule.register({
+      isGlobal: true, // Hacemos el módulo de caché global
       ttl: 60000, // tiempo de vida en milisegundos
       max: 100, //max numero de items en cache
     }),

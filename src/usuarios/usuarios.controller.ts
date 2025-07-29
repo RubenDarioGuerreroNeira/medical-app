@@ -9,15 +9,18 @@ import {
   HttpStatus,
   HttpCode,
   ParseUUIDPipe,
+  UseInterceptors,
+  Req,
 } from "@nestjs/common";
 import { Request } from "express";
+import { CacheInterceptor } from "@nestjs/cache-manager";
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from "@nestjs/swagger";
 import { UsuariosService } from "./usuarios.service";
 import { CreateUsuarioDto } from "./dto/create-usuario.dto";
 import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
 import { Roles, Usuario } from "../Entities/Usuarios.entity";
 import { JwtAuthGuard } from "../auth/Jwt-auth.guard";
-import { UseGuards, Req } from "@nestjs/common";
+import { UseGuards } from "@nestjs/common";
 import { RequireRoles } from "../Guard/Decorator";
 import { PaginatedUsuariosResponseDto } from "./dto/paginated-usuarios-response.dto";
 import { PaginatedResult } from "src/Dto Pagination/Pagination";
@@ -69,6 +72,7 @@ export class UsuariosController {
   // @UseGuards(JwtAuthGuard) // Descomentar si solo los usuarios autenticados pueden ver la lista
   // @RequireRoles(Roles.ADMIN)
   @Get()
+  @UseInterceptors(CacheInterceptor) // <-- ¡AQUÍ INTERCEPTO LA PETICION DE USUARIOS! Y LA ALMACENAMOS EN CACHE!
   findAll(): Promise<PaginatedResult<Usuario>> {
     return this.usuariosService.findAll();
   }
