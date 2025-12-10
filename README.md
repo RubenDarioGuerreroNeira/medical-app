@@ -1,177 +1,266 @@
-<img src="/src/images/Clinica C.jpg" width="320" alt="Medical Logo" />
 
-# Medical Appointments API
+<div align="center">
+  <img src="src/images/medical_banner.png" width="100%" alt="Medical Appointments API Banner" style="border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);" />
+  
+  <br />
+  
+  <h1 style="font-size: 3em; color: #2C3E50;">🏥 Medical Appointments API</h1>
+  
+  <p align="center" style="font-size: 1.2em; max-width: 600px; margin: auto;">
+    <strong>Sistema Integral de Gestión Médica potenciado por Inteligencia Artificial y Telegram</strong>
+  </p>
 
-## Descripción
+  <br />
 
-Esta API, desarrollada con NestJS, ofrece una solución completa para la gestión de citas médicas, facilitando la administración de pacientes, médicos y sus respectivas citas en centros de salud. Está dirigida a clínicas, hospitales y consultorios médicos que buscan optimizar la organización y el control de su flujo de pacientes.
+  <!-- Badges -->
+  <div align="center">
+    <a href="https://nestjs.com/">
+      <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS">
+    </a>
+    <a href="https://www.typescriptlang.org/">
+      <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+    </a>
+    <a href="https://www.postgresql.org/">
+      <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL">
+    </a>
+    <a href="https://graphql.org/">
+      <img src="https://img.shields.io/badge/GraphQL-E10098?style=for-the-badge&logo=graphql&logoColor=white" alt="GraphQL">
+    </a>
+    <a href="https://core.telegram.org/bots/api">
+      <img src="https://img.shields.io/badge/Telegram_Bot-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram Bot">
+    </a>
+    <a href="https://ai.google.dev/">
+      <img src="https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=google-bard&logoColor=white" alt="Google Gemini AI">
+    </a>
+  </div>
+</div>
 
-## Desarrollador
+<br />
 
-**Rubén D. Guerrero N.**  
-Desarrollador Full Stack  
-Email: rudargeneira@gmail.com  
-Telegram: @Rubedev
+---
 
-## Tecnologías Utilizadas
+## ⚡ **Descripción General**
 
-- NestJS
-- TypeScript
-- PostgreSQL
-- TypeORM
-- Class Validator
-- JWT
-- Cloudinary (almacenamiento de imágenes)
+**Medical Appointments API** es una solución de backend de vanguardia diseñada para transformar la administración sanitaria. Construida sobre la robustez de **NestJS**, esta plataforma no solo gestiona citas y pacientes, sino que integra un ecosistema completo de salud digital.
 
-## Pruebas
+Desde la gestión de historiales clínicos hasta la asistencia médica automatizada 24/7 mediante un **Bot de Telegram con IA**, este sistema está preparado para escalar en clínicas, hospitales y consultorios modernos.
 
-- Unitarias: `npm run test`
-- E2E: `npm run test:e2e`
-- Cobertura: `npm run test:cov`
+### 🌟 **Características Principales**
+*   🤖 **Asistente Médico IA**: Consultas preliminares, análisis de síntomas y recordatorios inteligentes powered by Google Gemini.
+*   📅 **Gestión de Citas Avanzada**: Algoritmos de disponibilidad en tiempo real y reprogramación automática.
+*   🔐 **Seguridad de Grado Médico**: Roles granulares, encriptación de datos sensibles y cumplimiento de normativas.
+*   📱 **Omnicanalidad**: Acceso fluido desde Web, Móvil y Telegram.
 
-## Documentación
+---
 
-La documentación completa de la API está disponible a través de Swagger una vez que el servidor está en ejecución.
+## 🏗️ **Arquitectura del Sistema**
 
-## Seguridad
+Diseñado bajo una arquitectura modular y escalable, garantizando alto rendimiento y mantenibilidad.
 
-- Autenticación mediante JWT
-- Validación de datos con Class Validator
-- Encriptación de contraseñas
-- Configuración CORS
+```mermaid
+graph TB
+    subgraph "Frontend Interfaces"
+        TG[📱 Telegram Bot]
+        WEB[🌐 Web Dashboard]
+        MOB[📱 Mobile App]
+    end
+    
+    subgraph "API Gateway & Authentification"
+        GW[🔐 NestJS API Gateway]
+        AUTH[🔑 JWT Authentication]
+        GUARD[🛡️ Role-Based Guards]
+    end
+    
+    subgraph "Core Applications"
+        US[👥 User Service]
+        AS[📅 Appointments Service] 
+        MS[🏥 Medical Service]
+        NS[📝 Notes Service]
+        RS[💊 Prescriptions Service]
+    end
+    
+    subgraph "Intelligent Agents"
+        BOT[🤖 Telegram Bot Service]
+        AI[🧠 Gemini AI Integration]
+        GEO[📍 Location Services]
+        REMIND[⏰ Reminder System]
+    end
+    
+    subgraph "Data Storage"
+        PG[(🗄️ PostgreSQL)]
+        REDIS[(📊 Redis Cache)]
+        CLOUD[☁️ Cloudinary]
+    end
 
-## Funcionalidades Principales
+    TG & WEB & MOB --> GW
+    GW --> AUTH --> GUARD
+    GUARD --> US & AS & MS & NS & RS
+    
+    BOT <--> AI
+    BOT --> GEO & REMIND
+    
+    US & AS & MS & NS & RS --> PG
+    GW & BOT --> REDIS
+    RS & MS --> CLOUD
+    
+    style TG fill:#26A5E4,stroke:#1DA1F2
+    style BOT fill:#FF6B6B,stroke:#FF5252
+    style AI fill:#4285F4,stroke:#1976D2
+    style PG fill:#336791,stroke:#2E5984
+```
 
-### Gestión de Usuarios (Pacientes, Médicos, Administradores)
+### 🗃️ **Modelo de Datos (ERD)**
 
-La API permite el registro, autenticación y gestión de usuarios con diferentes roles (paciente, médico, administrador). Se utiliza un sistema de roles para controlar los permisos y accesos a las diferentes funcionalidades.
+Estructura de base de datos relacional optimizada para integridad y consultas complejas.
 
-### Creación y Gestión de Citas
+```mermaid
+erDiagram
+    Usuarios ||--o{ Cita : "programa"
+    Usuarios ||--o| Medico : "es (si rol=doctor)"
+    Usuarios ||--o| HistorialMedico : "tiene"
+    Usuarios ||--o{ DocumentoConsulta : "sube"
+    
+    Medico ||--o{ Cita : "atiende"
+    Medico ||--o{ NotaMedica : "escribe"
+    Medico ||--o{ RecetaMedica : "prescribe"
+    
+    Cita ||--o| NotaMedica : "genera"
+    Cita ||--o{ RecetaMedica : "incluye"
+    
+    HistorialMedico ||--o{ MedicationReminder : "contiene"
+    HistorialMedico ||--o{ EmergencyInfo : "incluye"
+    
+    Usuarios {
+        uuid id PK
+        string email
+        string password
+        enum role
+        boolean isActive
+    }
+    
+    Cita {
+        uuid id PK
+        timestamp fecha
+        enum estado
+        uuid paciente_id FK
+        uuid medico_id FK
+    }
 
-Los pacientes pueden solicitar citas con médicos específicos, seleccionando fecha y hora según la disponibilidad del médico. El estado de la cita (confirmada, cancelada, completada) se gestiona a través de un sistema de enums, permitiendo un seguimiento preciso del flujo de la cita.
+    Medico {
+        uuid id PK
+        uuid usuario_id FK
+        string especialidad
+        string licencia
+    }
 
-### Gestión de Historiales Médicos
+    HistorialMedico {
+        uuid id PK
+        uuid usuario_id FK
+        jsonb diagnosticos
+        jsonb antecedentes
+    }
+```
 
-Se registra el historial médico de cada paciente, incluyendo descripciones, diagnósticos, tratamientos y datos médicos complejos en formato JSONB para facilitar la búsqueda y el análisis.
+---
 
-### Manejo de Recetas Médicas
+## 🛠️ **Stack Tecnológico**
 
-Integración con la gestión de recetas médicas, incluyendo la lista de medicamentos, indicaciones y la fecha de emisión. Se permite la asociación de recetas a citas específicas y almacenamiento de imágenes mediante Cloudinary.
+| Capa | Tecnologías | Descripción |
+| :--- | :--- | :--- |
+| **Core** | ![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) | Framework progresivo y tipado estático |
+| **Data** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white) ![TypeORM](https://img.shields.io/badge/TypeORM-FE0E0E?logo=typeorm&logoColor=white) | Persistencia robusta y ORM |
+| **Cache** | ![Redis](https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white) | Gestión de sesiones y rate limiting |
+| **IA & Bot** | ![Gemini](https://img.shields.io/badge/Gemini_AI-8E75B2?logo=google-bard&logoColor=white) ![Telegram](https://img.shields.io/badge/Telegram_API-26A5E4?logo=telegram&logoColor=white) | Procesamiento de lenguaje natural y mensajería |
+| **API** | ![GraphQL](https://img.shields.io/badge/GraphQL-E10098?logo=graphql&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) | Interfaces flexibles y documentación |
 
-### Registro de Notas Médicas
+---
 
-Facilita la creación y gestión de notas médicas asociadas a las citas, con la opción de marcarlas como privadas para controlar el acceso a la información sensible.
+## 🚀 **Instalación y Despliegue**
 
-### Almacenamiento de Documentos de Consulta
+### Prerrequisitos
+*   **Node.js** v18+
+*   **PostgreSQL** v14+
+*   **Redis** v6+
 
-Permite subir y gestionar documentos relacionados con las consultas, incluyendo el nombre del archivo, tipo de documento, URL del archivo y la fecha de subida.
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/RubenDarioGuerreroNeira/medical-appointments-api.git
+cd medical-appointments-api
+```
 
-### Manejo de Horarios Médicos
+### 2. Instalar dependencias
+```bash
+npm install
+```
 
-Se gestionan los horarios de disponibilidad de los médicos utilizando un formato JSONB para representar la complejidad de los horarios.
+### 3. Configurar entorno
+Crea un archivo `.env` basado en `.env.example`:
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/medical_db
 
-# Bot de Telegram para Citas Médicas
+# Security
+JWT_SECRET=super_secret_key_change_me
 
-<img src="/src/images/Bot telegram Bw.jpg" width="320" alt="Telegram Bot Screenshot" />
+# External Services
+TELEGRAM_BOT_TOKEN=your_token
+GEMINI_API_KEY=your_key
+CLOUDINARY_URL=your_url
+```
 
-## Características Principales
+### 4. Inicializar base de datos
+```bash
+npm run migration:run
+```
 
-El bot de Telegram [@CitasMedicbot](https://t.me/CitasMedicbot) complementa nuestra API de citas médicas, ofreciendo una interfaz conversacional accesible y fácil de usar para los pacientes.
+### 5. Iniciar servidor
+```bash
+# Modo Desarrollo
+npm run start:dev
 
-### Funcionalidades Implementadas
+# Modo Producción
+npm run build
+npm run start:prod
+```
 
-- **Menú Interactivo**: Navegación intuitiva mediante botones y comandos
-- **Búsqueda de Farmacias**: Localiza farmacias cercanas basadas en la ubicación del usuario
-- **Búsqueda de Centros Médicos**: Encuentra centros médicos cercanos con opciones para obtener direcciones
-- **Consultas Médicas por IA**: Responde preguntas médicas básicas utilizando inteligencia artificial
-- **Recordatorios de Medicamentos**: Configura y gestiona recordatorios para tomar medicamentos
-- **Información de Contacto**: Acceso rápido a información de contacto del centro médico
-- **Gestión de Historial Médico**: Registro y consulta de historiales médicos personales
-  - Creación de nuevos registros médicos con diagnósticos, tratamientos y médicos
-  - Visualización detallada del historial médico completo
-  - Eliminación de registros médicos específicos
-  - Interfaz intuitiva con botones interactivos para navegar entre opciones
-  - **Exportación de Recordatorios Médicos**: Genera y descarga reportes de medicamentos en formato PDF o CSV
-  - Exportación personalizada con datos del paciente
-  - Opción para compartir directamente con profesionales médicos
-  - Formato profesional para uso clínico
-  - Resumen estadístico de medicamentos y frecuencias
-- **Recordatorios de Citas Médicas**: Configuración y gestión de recordatorios para citas médicas programadas
-- **Integración con Geolocalización**: Búsqueda de servicios médicos basada en la ubicación actual del usuario
-- **Interpretación de Resultados de Laboratorio**: Procesamiento automático de resultados de laboratorio y visualización en formato texto
-**Informacion de Emergencia Médica**: 
- Permite a los usuarios configurar y almacenar datos médicos críticos (como alergias, condiciones preexistentes, medicamentos actuales),Tipo de Sangre, Factor,contacto de emergencia (Nombre y Numeros telefonicos ), a demás si el usuario posee una Póliza de Seguro Médico,. Esta información es vital para situaciones de primeros auxilios y se puede generar un código de acceso para que personal médico autorizado la consulte rápidamente."
- **Genera Código QR**:
- Con tu Información Médica en caso de que necesites Primeros Auxilios, al escanearlo las personas o el personal médico que te presten primeros auxilios podran saber de tus alergias, tratamientos, si posees o no Seguro Médico, Nombre de la Compañía , Nombre y Número de Telefono de la Persona de Contacto
+---
 
-### Próximas Funcionalidades
+## 🧪 **Calidad y Testing**
 
-#### 1. Sistema de Citas Médicas
+El proyecto mantiene altos estándares de calidad de código y cobertura de pruebas.
 
-- Programación, visualización y cancelación de citas médicas directamente desde Telegram
-- Recordatorios automáticos de citas próximas
-- Opción para reprogramar citas con un simple botón
+```bash
+npm run test          # Unit Tests
+npm run test:e2e      # End-to-End Tests
+npm run test:cov      # Coverage Report
+```
 
-#### 2. Seguimiento de Medicamentos Mejorado
+> **Coverage Goal:** > 90% en módulos críticos.
 
-- Registro de medicamentos con fotos (el usuario puede enviar una foto del medicamento)
-- Alertas de interacciones medicamentosas peligrosas
-- Recordatorios personalizables (sonidos, frecuencia, mensajes)
+---
 
-#### 3. Síntomas y Primeros Auxilios
+## 📞 **Autor y Contacto**
 
-- Guía interactiva de primeros auxilios con imágenes y videos
-- Evaluador de síntomas básico que sugiera nivel de urgencia
-- Información sobre cuándo buscar atención médica inmediata
+<div align="center">
+  <img src="https://github.com/RubenDarioGuerreroNeira.png" width="100px" style="border-radius: 50%;" alt="Avatar"/>
+  <br />
+  <strong>Rubén D. Guerrero N.</strong>
+  <br />
+  <p>Full Stack Developer & AI Integration Specialist</p>
+  
+  <a href="mailto:rudargeneira@gmail.com">
+    <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />
+  </a>
+  <a href="https://t.me/Rubedev">
+    <img src="https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram" />
+  </a>
+  <a href="https://linkedin.com/in/rubendguerrero">
+    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+  </a>
+</div>
 
-#### 4. Integración con Seguros Médicos
+---
 
-- Verificación de cobertura de seguro para clínicas y farmacias mostradas
-- Consulta de saldo disponible o estado de reembolsos
-- Información sobre trámites y documentación necesaria
-
-#### 5. Comunidad y Soporte
-
-- Grupos de apoyo para condiciones específicas
-- Conexión con otros pacientes (anónima y moderada)
-- Preguntas frecuentes sobre condiciones médicas comunes
-
-#### 6. Telemedicina
-
-- Integración con servicios de consulta médica virtual
-- Programación de videoconsultas desde el bot
-- Sala de espera virtual con notificaciones
-
-#### 7. Gamificación para Adherencia al Tratamiento
-
-- Sistema de puntos por seguir tratamientos correctamente
-- Insignias y logros por mantener hábitos saludables
-- Estadísticas visuales de progreso
-
-#### 8. Información Nutricional y Ejercicio
-
-- Recomendaciones personalizadas según condiciones médicas
-- Seguimiento de actividad física básica
-- Sugerencias de dietas específicas para condiciones médicas
-
-#### 9. Emergencias Médicas Mejoradas
-
-- Botón de pánico que envía ubicación a contactos de emergencia
-- Información de contacto de emergencias según ubicación actual
-- Instrucciones de audio para situaciones críticas
-
-## Soporte
-
-Para soporte o consultas, por favor contactar a través de los canales disponibles.
-
-## Licencia
-
-MIT
-
-### Tecnologías Utilizadas
-
-- Node-telegram-bot-api
-- NestJS para la integración con el backend
-- Servicios de geolocalización
-- Integración con APIs externas para información médica
-- Cloudinary para manejo de imágenes
+<p align="center">
+  Made with ❤️ using NestJS and AI
+</p>
