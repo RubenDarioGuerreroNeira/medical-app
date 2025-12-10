@@ -67,10 +67,13 @@ jobs:
           DB_USERNAME: postgres
           DB_PASSWORD: test_password # Asegúrate que esta variable se define
           DB_NAME: test_db
-          # Añadir un pequeño retraso por si acaso la DB tarda en estar lista tras la creación
+          # Añadir un pequeño retraso y verificación de salud
           # RUNNER_OS es 'Linux' en los runners de GitHub
         run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then sleep 5; fi
+          if [ "$RUNNER_OS" == "Linux" ]; then 
+            sleep 5
+            pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USERNAME
+          fi
           npm run migration:run
 
       - name: Run tests
