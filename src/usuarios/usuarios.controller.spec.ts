@@ -4,6 +4,8 @@ import { UsuariosService } from './usuarios.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Usuario } from '../Entities/Usuarios.entity';
 import { Medico } from '../Entities/Medico.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Reflector } from '@nestjs/core';
 
 describe('UsuariosController', () => {
   let controller: UsuariosController;
@@ -30,6 +32,14 @@ describe('UsuariosController', () => {
         {
           provide: getRepositoryToken(Medico),
           useValue: mockRepository,
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: { get: jest.fn(), set: jest.fn() },
+        },
+        {
+          provide: Reflector,
+          useValue: { get: jest.fn() },
         },
       ],
     }).compile();
