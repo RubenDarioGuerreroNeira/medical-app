@@ -8,12 +8,12 @@ import { EstadoCita } from "../Entities/Cita.entity";
 import { Usuario } from "../Entities/Usuarios.entity";
 import { Roles } from "../Entities/Usuarios.entity";
 import { Medico } from "../Entities/Medico.entity";
-import { HistorialMedico } from "src/Entities/HistorialMedico.entity";
+import { HistorialMedico } from "../Entities/HistorialMedico.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { PaginationDto, PaginatedResult } from "src/Dto Pagination/Pagination";
+import { PaginationDto, PaginatedResult } from "../Dto Pagination/Pagination";
 import { isMainThread } from "worker_threads";
-import { GetCitasRangoFechaDto } from "src/Dto Pagination/getCitasRangoFecha";
+import { GetCitasRangoFechaDto } from "../Dto Pagination/getCitasRangoFecha";
 import { Cache } from "cache-manager";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Inject } from "@nestjs/common";
@@ -33,7 +33,7 @@ export class CitasService {
     private medicoRepository: Repository<Medico>,
     @InjectRepository(HistorialMedico)
     private historialMedicoRepository: Repository<HistorialMedico>
-  ) {}
+  ) { }
 
   async verificaMedico(medico_id: string): Promise<Medico> {
     try {
