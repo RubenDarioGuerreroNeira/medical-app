@@ -23,6 +23,7 @@
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts"
   },
   "dependencies": {
+    "@apollo/server": "^4.12.2",
     "@google/generative-ai": "^0.21.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/apollo": "^12.2.2",
@@ -63,7 +64,6 @@
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "save-dev": "^0.0.1-security",
     "stream-browserify": "^3.0.0",
     "streamifier": "^0.1.1",
     "typeorm": "^0.3.20"
