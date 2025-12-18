@@ -90,8 +90,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     RecetaMedicaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppResolver, ReminderResolver],
-})
+      providers: [AppService, AppResolver],})
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');

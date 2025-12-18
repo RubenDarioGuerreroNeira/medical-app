@@ -10,7 +10,7 @@ export class AppointmentCommands {
 
   constructor(
     private readonly appointmentService: AppointmentService,
-    private readonly bot: TelegramBot,
+    @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
     @Inject("USER_STATES_MAP") userStatesMap: Map<number, any>
   ) {
     this.userStates = userStatesMap;
