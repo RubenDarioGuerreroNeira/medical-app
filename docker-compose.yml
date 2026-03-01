@@ -2,12 +2,23 @@ version: '3.8'
 
 services:
   api:
-    build: .
+    build:
+      context: .
+      target: builder
+    command: npm run start:dev
+    volumes:
+      - .:/app
+      - /app/node_modules
     ports:
       - '3000:3000'
     environment:
       # Nota: En Docker, el host de la base de datos es el nombre del servicio ('db'), no 'localhost'
       - DATABASE_URL=postgresql://postgres:password123@db:5432/medical_db
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password123
+      - DB_DATABASE=medical_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       # Variables que debes definir o pasar desde un archivo .env

@@ -1,6 +1,8 @@
-
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModuleAsyncOptions, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import {
+  TypeOrmModuleAsyncOptions,
+  TypeOrmModuleOptions,
+} from '@nestjs/typeorm';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -46,7 +48,9 @@ export const typeOrmOptions: TypeOrmModuleOptions = {
 export const TypeOrmConfigAsync: TypeOrmModuleAsyncOptions = {
   imports: [ConfigModule],
   inject: [ConfigService],
-  useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => {
+  useFactory: async (
+    configService: ConfigService,
+  ): Promise<TypeOrmModuleOptions> => {
     return {
       ...typeOrmOptions,
       host: configService.get<string>('DB_HOST'),
@@ -55,11 +59,13 @@ export const TypeOrmConfigAsync: TypeOrmModuleAsyncOptions = {
       password: configService.get<string>('DB_PASSWORD'),
       database: configService.get<string>('DB_NAME'),
       // Enable synchronize only if NODE_ENV is not 'production'
-      synchronize: configService.get<string>('NODE_ENV') !== 'production',
+      synchronize: false,
     };
   },
 };
 
 // This DataSource is used by the TypeORM CLI for migrations.
 // It directly uses the typeOrmOptions.
-export const AppDataSource = new DataSource(typeOrmOptions as DataSourceOptions);
+export const AppDataSource = new DataSource(
+  typeOrmOptions as DataSourceOptions,
+);
