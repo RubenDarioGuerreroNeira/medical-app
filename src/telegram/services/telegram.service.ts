@@ -16,8 +16,8 @@ import { EmergencyInfoService } from "./emergency-info.service";
 
 @Injectable()
 export class TelegramService {
-  sendMessage(chatId: number, message: string) {
-    throw new Error("Method not implemented.");
+  async sendMessage(chatId: number, message: string): Promise<any> {
+    return this.bot.sendMessage(chatId, message);
   }
   // private bot: TelegramBot;
 

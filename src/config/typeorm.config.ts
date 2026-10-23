@@ -58,8 +58,9 @@ export const TypeOrmConfigAsync: TypeOrmModuleAsyncOptions = {
       username: configService.get<string>('DB_USERNAME'),
       password: configService.get<string>('DB_PASSWORD'),
       database: configService.get<string>('DB_NAME'),
-      // Enable synchronize only if NODE_ENV is not 'production'
-      synchronize: false,
+      // Enable synchronize only in non-production (dev) so missing tables are created automatically.
+      // In production use migrations only.
+      synchronize: configService.get<string>('NODE_ENV') !== 'production',
     };
   },
 };

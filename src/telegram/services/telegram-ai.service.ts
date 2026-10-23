@@ -210,7 +210,6 @@ export class TelegramAIService extends TelegramBaseService {
     esFinal: boolean
   ): Promise<void> {
     const options: TelegramBot.SendMessageOptions = {
-      parse_mode: "MarkdownV2",
       reply_markup: esFinal
         ? {
             inline_keyboard: [

@@ -32,27 +32,6 @@ export class GeminiAIService {
     });
   }
 
-  private sanitizeMarkdown(text: string): string {
-    return text
-      .replace(/\_/g, "\\_")
-      .replace(/\*/g, "\\*")
-      .replace(/\[/g, "\\[")
-      .replace(/\]/g, "\\]")
-      .replace(/\(/g, "\\(")
-      .replace(/\)/g, "\\)")
-      .replace(/\~/g, "\\~")
-      .replace(/\`/g, "\\`")
-      .replace(/\>/g, "\\>")
-      .replace(/\#/g, "\\#")
-      .replace(/\+/g, "\\+")
-      .replace(/\-/g, "\\-")
-      .replace(/\=/g, "\\=")
-      .replace(/\|/g, "\\|")
-      .replace(/\{/g, "\\{")
-      .replace(/\}/g, "\\}")
-      .replace(/\./g, "\\.")
-      .replace(/\!/g, "\\!");
-  }
 
   async generateMedicalResponse(prompt: string): Promise<string> {
     try {
@@ -66,11 +45,11 @@ export class GeminiAIService {
 
       const result = await this.model.generateContent(medicalPrompt);
       const response = await result.response;
-      let text = response.text();
+      const text = response.text();
 
-      text = this.sanitizeMarkdown(text);
 
-      return `${text}\n\n⚠️ *Aviso importante*: Esta información es solo para orientación general y no reemplaza el consejo médico profesional\\. Por favor, consulta a un profesional de la salud para un diagnóstico y tratamiento adecuado\\.`;
+      return `${text}
+⚠️ Aviso importante: Esta información es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para un diagnóstico y tratamiento adecuado.`;
     } catch (error) {
       this.logger.error("Error generating Gemini medical response:", error);
       return "Lo siento, hubo un error al procesar tu consulta médica. Por favor, intenta nuevamente más tarde.";
@@ -139,11 +118,11 @@ export class GeminiAIService {
 
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-      let text = response.text();
+      const text = response.text();
 
-      text = this.sanitizeMarkdown(text);
 
-      return `${text}\n\n⚠️ *Aviso importante*: Esta interpretación es solo para orientación general y no reemplaza el consejo médico profesional\\. Por favor, consulta a un profesional de la salud para una interpretación completa de tus resultados\\.`;
+      return `${text}
+⚠️ Aviso importante: Esta interpretación es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para una interpretación completa de tus resultados.`;
     } catch (error) {
       this.logger.error("Error generating lab results interpretation:", error);
       return "Lo siento, hubo un error al interpretar tus resultados de laboratorio. Por favor, intenta nuevamente más tarde.";

@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -38,7 +41,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    TelegramModule,
+    ...(process.env.TELEGRAM_BOT_TOKEN ? [TelegramModule] : []),
     CacheModule.register({
       isGlobal: true,
       ttl: 60000,
@@ -58,15 +61,17 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        transport: {
-          host: configService.get('MAIL_HOST'),
-          port: configService.get('MAIL_PORT'),
-          secure: false,
-          auth: {
-            user: configService.get('MAIL_USER'),
-            pass: configService.get('MAIL_PASS'),
-          },
-        },
+        transport: configService.get('MAIL_HOST')
+          ? {
+              host: configService.get('MAIL_HOST'),
+              port: configService.get('MAIL_PORT'),
+              secure: false,
+              auth: {
+                user: configService.get('MAIL_USER'),
+                pass: configService.get('MAIL_PASS'),
+              },
+            }
+          : { jsonTransport: true },
         defaults: {
           from: `"No Reply" <${configService.get('MAIL_FROM')}>`,
         },
@@ -90,7 +95,8 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     RecetaMedicaModule,
   ],
   controllers: [AppController],
-      providers: [AppService, AppResolver],})
+  providers: [AppService, AppResolver, ...(process.env.TELEGRAM_BOT_TOKEN ? [ReminderResolver] : [])],
+})
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');

@@ -5,9 +5,6 @@ import { CreateTelegramHistorialMedicoDto } from "../../telegram-historial-medic
 
 @Injectable()
 export class TelegramHistorialMedicoService {
-  create(historialData: CreateTelegramHistorialMedicoDto) {
-    throw new Error("Method not implemented.");
-  }
   private readonly logger = new Logger(TelegramHistorialMedicoService.name);
 
   constructor(
