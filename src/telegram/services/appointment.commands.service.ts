@@ -2,19 +2,17 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 import { AppointmentService } from "./appointment.service";
 import TelegramBot from "node-telegram-bot-api";
 import * as moment from "moment-timezone";
+import { TelegramStateService } from "./telegram-state.service";
 
 @Injectable()
 export class AppointmentCommands {
   private readonly logger = new Logger(AppointmentCommands.name);
-  private userStates: Map<number, any>; // Ya no se inicializa aquí, se inyecta
 
   constructor(
     private readonly appointmentService: AppointmentService,
     @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
-    @Inject("USER_STATES_MAP") userStatesMap: Map<number, any>
-  ) {
-    this.userStates = userStatesMap;
-  }
+    private readonly stateService: TelegramStateService
+  ) {}
 
   public async mostrarMenuCitas(chatId: number) {
     await this.bot.sendMessage(
@@ -49,7 +47,7 @@ export class AppointmentCommands {
   }
 
   async iniciarCreacionCita(chatId: number) {
-    this.userStates.set(chatId, {
+    await this.stateService.set(chatId, {
       currentOperation: "create_appointment",
       step: "awaiting_doctor_name", // Cambiado para reflejar que esperamos este dato
       appointmentData: {},
@@ -76,7 +74,7 @@ export class AppointmentCommands {
     } else if (data === "ver_citas") {
       await this.mostrarCitasConIds(chatId, "show"); // "show" es un placeholder, ajustar según necesidad
     } else if (data === "select_edit_appointment") {
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "edit_appointment",
         step: "awaiting_id_for_edit",
       });
@@ -85,7 +83,7 @@ export class AppointmentCommands {
         "✏️ Por favor, ingresa el ID de la cita que deseas editar:"
       );
     } else if (data === "select_delete_appointment") {
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "delete_appointment",
         step: "awaiting_id_for_delete",
       });
@@ -100,14 +98,14 @@ export class AppointmentCommands {
       const appointmentId = parseInt(data.split("_")[2]);
       await this.confirmarEliminarCita(chatId, appointmentId);
     } else if (data === "confirm_delete_appointment") {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (state && state.appointmentToDeleteId) {
         await this.eliminarCita(chatId, state.appointmentToDeleteId);
       }
-      this.userStates.delete(chatId); // Limpiar estado después de la operación
+      await this.stateService.delete(chatId); // Limpiar estado después de la operación
     } else if (data === "cancel_delete_appointment") {
       await this.bot.sendMessage(chatId, "❌ Eliminación cancelada");
-      this.userStates.delete(chatId); // Limpiar estado
+      await this.stateService.delete(chatId); // Limpiar estado
     }
   }
 
@@ -115,7 +113,7 @@ export class AppointmentCommands {
     const chatId = msg.chat.id;
     if (!msg.text) return;
 
-    const state = this.userStates.get(chatId);
+    const state = await this.stateService.get(chatId);
     if (
       !state ||
       (state.currentOperation !== "create_appointment" &&
@@ -166,7 +164,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.doctorName = msg.text;
           state.step = "awaiting_specialty";
-          this.userStates.set(chatId, state); // Guardar estado actualizado
+          await this.stateService.set(chatId, state); // Guardar estado actualizado
           await this.bot.sendMessage(
             chatId,
             "🔬 ¿Cuál es la especialidad médica?"
@@ -183,7 +181,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.specialty = msg.text;
           state.step = "awaiting_date";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "📅 ¿En qué fecha es la cita? (Formato: DD-MM-AAAA, ejemplo: 21-05-2025)"
@@ -198,7 +196,7 @@ export class AppointmentCommands {
             }
             state.appointmentData.appointmentDate = msg.text; // Guardar en formato original
             state.step = "awaiting_time";
-            this.userStates.set(chatId, state);
+            await this.stateService.set(chatId, state);
             await this.bot.sendMessage(
               chatId,
               "⏰ ¿A qué hora es la cita? (Ejemplo: 02:30 PM o 14:30)"
@@ -223,7 +221,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.appointmentTime = msg.text;
           state.step = "awaiting_medical_center";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "🏥 ¿En qué centro médico es la cita?"
@@ -240,7 +238,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.medicalCenterName = msg.text;
           state.step = "awaiting_location";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "📍 ¿Cuál es la ubicación del centro médico? (Opcional, envía 'N' si no deseas especificar)"
@@ -251,7 +249,7 @@ export class AppointmentCommands {
           state.appointmentData.medicalCenterLocation =
             msg.text.trim().toUpperCase() === "N" ? "" : msg.text;
           state.step = "awaiting_phone";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "📞 ¿Cuál es el número de teléfono de contacto? (Opcional, envía 'N' si no deseas especificar)"
@@ -262,7 +260,7 @@ export class AppointmentCommands {
           state.appointmentData.phoneNumber =
             msg.text.trim().toUpperCase() === "N" ? "" : msg.text;
           state.step = "awaiting_notes";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "📝 ¿Deseas agregar alguna nota adicional? (Opcional, envía 'N' si no deseas especificar)"
@@ -287,7 +285,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.doctorName = msg.text;
           state.step = "awaiting_edit_specialty";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "🔬 ¿Cuál es la nueva especialidad médica?"
@@ -297,7 +295,7 @@ export class AppointmentCommands {
         case "awaiting_edit_specialty":
           state.appointmentData.specialty = msg.text;
           state.step = "awaiting_edit_date";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "📅 ¿Cuál es la nueva fecha de la cita? (Formato: DD-MM-AAAA)"
@@ -312,7 +310,7 @@ export class AppointmentCommands {
             }
             state.appointmentData.appointmentDate = msg.text;
             state.step = "awaiting_edit_time";
-            this.userStates.set(chatId, state);
+            await this.stateService.set(chatId, state);
             await this.bot.sendMessage(
               chatId,
               "⏰ ¿Cuál es la nueva hora de la cita? (Formato: HH:MM AM/PM o HH:MM)"
@@ -341,7 +339,7 @@ export class AppointmentCommands {
           }
           state.appointmentData.appointmentTime = msg.text;
           state.step = "awaiting_edit_medical_center";
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
           await this.bot.sendMessage(
             chatId,
             "🏥 ¿Cuál es el nuevo centro médico?"
@@ -360,7 +358,7 @@ export class AppointmentCommands {
             `Estado desconocido en handleUserInput: ${state.step} para el chat ${chatId}`
           );
           // Podrías querer limpiar el estado aquí o enviar un mensaje de error genérico
-          // this.userStates.delete(chatId);
+          // await this.stateService.delete(chatId);
           // await this.bot.sendMessage(chatId, "❌ Ocurrió un error en el flujo. Por favor, intenta comenzar de nuevo.");
           break;
       }
@@ -376,7 +374,7 @@ export class AppointmentCommands {
         "❌ Ocurrió un error inesperado procesando tu respuesta. Por favor, intenta nuevamente."
       );
       // Considera limpiar el estado aquí también si el error es irrecuperable
-      // this.userStates.delete(chatId);
+      // await this.stateService.delete(chatId);
     }
   }
 
@@ -446,7 +444,7 @@ export class AppointmentCommands {
         }
       );
     } finally {
-      this.userStates.delete(chatId); // Limpiar el estado del usuario
+      await this.stateService.delete(chatId); // Limpiar el estado del usuario
     }
   }
 
@@ -523,7 +521,7 @@ export class AppointmentCommands {
         }
       );
     } finally {
-      this.userStates.delete(chatId); // Limpiar el estado del usuario
+      await this.stateService.delete(chatId); // Limpiar el estado del usuario
     }
   }
 
@@ -543,7 +541,7 @@ export class AppointmentCommands {
         "DD/MM/YYYY"
       );
 
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "edit_appointment",
         step: "awaiting_edit_doctor_name",
         appointmentData: { ...appointment }, // Guardamos toda la cita, incluyendo su ID
@@ -597,7 +595,7 @@ export class AppointmentCommands {
         return;
       }
 
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "delete_appointment_confirmation", // Estado específico para la confirmación
         appointmentToDeleteId: appointmentId, // Guardar el ID de la cita a eliminar
       });
@@ -751,7 +749,7 @@ export class AppointmentCommands {
           "❌ No se encontró una cita con ese ID. Por favor, intenta nuevamente."
         );
         // Mantener el estado para que pueda reintentar o cancelar
-        this.userStates.set(chatId, {
+        await this.stateService.set(chatId, {
           currentOperation: "delete_appointment",
           step: "awaiting_id_for_delete", // Permanece en este paso
         });
@@ -768,7 +766,7 @@ export class AppointmentCommands {
         chatId,
         "❌ Ocurrió un error al buscar la cita. Por favor, intenta nuevamente."
       );
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "delete_appointment",
         step: "awaiting_id_for_delete",
       });
@@ -820,7 +818,7 @@ export class AppointmentCommands {
         }
       );
     } finally {
-      this.userStates.delete(chatId); // Limpiar estado
+      await this.stateService.delete(chatId); // Limpiar estado
     }
   }
 }

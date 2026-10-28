@@ -13,13 +13,13 @@ import { AppointmentCommands } from "./appointment.commands.service";
 import { TelegramHistorialMedicoService } from "../services/telegram-historial-medico.service";
 import { TelegramLabResultsService } from "./telegram-lab-results.service";
 import { EmergencyInfoService } from "./emergency-info.service";
+import { TelegramStateService } from "./telegram-state.service";
 
 @Injectable()
 export class TelegramService {
   async sendMessage(chatId: number, message: string): Promise<any> {
     return this.bot.sendMessage(chatId, message);
   }
-  // private bot: TelegramBot;
 
   constructor(
     private configService: ConfigService,
@@ -31,13 +31,11 @@ export class TelegramService {
     private diagnosticService: TelegramDiagnosticService,
     private contactService: TelegramContactService,
     private historialMedicoService: TelegramHistorialMedicoService,
-    private labResultsService: TelegramLabResultsService, // <-- Agrega aquí
-
-    // private colombiaService: TelegramColombiaService,
+    private labResultsService: TelegramLabResultsService,
     private appointmentCommands: AppointmentCommands,
-    @Inject("USER_STATES_MAP") private userStates: Map<number, any>,
+    private stateService: TelegramStateService,
     @Inject("TELEGRAM_BOT") private bot: TelegramBot,
-    private emergencyInfoService: EmergencyInfoService // <-- Agrega aquí
+    private emergencyInfoService: EmergencyInfoService
   ) {
     this.initializeBot();
   }
@@ -72,11 +70,9 @@ export class TelegramService {
       this.historialMedicoService.handleHistorialMedicoCommand(msg)
     );
     this.bot.onText(/\/nuevohistorial/, (msg) => {
-      this.userStates.delete(msg.chat.id); // Limpiar estado previo
       this.historialMedicoService.iniciarRegistroHistorialMedico(msg.chat.id);
     });
     this.bot.onText(/\/mishistoriales/, (msg) => {
-      this.userStates.delete(msg.chat.id); // Limpiar estado previo
       this.historialMedicoService.mostrarHistorialMedico(msg.chat.id);
     });
 
@@ -142,13 +138,13 @@ export class TelegramService {
       // Manejar callbacks de selección de zona horaria
       if (data.startsWith("tz_")) {
         const selectedTimezone = data.substring("tz_".length);
-        const state = this.userStates.get(chatId);
+        const state = await this.stateService.get(chatId);
 
         if (state && state.reminderData) {
           state.reminderData.timezone = selectedTimezone;
           // El siguiente paso después de la zona horaria es la frecuencia
           state.step = "awaiting_frequency"; // Asegúrate que este sea el nombre correcto del paso
-          this.userStates.set(chatId, state);
+          await this.stateService.set(chatId, state);
 
           // Llamar al método que solicita la frecuencia en TelegramReminderService
           await this.reminderService.solicitarFrecuenciaRecordatorio(
@@ -210,7 +206,7 @@ export class TelegramService {
 
       // Manejo global de "menu_principal"
       if (data === "menu_principal") {
-        this.userStates.delete(chatId); // Limpiar estado
+        await this.stateService.delete(chatId); // Limpiar estado
         await this.menuService.mostrarMenuPrincipal(chatId);
         return;
       }
@@ -229,7 +225,7 @@ export class TelegramService {
       ) {
         if (data === "recordatorio_cita_medica") {
           // Opción del menú principal para citas
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.appointmentCommands.mostrarMenuCitas(chatId);
         } else {
           await this.appointmentCommands.handleAppointmentCallback(
@@ -400,24 +396,24 @@ export class TelegramService {
 
       switch (data) {
         case "consulta_medica":
-          this.userStates.set(chatId, {
+          await this.stateService.set(chatId, {
             currentOperation: "awaiting_medical_query",
           });
           await this.aiService.iniciarConsultaMedica(chatId);
           break;
         case "solicitar_ubicacion_farmacia":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.locationService.solicitarUbicacion(chatId, "farmacia");
           break;
 
         case "mostrarCentrosCercanos":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.locationService.solicitarUbicacion(chatId, "clinica");
           break;
 
         // Agregar manejo para crear_recordatorio medico (trataniento)
         case "recordatorios":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.reminderService.mostrarMenuRecordatorios(chatId);
           break;
 
@@ -427,7 +423,7 @@ export class TelegramService {
 
         case "crear_recordatorio":
         case "create_reminder":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.reminderService.iniciarCreacionRecordatorio(chatId);
           break;
 
@@ -454,7 +450,7 @@ export class TelegramService {
           break;
 
         case "contacto":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.contactService.mostrarContacto(chatId);
           break;
 
@@ -465,18 +461,18 @@ export class TelegramService {
           break;
         // Agregar estos casos al switch
         case "nuevo_historial":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.historialMedicoService.iniciarRegistroHistorialMedico(
             chatId
           );
           break;
         case "ver_historiales":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.historialMedicoService.mostrarHistorialMedico(chatId);
           break;
 
         case "interpretar_resultados":
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
           await this.labResultsService.iniciarInterpretacionResultados(chatId);
           break;
         // }
@@ -527,7 +523,7 @@ export class TelegramService {
     }
 
     const chatId = msg.chat.id;
-    const userState = this.userStates.get(chatId);
+    const userState = await this.stateService.get(chatId);
     try {
       // 1. Flujos activos basados en userState
 
@@ -544,7 +540,7 @@ export class TelegramService {
         userState.currentOperation === "awaiting_medical_query"
       ) {
         // Limpiar el estado inmediatamente para evitar ejecuciones múltiples
-        this.userStates.delete(chatId);
+        await this.stateService.delete(chatId);
 
         if (msg.text) {
           const waitingMessage = await this.bot.sendMessage(
@@ -606,7 +602,7 @@ export class TelegramService {
     match: RegExpMatchArray | null
   ): Promise<void> {
     const chatId = msg.chat.id;
-    this.userStates.delete(chatId); // Limpiar estado previo
+    await this.stateService.delete(chatId); // Limpiar estado previo
     const payload = match && match[1] ? match[1].trim() : null;
 
     if (payload) {
@@ -626,7 +622,7 @@ export class TelegramService {
   }
 
   private async handleHelpCommand(msg: TelegramBot.Message): Promise<void> {
-    this.userStates.delete(msg.chat.id); // Limpiar estado previo
+    await this.stateService.delete(msg.chat.id); // Limpiar estado previo
     await this.menuService.mostrarAyuda(msg.chat.id);
   }
 } // final

@@ -9,6 +9,7 @@ import * as QRCode from "qrcode";
 import * as PDFDocument from "pdfkit";
 // import PDFDocument from "pdfkit";
 import { PassThrough } from "stream";
+import { TelegramStateService } from "./telegram-state.service";
 // Interfaz para el estado de configuración de emergencia
 interface EmergencyConfigState {
   currentOperation: "configure_emergency_info";
@@ -41,8 +42,7 @@ export class EmergencyInfoService {
     @InjectRepository(EmergencyInfo)
     private emergencyInfoRepository: Repository<EmergencyInfo>,
     @Inject("TELEGRAM_BOT") private bot: TelegramBot,
-    @Inject("USER_STATES_MAP")
-    private userStates: Map<number, EmergencyConfigState | any>
+    private readonly stateService: TelegramStateService,
   ) {}
 
   async mostrarMenuEmergencia(chatId: number): Promise<void> {
@@ -95,7 +95,7 @@ export class EmergencyInfoService {
   }
 
   async iniciarConfiguracionEmergencia(chatId: number): Promise<void> {
-    this.userStates.set(chatId, {
+    await this.stateService.set(chatId, {
       currentOperation: "configure_emergency_info",
       step: "awaiting_allergies",
       data: {},
@@ -131,7 +131,7 @@ export class EmergencyInfoService {
 
     if (!text) return; // Ignorar mensajes sin texto en este flujo
     const hasAlphanumeric = /[a-zA-Z0-9]/;
-    const state = this.userStates.get(chatId) as EmergencyConfigState;
+    const state = await this.stateService.get(chatId) as EmergencyConfigState;
 
     if (!state || state.currentOperation !== "configure_emergency_info") {
       return; // No está en el flujo correcto
@@ -310,7 +310,7 @@ export class EmergencyInfoService {
         if (state.step === "awaiting_contact") {
           // Solo guardar si el último paso fue el contacto
           await this.guardarInformacionEmergencia(chatId, state.data);
-          this.userStates.delete(chatId); // Limpiar estado al finalizar
+          await this.stateService.delete(chatId); // Limpiar estado al finalizar
           await this.bot.sendMessage(
             chatId,
             "✅ Información de emergencia guardada correctamente.\n\n" +
@@ -339,7 +339,7 @@ export class EmergencyInfoService {
         }
       } else {
         state.step = nextStep;
-        this.userStates.set(chatId, state);
+        await this.stateService.set(chatId, state);
         await this.requestNextStep(chatId, nextQuestion);
       }
     } catch (error) {
@@ -351,7 +351,7 @@ export class EmergencyInfoService {
         chatId,
         "❌ Ocurrió un error procesando tu respuesta. Por favor, intenta configurar la información nuevamente desde el menú."
       );
-      this.userStates.delete(chatId);
+      await this.stateService.delete(chatId);
     }
   }
 

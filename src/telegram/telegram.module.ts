@@ -24,6 +24,7 @@ import { TelegramLocationService } from "./services/telegram-location.service";
 import { TelegramReminderService } from "./services/telegram-reminder.service";
 import { TelegramContactService } from "./services/telegram-contact.service";
 import { TelegramLabResultsService } from "./services/telegram-lab-results.service";
+import { TelegramStateService } from "./services/telegram-state.service";
 import { EmergencyInfoService } from "./services/emergency-info.service";
 import { AppointmentCommands } from "./services/appointment.commands.service";
 import { AppointmentService } from "./services/appointment.service";
@@ -62,7 +63,7 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
   ],
   controllers: [TelegramController, TelegramWebhookController],
   providers: [
-    // --- BOT INSTANCE ---
+    // --- BOT INSTANCE (modo webhook) ---
     {
       provide: "TELEGRAM_BOT",
       useFactory: (configService: ConfigService) => {
@@ -70,15 +71,13 @@ import { TelegramHistorialMedicoModule } from "../telegram-historial-medico/tele
         if (!token) {
           throw new Error("TELEGRAM_BOT_TOKEN no está definido en las variables de entorno");
         }
-        return new TelegramBot(token, { polling: true });
+        // polling: false => el bot no hace polling; las actualizaciones llegan vía webhook
+        return new TelegramBot(token, { polling: false });
       },
       inject: [ConfigService],
     },
-    // --- USER STATE MAP ---
-    {
-      provide: "USER_STATES_MAP",
-      useValue: new Map<number, any>(),
-    },
+    // --- ESTADO DE CONVERSACIÓN (Redis con fallback en memoria) ---
+    TelegramStateService,
     
     // --- REFACTORED SERVICES ---
     // These should be plain providers, Nest will resolve the dependency tree.

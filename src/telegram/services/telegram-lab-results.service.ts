@@ -1,19 +1,17 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import * as TelegramBot from "node-telegram-bot-api";
 import { GeminiAIService } from "../../Gemini/gemini.service";
+import { TelegramStateService } from "./telegram-state.service";
 
 @Injectable()
 export class TelegramLabResultsService {
   private readonly logger = new Logger(TelegramLabResultsService.name);
-  private userStates: Map<number, any>;
 
   constructor(
     @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot,
     private readonly geminiService: GeminiAIService,
-    @Inject("USER_STATES_MAP") userStatesMap: Map<number, any>
-  ) {
-    this.userStates = userStatesMap;
-  }
+    private readonly stateService: TelegramStateService,
+  ) {}
 
   async iniciarInterpretacionResultados(chatId: number): Promise<void> {
     const sentMessage = await this.bot.sendMessage(

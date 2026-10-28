@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from "@nestjs/common";
 import * as TelegramBot from "node-telegram-bot-api";
 import { TelegramHistorialMedicoService as HistorialMedicoDataService } from "../../telegram-historial-medico/telegram-historial-medico.service";
 import { CreateTelegramHistorialMedicoDto } from "../../telegram-historial-medico/dto/create-telegram-historial-medico.dto";
+import { TelegramStateService } from "./telegram-state.service";
 
 @Injectable()
 export class TelegramHistorialMedicoService {
@@ -10,8 +11,7 @@ export class TelegramHistorialMedicoService {
   constructor(
     @Inject("TELEGRAM_BOT")
     private readonly bot: TelegramBot,
-    @Inject("USER_STATES_MAP")
-    private readonly userStates: Map<number, any>,
+    private readonly stateService: TelegramStateService,
     private readonly historialMedicoService: HistorialMedicoDataService
   ) {}
 
@@ -102,7 +102,7 @@ export class TelegramHistorialMedicoService {
   async iniciarRegistroHistorialMedico(chatId: number): Promise<void> {
     try {
       this.logger.log(`[${chatId}] Iniciando registro de historial médico`);
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         currentOperation: "create_historial_medico",
         step: "awaiting_diagnostico",
         historialData: {},
@@ -273,7 +273,7 @@ export class TelegramHistorialMedicoService {
           : "🔒 Has elegido mantener este registro como privado."
       );
 
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (state) {
         state.historialData.esCompartible = esCompartible;
         await this.guardarHistorialMedico(chatId);
@@ -289,7 +289,7 @@ export class TelegramHistorialMedicoService {
       if (msg.chat.id !== chatId) return;
       if (msg.text === "/cancelar") {
         this.logger.log(`[${chatId}] Registro Cancelado`);
-        this.userStates.delete(chatId);
+        await this.stateService.delete(chatId);
         await this.bot.sendMessage(
           chatId,
           "❌ Registro cancelado.",
@@ -316,7 +316,7 @@ export class TelegramHistorialMedicoService {
         return;
       }
 
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (!state || state.step !== currentStep) {
         this.logger.warn(`[${chatId}] Estado no válido o paso incorrecto`);
         return;
@@ -361,7 +361,7 @@ export class TelegramHistorialMedicoService {
         }
         if (nextStepFunction) {
           state.step = nextStepName; // Actualizar el estado al siguiente paso ANTES de llamar a la función
-          this.userStates.set(chatId, state); // Guardar el estado actualizado
+          await this.stateService.set(chatId, state); // Guardar el estado actualizado
           await nextStepFunction();
         } else if (currentStep === "awaiting_descripcion") {
           // solicitarCompartible fue llamado, no actualizamos el step aquí,
@@ -387,7 +387,7 @@ export class TelegramHistorialMedicoService {
 
   private async guardarHistorialMedico(chatId: number): Promise<void> {
     try {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (!state) return;
 
       const historialData: CreateTelegramHistorialMedicoDto = {
@@ -432,7 +432,7 @@ export class TelegramHistorialMedicoService {
       );
       await this.handleError(chatId);
     } finally {
-      this.userStates.delete(chatId);
+      await this.stateService.delete(chatId);
     }
   }
 
@@ -441,7 +441,7 @@ export class TelegramHistorialMedicoService {
       chatId,
       "❌ Lo siento, ha ocurrido un error. Por favor, intenta nuevamente más tarde."
     );
-    this.userStates.delete(chatId);
+    await this.stateService.delete(chatId);
   }
 
   async mostrarHistorialMedico(
@@ -451,7 +451,7 @@ export class TelegramHistorialMedicoService {
     try {
       // Primero, verificamos si hay un manejador de callback activo y lo eliminamos
       // para evitar duplicaciones
-      const state = this.userStates.get(chatId) || {};
+      const state = await this.stateService.get(chatId) || {};
       if (state.activeCallbackHandler) {
         this.bot.removeListener("callback_query", state.activeCallbackHandler);
         state.activeCallbackHandler = null;
@@ -552,7 +552,7 @@ export class TelegramHistorialMedicoService {
       });
 
       // Guardar el ID del mensaje para poder eliminarlo después
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         ...state,
         lastHistorialListMessageId: sentMessage.message_id,
       });
@@ -573,7 +573,7 @@ export class TelegramHistorialMedicoService {
 
         // Eliminar el mensaje de lista para mantener limpio el chat
         try {
-          const currentState = this.userStates.get(chatId);
+          const currentState = await this.stateService.get(chatId);
           if (currentState?.lastHistorialListMessageId) {
             await this.bot.deleteMessage(
               chatId,
@@ -591,9 +591,9 @@ export class TelegramHistorialMedicoService {
       };
 
       // Guardar referencia al manejador para poder eliminarlo después
-      const updatedState = this.userStates.get(chatId) || {};
+      const updatedState = await this.stateService.get(chatId) || {};
       updatedState.activeCallbackHandler = callbackHandler;
-      this.userStates.set(chatId, updatedState);
+      await this.stateService.set(chatId, updatedState);
 
       // Usar once para que solo se ejecute una vez
       this.bot.once("callback_query", callbackHandler);
@@ -671,8 +671,8 @@ export class TelegramHistorialMedicoService {
       });
 
       // Guardar el ID del mensaje para poder eliminarlo después
-      this.userStates.set(chatId, {
-        ...this.userStates.get(chatId),
+      await this.stateService.set(chatId, {
+        ...await this.stateService.get(chatId),
         lastHistorialDetailMessageId: sentMessage.message_id,
       });
 
@@ -689,7 +689,7 @@ export class TelegramHistorialMedicoService {
 
         // Eliminar el mensaje de detalle para mantener limpio el chat
         try {
-          const state = this.userStates.get(chatId);
+          const state = await this.stateService.get(chatId);
           if (state?.lastHistorialDetailMessageId) {
             await this.bot.deleteMessage(
               chatId,
@@ -753,8 +753,8 @@ export class TelegramHistorialMedicoService {
     );
 
     // Guardar el ID del mensaje para poder eliminarlo después
-    this.userStates.set(chatId, {
-      ...this.userStates.get(chatId),
+    await this.stateService.set(chatId, {
+      ...await this.stateService.get(chatId),
       lastConfirmDeleteMessageId: sentMessage.message_id,
     });
 
@@ -770,7 +770,7 @@ export class TelegramHistorialMedicoService {
 
       // Eliminar el mensaje de confirmación para mantener limpio el chat
       try {
-        const state = this.userStates.get(chatId);
+        const state = await this.stateService.get(chatId);
         if (state?.lastConfirmDeleteMessageId) {
           await this.bot.deleteMessage(
             chatId,

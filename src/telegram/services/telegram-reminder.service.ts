@@ -11,22 +11,20 @@ import * as path from "path";
 import * as csv from "fast-csv";
 import * as moment from "moment";
 import "moment/locale/es";
+import { TelegramStateService } from "./telegram-state.service";
 
 @Injectable()
 export class TelegramReminderService {
   private readonly logger = new Logger(TelegramReminderService.name);
-  private userStates: Map<number, any>;
 
   constructor(
     @Inject("TELEGRAM_BOT") private bot: TelegramBot,
-    @Inject("USER_STATES_MAP") userStatesMap: Map<number, any>,
+    private readonly stateService: TelegramStateService,
     @Inject(forwardRef(() => ReminderService))
     private reminderService: ReminderService,
     private historialMedicoService: TelegramHistorialMedicoService,
     private menusService: TelegramMenuService
-  ) {
-    this.userStates = userStatesMap;
-  }
+  ) {}
 
   async mostrarMenuRecordatorios(chatId: number): Promise<void> {
     await this.bot.sendMessage(
@@ -212,7 +210,7 @@ export class TelegramReminderService {
   }
 
   async iniciarCreacionRecordatorio(chatId: number): Promise<void> {
-    this.userStates.set(chatId, {
+    await this.stateService.set(chatId, {
       step: "medication_name",
       reminderData: {},
     });
@@ -274,10 +272,10 @@ export class TelegramReminderService {
           return;
         }
 
-        const currentState = this.userStates.get(chatId);
+        const currentState = await this.stateService.get(chatId);
         if (currentState) {
           currentState.reminderData.medicationName = nombreMedicamento;
-          this.userStates.set(chatId, currentState);
+          await this.stateService.set(chatId, currentState);
         }
 
         // Si no existe, continuar con el flujo normal
@@ -296,7 +294,7 @@ export class TelegramReminderService {
   // Método para solicitar el nuevo nombre del medicamento
   public async solicitarNuevoNombre(chatId: number): Promise<void> {
     try {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
 
       if (
         !state ||
@@ -336,7 +334,7 @@ export class TelegramReminderService {
         }
       );
 
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         ...state,
         step: "waiting_new_name",
       });
@@ -428,7 +426,7 @@ export class TelegramReminderService {
   // Método para solicitar la nueva dosis
   public async solicitarNuevaDosis(chatId: number): Promise<void> {
     try {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (
         !state ||
         !state.reminderData ||
@@ -467,7 +465,7 @@ export class TelegramReminderService {
         }
       );
 
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         ...state,
         step: "waiting_new_dosage",
       });
@@ -547,7 +545,7 @@ export class TelegramReminderService {
   // Método para solicitar la nueva hora
   public async solicitarNuevaHora(chatId: number): Promise<void> {
     try {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (
         !state ||
         !state.reminderData ||
@@ -586,7 +584,7 @@ export class TelegramReminderService {
         }
       );
 
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         ...state,
         step: "waiting_new_time",
       });
@@ -705,13 +703,13 @@ export class TelegramReminderService {
         );
 
         // Guardar el estado actual para referencia futura
-        const userState = this.userStates.get(chatId) || { reminderData: {} };
+        const userState = await this.stateService.get(chatId) || { reminderData: {} };
         userState.reminderData = {
           ...userState.reminderData,
           reminderId: reminderId,
           frequency: frecuencia,
         };
-        this.userStates.set(chatId, userState);
+        await this.stateService.set(chatId, userState);
 
         // Obtener el recordatorio actual para tener información
         const reminder = await this.reminderService.getReminderById(reminderId);
@@ -961,7 +959,7 @@ export class TelegramReminderService {
   // Método para solicitar la nueva frecuencia
   public async solicitarNuevaFrecuencia(chatId: number): Promise<void> {
     try {
-      const state = this.userStates.get(chatId);
+      const state = await this.stateService.get(chatId);
       if (
         !state ||
         !state.reminderData ||
@@ -1151,7 +1149,7 @@ export class TelegramReminderService {
       const dosis = msg.text;
 
       // Guardar la dosis en el estado del usuario
-      const currentState = this.userStates.get(chatId);
+      const currentState = await this.stateService.get(chatId);
       if (!currentState || !currentState.reminderData) {
         this.logger.error(
           `[${chatId}] Estado de usuario no encontrado o reminderData ausente al procesar dosis.`
@@ -1160,11 +1158,11 @@ export class TelegramReminderService {
           chatId,
           "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
         );
-        this.userStates.delete(chatId);
+        await this.stateService.delete(chatId);
         return;
       }
       currentState.reminderData.dosage = dosis;
-      this.userStates.set(chatId, currentState);
+      await this.stateService.set(chatId, currentState);
 
       await this.solicitarHoraRecordatorio(chatId, nombreMedicamento, dosis);
     });
@@ -1181,7 +1179,7 @@ export class TelegramReminderService {
     const userTimezone =
       (await this.detectUserTimezone(chatId)) || "America/Caracas";
 
-    const userState = this.userStates.get(chatId);
+    const userState = await this.stateService.get(chatId);
     if (!userState || !userState.reminderData) {
       this.logger.error(
         `[${chatId}] Estado de usuario no encontrado o reminderData ausente en solicitarHoraRecordatorio`
@@ -1190,13 +1188,13 @@ export class TelegramReminderService {
         chatId,
         "❌ Ocurrió un error, por favor intenta crear el recordatorio de nuevo."
       );
-      this.userStates.delete(chatId);
+      await this.stateService.delete(chatId);
       return;
     }
     // El nombre del medicamento ya debe estar en userState.reminderData.medicationName
     userState.reminderData.dosage = dosis;
     // La timezone se pedirá después de la hora.
-    this.userStates.set(chatId, userState);
+    await this.stateService.set(chatId, userState);
 
     const message = await this.bot.sendMessage(
       chatId,
@@ -1222,7 +1220,7 @@ export class TelegramReminderService {
         );
         await this.solicitarHoraRecordatorio(chatId, nombreMedicamento, dosis);
         // Re-solicitar la hora usando los datos originales
-        const originalState = this.userStates.get(chatId);
+        const originalState = await this.stateService.get(chatId);
         if (originalState && originalState.reminderData) {
           await this.solicitarHoraRecordatorio(
             chatId,
@@ -1234,18 +1232,18 @@ export class TelegramReminderService {
             chatId,
             "❌ Error al reintentar. Por favor, comienza de nuevo."
           );
-          this.userStates.delete(chatId);
+          await this.stateService.delete(chatId);
         }
         return;
       }
 
       const horaRecordatorio = msg.text;
 
-      const currentState = this.userStates.get(chatId);
+      const currentState = await this.stateService.get(chatId);
       if (currentState && currentState.reminderData) {
         currentState.reminderData.reminderTime = horaRecordatorio;
         currentState.step = "awaiting_timezone"; // Nuevo paso
-        this.userStates.set(chatId, currentState);
+        await this.stateService.set(chatId, currentState);
         await this.solicitarZonaHoraria(chatId); // Llamar al nuevo método
       } else {
         this.logger.error(
@@ -1255,7 +1253,7 @@ export class TelegramReminderService {
           chatId,
           "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
         );
-        this.userStates.delete(chatId);
+        await this.stateService.delete(chatId);
       }
     });
   }
@@ -1307,7 +1305,7 @@ export class TelegramReminderService {
 
     this.bot.onReplyToMessage(chatId, message.message_id, async (msg) => {
       if (!msg.text) return;
-      const userState = this.userStates.get(chatId);
+      const userState = await this.stateService.get(chatId);
       if (!userState || !userState.reminderData) {
         this.logger.error(
           `[${chatId}] Estado de usuario no encontrado al procesar zona horaria.`
@@ -1316,14 +1314,14 @@ export class TelegramReminderService {
           chatId,
           "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
         );
-        this.userStates.delete(chatId);
+        await this.stateService.delete(chatId);
         return;
       }
 
       if (moment.tz.zone(msg.text)) {
         // Validar si la zona horaria es válida
         userState.reminderData.timezone = msg.text;
-        this.userStates.set(chatId, userState);
+        await this.stateService.set(chatId, userState);
         await this.solicitarFrecuenciaRecordatorio(
           chatId,
           userState.reminderData.medicationName,
@@ -1364,7 +1362,7 @@ export class TelegramReminderService {
 
       if (timezoneToSave) {
         userState.reminderData.timezone = timezoneToSave;
-        this.userStates.set(chatId, userState);
+        await this.stateService.set(chatId, userState);
         await this.solicitarFrecuenciaRecordatorio(
           chatId,
           userState.reminderData.medicationName,
@@ -1403,7 +1401,7 @@ export class TelegramReminderService {
     dosis: string,
     horaRecordatorio: string
   ): Promise<void> {
-    const userState = this.userStates.get(chatId);
+    const userState = await this.stateService.get(chatId);
     if (!userState || !userState.reminderData) {
       this.logger.error(
         `[${chatId}] Estado de usuario no encontrado al solicitar frecuencia.`
@@ -1412,12 +1410,12 @@ export class TelegramReminderService {
         chatId,
         "❌ Ocurrió un error. Por favor, intenta crear el recordatorio de nuevo."
       );
-      this.userStates.delete(chatId);
+      await this.stateService.delete(chatId);
       return;
     }
     // medicationName, dosage, reminderTime y timezone ya deberian estar en userState.reminderData
     userState.step = "awaiting_frequency";
-    this.userStates.set(chatId, userState);
+    await this.stateService.set(chatId, userState);
 
     await this.bot.sendMessage(
       chatId,
@@ -1466,7 +1464,7 @@ export class TelegramReminderService {
     );
 
     // Obtener el reminderId del estado del usuario
-    const userState = this.userStates.get(chatId);
+    const userState = await this.stateService.get(chatId);
     const reminderId = userState?.reminderData?.reminderId;
 
     try {
@@ -1589,7 +1587,7 @@ export class TelegramReminderService {
       const daysOfWeek: number[] = [diaSemana];
 
       // Obtener la dosis y zona horaria del estado del usuario
-      const userState = this.userStates.get(chatId);
+      const userState = await this.stateService.get(chatId);
       const dosage = userState?.reminderData?.dosage || "Dosis no especificada";
       // const timezone = userState?.reminderData?.timezone || "America/Caracas";
       const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Ahora debería ser el valor por defecto
@@ -1729,7 +1727,7 @@ export class TelegramReminderService {
       }
 
       // Obtener la dosis y zona horaria del estado del usuario
-      const userState = this.userStates.get(chatId);
+      const userState = await this.stateService.get(chatId);
       const dosage = userState?.reminderData?.dosage || "Dosis no especificada";
       // const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Usar Bogotá como predeterminado para Colombia
       const timezone = userState?.reminderData?.timezone || "America/Caracas"; // Ahora debería venir del estado del usuario
@@ -1973,7 +1971,7 @@ export class TelegramReminderService {
       }
 
       // Guardar el ID del recordatorio en el estado del usuario
-      const userState = this.userStates.get(chatId) || {
+      const userState = await this.stateService.get(chatId) || {
         step: "",
         reminderData: {},
       };
@@ -1982,7 +1980,7 @@ export class TelegramReminderService {
         reminderId: reminderId,
         currentReminder: reminder,
       };
-      this.userStates.set(chatId, userState);
+      await this.stateService.set(chatId, userState);
 
       // Mostrar opciones de edición
       await this.bot.sendMessage(
@@ -2196,7 +2194,7 @@ export class TelegramReminderService {
   }
 
   async finalizarCreacionRecordatorio(chatId: number): Promise<void> {
-    const state = this.userStates.get(chatId);
+    const state = await this.stateService.get(chatId);
     if (!state || !state.reminderData) {
       await this.bot.sendMessage(
         chatId,
@@ -2212,7 +2210,7 @@ export class TelegramReminderService {
       );
 
       // Guardar el recordatorio en el estado del usuario para usarlo después
-      this.userStates.set(chatId, {
+      await this.stateService.set(chatId, {
         ...state,
         savedReminder: reminder,
       });
@@ -2266,7 +2264,7 @@ export class TelegramReminderService {
           },
         }
       );
-      this.userStates.delete(chatId);
+      await this.stateService.delete(chatId);
     }
   }
 
