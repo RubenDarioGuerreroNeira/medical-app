@@ -1,11 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   GoogleGenerativeAI,
   GenerativeModel,
   GenerationConfig,
   Part,
-} from "@google/generative-ai";
+} from '@google/generative-ai';
 
 @Injectable()
 export class GeminiAIService {
@@ -19,19 +19,18 @@ export class GeminiAIService {
   };
 
   constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>("GEMINI_API_KEY");
+    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not configured");
+      throw new Error('GEMINI_API_KEY is not configured');
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // Ahora usamos 'gemini-pro-vision' por defecto, ya que soportará texto e imágenes
     this.model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: 'gemini-1.5-flash',
       generationConfig: this.generationConfig,
     });
   }
-
 
   async generateMedicalResponse(prompt: string): Promise<string> {
     try {
@@ -47,42 +46,40 @@ export class GeminiAIService {
       const response = await result.response;
       const text = response.text();
 
-
       return `${text}
 ⚠️ Aviso importante: Esta información es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para un diagnóstico y tratamiento adecuado.`;
     } catch (error) {
-      this.logger.error("Error generating Gemini medical response:", error);
-      return "Lo siento, hubo un error al procesar tu consulta médica. Por favor, intenta nuevamente más tarde.";
+      this.logger.error('Error generating Gemini medical response:', error);
+      return 'Lo siento, hubo un error al procesar tu consulta médica. Por favor, intenta nuevamente más tarde.';
     }
   }
 
-  
   async extractTextFromImage(
     imageBuffer: Buffer,
-    mimeType: string
+    mimeType: string,
   ): Promise<string> {
     try {
       // Validar el tipo MIME
-      const supportedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
-      const actualMimeType = mimeType || "image/jpeg"; // Por defecto usar JPEG si no se especifica
+      const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      const actualMimeType = mimeType || 'image/jpeg'; // Por defecto usar JPEG si no se especifica
 
       if (!supportedMimeTypes.includes(actualMimeType)) {
         throw new Error(
           `Tipo de imagen no soportado. Use uno de: ${supportedMimeTypes.join(
-            ", "
-          )}`
+            ', ',
+          )}`,
         );
       }
 
       const prompt =
-        "Por favor, extrae y describe el texto que ves en esta imagen.";
+        'Por favor, extrae y describe el texto que ves en esta imagen.';
 
       const result = await this.model.generateContent([
         prompt,
         {
           inlineData: {
             mimeType: actualMimeType, // Usar el tipo MIME validado
-            data: imageBuffer.toString("base64"),
+            data: imageBuffer.toString('base64'),
           },
         },
       ]);
@@ -91,13 +88,13 @@ export class GeminiAIService {
       const text = response.text();
 
       if (!text) {
-        throw new Error("No se pudo extraer el texto de la imagen.");
+        throw new Error('No se pudo extraer el texto de la imagen.');
       }
 
       return text;
     } catch (error) {
-      this.logger.error("Error al extraer texto de la imagen:", error);
-      throw new Error("No se pudo extraer el texto de la imagen.");
+      this.logger.error('Error al extraer texto de la imagen:', error);
+      throw new Error('No se pudo extraer el texto de la imagen.');
     }
   }
 
@@ -120,12 +117,11 @@ export class GeminiAIService {
       const response = await result.response;
       const text = response.text();
 
-
       return `${text}
 ⚠️ Aviso importante: Esta interpretación es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para una interpretación completa de tus resultados.`;
     } catch (error) {
-      this.logger.error("Error generating lab results interpretation:", error);
-      return "Lo siento, hubo un error al interpretar tus resultados de laboratorio. Por favor, intenta nuevamente más tarde.";
+      this.logger.error('Error generating lab results interpretation:', error);
+      return 'Lo siento, hubo un error al interpretar tus resultados de laboratorio. Por favor, intenta nuevamente más tarde.';
     }
   }
 }

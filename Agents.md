@@ -43,13 +43,15 @@ Convertir el Bot de Telegram en un **asistente médico omnicanal, escalable y se
 
 ### P0 — Crítico (producción)
 
-- [ ] **P0.1** Migrar de polling a webhooks con `secret_token` y verificación de firma.
+- [x] **P0.1** Migrar de polling a webhooks con `secret_token` y verificación de firma.
   - Agente: A4 · Archivos: `telegramWebhook.controller.ts`, `telegram.module.ts`
   - DoD: webhook activo en staging, firma verificada, tests E2E de recepción.
+  - Observación: Webhook configurado con `polling: false`, `setWebHook` en `onModuleInit`, y validación de `secret_token` en controller.
 
-- [ ] **P0.2** Persistir estado de conversación en Redis (reemplazar `USER_STATES_MAP` en memoria).
+- [x] **P0.2** Persistir estado de conversación en Redis (reemplazar `USER_STATES_MAP` en memoria).
   - Agente: A3 · Archivos: `telegram.module.ts`, servicios que usan `userStates`
   - DoD: estado sobrevive restart; multi-instancia OK; tests de recuperación.
+  - Observación: `TelegramStateService` con Redis + fallback a Map en memoria. `USE_REDIS` controla el modo.
 
 - [x] **P0.3** Corregir escapado de Markdown en respuestas de Gemini.
   - Agente: A2 · Archivos: `gemini.service.ts` (`sanitizeMarkdown`), `telegram-ai.service.ts`
@@ -61,9 +63,9 @@ Convertir el Bot de Telegram en un **asistente médico omnicanal, escalable y se
 
 ### P1 — Alto (escalabilidad y calidad)
 
-- [ ] **P1.1** Rate limiting por `chatId` (comandos e IA). (A5)
-- [ ] **P1.2** Refactor del dispatcher de comandos (extraer router, reducir god class). (A1)
-- [ ] **P1.3** Validación y compresión de imágenes antes de Gemini. (A2)
+- [x] **P1.1** Rate limiting por `chatId` (comandos e IA). (A5)
+- [x] **P1.2** Refactor del dispatcher de comandos (extraer router, reducir god class). (A1)
+- [x] **P1.3** Validación y compresión de imágenes antes de Gemini. (A2)
 - [ ] **P1.4** Idempotencia y retry en recordatorios. (A3)
 - [ ] **P1.5** Tests unitarios + E2E del módulo Telegram. (A6)
 ### P2 — Medio (UX y observabilidad)

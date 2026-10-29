@@ -1,19 +1,19 @@
-import { Injectable, Inject } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as TelegramBot from "node-telegram-bot-api";
-import { TelegramMenuService } from "./telegram-menu.service";
-import { TelegramAIService } from "./telegram-ai.service";
-import { TelegramLocationService } from "./telegram-location.service";
-import { TelegramReminderService } from "./telegram-reminder.service";
-import { TelegramErrorHandler } from "../telegramErrorHandler.service";
-import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
-import { TelegramContactService } from "./telegram-contact.service";
-import { TelegramColombiaService } from "../colombia/telegram-colombia.service";
-import { AppointmentCommands } from "./appointment.commands.service";
-import { TelegramHistorialMedicoService } from "../services/telegram-historial-medico.service";
-import { TelegramLabResultsService } from "./telegram-lab-results.service";
-import { EmergencyInfoService } from "./emergency-info.service";
-import { TelegramStateService } from "./telegram-state.service";
+import { Injectable, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as TelegramBot from 'node-telegram-bot-api';
+import { TelegramMenuService } from './telegram-menu.service';
+import { TelegramAIService } from './telegram-ai.service';
+import { TelegramLocationService } from './telegram-location.service';
+import { TelegramReminderService } from './telegram-reminder.service';
+import { TelegramErrorHandler } from '../telegramErrorHandler.service';
+import { TelegramDiagnosticService } from '../telegramDiagnosticService.service';
+import { TelegramContactService } from './telegram-contact.service';
+import { TelegramColombiaService } from '../colombia/telegram-colombia.service';
+import { AppointmentCommands } from './appointment.commands.service';
+import { TelegramHistorialMedicoService } from '../services/telegram-historial-medico.service';
+import { TelegramLabResultsService } from './telegram-lab-results.service';
+import { EmergencyInfoService } from './emergency-info.service';
+import { TelegramStateService } from './telegram-state.service';
 
 @Injectable()
 export class TelegramService {
@@ -34,8 +34,8 @@ export class TelegramService {
     private labResultsService: TelegramLabResultsService,
     private appointmentCommands: AppointmentCommands,
     private stateService: TelegramStateService,
-    @Inject("TELEGRAM_BOT") private bot: TelegramBot,
-    private emergencyInfoService: EmergencyInfoService
+    @Inject('TELEGRAM_BOT') private bot: TelegramBot,
+    private emergencyInfoService: EmergencyInfoService,
   ) {
     this.initializeBot();
   }
@@ -44,30 +44,29 @@ export class TelegramService {
     try {
       const diagnostic = await this.diagnosticService.diagnoseBot(this.bot);
 
-      if (diagnostic.status === "ERROR") {
+      if (diagnostic.status === 'ERROR') {
         await this.diagnosticService.fixCommonIssues(this.bot);
       }
 
-      this.setupHandlers();
+      this.setupDispatcherHandlers();
     } catch (error) {
-      this.errorHandler.handleServiceError(this.bot, error, "initializeBot");
+      this.errorHandler.handleServiceError(this.bot, error, 'initializeBot');
     }
   }
 
-  private setupHandlers(): void {
+  private setupDispatcherHandlers(): void {
     this.bot.onText(/\/start(?: (.+))?/, (msg, match) =>
-      this.handleStartCommand(msg, match)
+      this.handleStartCommand(msg, match),
     );
-
 
     this.bot.onText(/\/help/, (msg) => this.handleHelpCommand(msg));
     this.bot.onText(/\/emergencia/, (msg) =>
-      this.emergencyInfoService.mostrarMenuEmergencia(msg.chat.id)
+      this.emergencyInfoService.mostrarMenuEmergencia(msg.chat.id),
     );
 
     // Comandos de Historial Médico (movidos desde TelegramHistorialMedicoService)
     this.bot.onText(/\/historialmedico/, (msg) =>
-      this.historialMedicoService.handleHistorialMedicoCommand(msg)
+      this.historialMedicoService.handleHistorialMedicoCommand(msg),
     );
     this.bot.onText(/\/nuevohistorial/, (msg) => {
       this.historialMedicoService.iniciarRegistroHistorialMedico(msg.chat.id);
@@ -77,17 +76,17 @@ export class TelegramService {
     });
 
     // Manejador de callbacks
-    this.bot.on("callback_query", async (callbackQuery) => {
+    this.bot.on('callback_query', async (callbackQuery) => {
       await this.handleCallbackQuery(callbackQuery);
     });
 
     // Manejador de mensajes
-    this.bot.on("message", async (msg) => {
+    this.bot.on('message', async (msg) => {
       // Ignorar mensajes que son comandos ya manejados por onText
       if (
         msg.text &&
         /^\/(start|help|historialmedico|nuevohistorial|mishistoriales)/.test(
-          msg.text
+          msg.text,
         )
       ) {
         return;
@@ -97,13 +96,13 @@ export class TelegramService {
   }
 
   private async handleCallbackQuery(
-    callbackQuery: TelegramBot.CallbackQuery
+    callbackQuery: TelegramBot.CallbackQuery,
   ): Promise<void> {
     if (!callbackQuery.message) {
       this.errorHandler.handleServiceError(
         this.bot,
-        new Error("Callback query without message"),
-        "handleCallbackQuery"
+        new Error('Callback query without message'),
+        'handleCallbackQuery',
       );
       if (callbackQuery.id)
         await this.bot
@@ -112,8 +111,8 @@ export class TelegramService {
             this.errorHandler.handleServiceError(
               this.bot,
               err,
-              "answerCallbackQuery"
-            )
+              'answerCallbackQuery',
+            ),
           );
       return;
     }
@@ -129,21 +128,21 @@ export class TelegramService {
             this.errorHandler.handleServiceError(
               this.bot,
               err,
-              "answerCallbackQuery",
-              chatId
-            )
+              'answerCallbackQuery',
+              chatId,
+            ),
           );
       }
 
       // Manejar callbacks de selección de zona horaria
-      if (data.startsWith("tz_")) {
-        const selectedTimezone = data.substring("tz_".length);
+      if (data.startsWith('tz_')) {
+        const selectedTimezone = data.substring('tz_'.length);
         const state = await this.stateService.get(chatId);
 
         if (state && state.reminderData) {
           state.reminderData.timezone = selectedTimezone;
           // El siguiente paso después de la zona horaria es la frecuencia
-          state.step = "awaiting_frequency"; // Asegúrate que este sea el nombre correcto del paso
+          state.step = 'awaiting_frequency'; // Asegúrate que este sea el nombre correcto del paso
           await this.stateService.set(chatId, state);
 
           // Llamar al método que solicita la frecuencia en TelegramReminderService
@@ -151,16 +150,16 @@ export class TelegramService {
             chatId,
             state.reminderData.medicationName,
             state.reminderData.dosage,
-            state.reminderData.reminderTime
+            state.reminderData.reminderTime,
           );
         } else {
           this.errorHandler.handleServiceError(
             this.bot,
             new Error(
-              `Estado no encontrado o reminderData ausente para callback de timezone: ${data}`
+              `Estado no encontrado o reminderData ausente para callback de timezone: ${data}`,
             ),
-            "handleCallbackQuery_Timezone",
-            chatId
+            'handleCallbackQuery_Timezone',
+            chatId,
           );
         }
         return;
@@ -168,32 +167,32 @@ export class TelegramService {
 
       // Manejar callback para marcar medicamento como tomado
 
-      if (data.startsWith("mark_taken_")) {
-        const reminderId = parseInt(data.split("_")[2]);
+      if (data.startsWith('mark_taken_')) {
+        const reminderId = parseInt(data.split('_')[2]);
         const originalMessageId = callbackQuery.message?.message_id; // Obtener el ID del mensaje
         await this.reminderService.handleMarkAsTaken(
           chatId,
           reminderId,
-          originalMessageId
+          originalMessageId,
         );
         return;
       }
 
       // Manejar callback para mostrar estadísticas de medicamentos
-      if (data === "estadisticas_medicamentos") {
+      if (data === 'estadisticas_medicamentos') {
         await this.reminderService.mostrarEstadisticasMedicamentos(chatId);
         // await this.bot.answerCallbackQuery(callbackQuery.id); // Ya se hace al inicio
         return;
       }
 
       // manejo de generar codigo QR
-      if (data === "descargar_tarjeta_pdf") {
+      if (data === 'descargar_tarjeta_pdf') {
         const pdfEnviado =
           await this.emergencyInfoService.enviarTarjetaEmergenciaPDF(chatId);
         if (pdfEnviado) {
           await this.bot.sendMessage(
             chatId,
-            "✅ Su código QR  ya fue generado satisfactoriamente. en formato PDF Puedes descargarlo o compartirlo."
+            '✅ Su código QR  ya fue generado satisfactoriamente. en formato PDF Puedes descargarlo o compartirlo.',
           );
         }
         // El mensaje de error (si no se pudo generar) ya se envía desde enviarTarjetaEmergenciaPDF
@@ -205,7 +204,7 @@ export class TelegramService {
       }
 
       // Manejo global de "menu_principal"
-      if (data === "menu_principal") {
+      if (data === 'menu_principal') {
         await this.stateService.delete(chatId); // Limpiar estado
         await this.menuService.mostrarMenuPrincipal(chatId);
         return;
@@ -213,31 +212,31 @@ export class TelegramService {
 
       // Delegar a AppointmentCommands si el callback es de citas
       if (
-        data === "nuevacita" ||
-        data === "ver_citas" ||
-        data === "select_edit_appointment" ||
-        data === "select_delete_appointment" ||
-        data.startsWith("edit_appointment_") ||
-        data.startsWith("delete_appointment_") ||
-        data === "confirm_delete_appointment" ||
-        data === "cancel_delete_appointment" ||
-        data === "recordatorio_cita_medica"
+        data === 'nuevacita' ||
+        data === 'ver_citas' ||
+        data === 'select_edit_appointment' ||
+        data === 'select_delete_appointment' ||
+        data.startsWith('edit_appointment_') ||
+        data.startsWith('delete_appointment_') ||
+        data === 'confirm_delete_appointment' ||
+        data === 'cancel_delete_appointment' ||
+        data === 'recordatorio_cita_medica'
       ) {
-        if (data === "recordatorio_cita_medica") {
+        if (data === 'recordatorio_cita_medica') {
           // Opción del menú principal para citas
           await this.stateService.delete(chatId);
           await this.appointmentCommands.mostrarMenuCitas(chatId);
         } else {
           await this.appointmentCommands.handleAppointmentCallback(
             chatId,
-            callbackQuery
+            callbackQuery,
           );
         }
         return;
       }
 
       // (Los que usan 'once' se manejan internamente en ese servicio)
-      if (data === "historial_volver") {
+      if (data === 'historial_volver') {
         // Ejemplo de callback que podría ser manejado aquí
         await this.historialMedicoService.mostrarHistorialMedico(chatId);
         return;
@@ -245,20 +244,20 @@ export class TelegramService {
 
       //callback para cuando selecciono recordatorio semanal,
       // me muestra los dias de la semana para que seleccione el dia
-      if (data.startsWith("day_semanal_")) {
-        const parts = data.split("_");
+      if (data.startsWith('day_semanal_')) {
+        const parts = data.split('_');
         const dayNumber = parseInt(parts[2]);
         const nombreMedicamento = parts[3];
-        const horaRecordatorio = parts.slice(4).join("_"); // Por si la hora tiene espacios
+        const horaRecordatorio = parts.slice(4).join('_'); // Por si la hora tiene espacios
 
         const dayNames = [
-          "Domingo",
-          "Lunes",
-          "Martes",
-          "Miércoles",
-          "Jueves",
-          "Viernes",
-          "Sábado",
+          'Domingo',
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
         ];
         const nombreDia = dayNames[dayNumber];
 
@@ -266,42 +265,42 @@ export class TelegramService {
           chatId,
           nombreMedicamento,
           horaRecordatorio,
-          "semanal",
+          'semanal',
           dayNumber,
-          nombreDia
+          nombreDia,
         );
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       // Manejar callbacks de exportación de recordatorios
-      if (data === "exportar_recordatorios") {
+      if (data === 'exportar_recordatorios') {
         await this.reminderService.mostrarOpcionesExportacion(chatId);
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       if (
-        data === "exportar_recordatorios_pdf" ||
-        data === "exportar_recordatorios_csv"
+        data === 'exportar_recordatorios_pdf' ||
+        data === 'exportar_recordatorios_csv'
       ) {
-        const formato = data.endsWith("_pdf") ? "pdf" : "csv";
+        const formato = data.endsWith('_pdf') ? 'pdf' : 'csv';
         await this.reminderService.exportarRecordatorios(chatId, formato);
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
-      if (data.startsWith("freq_")) {
+      if (data.startsWith('freq_')) {
         const [freq, nombreMedicamento, horaRecordatorio] = data
-          .split("_")
+          .split('_')
           .slice(1);
 
-        if (freq === "semanal") {
+        if (freq === 'semanal') {
           // Mostrar selector de días de la semana para creación
           await this.reminderService.mostrarSelectorDiaSemanal(
             chatId,
             nombreMedicamento,
-            horaRecordatorio
+            horaRecordatorio,
           );
           // await this.bot.answerCallbackQuery(callbackQuery.id);
           return;
@@ -312,48 +311,48 @@ export class TelegramService {
           chatId,
           nombreMedicamento,
           horaRecordatorio,
-          freq
+          freq,
         );
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       // Manejar callbacks de edición de recordatorios
-      if (data.startsWith("edit_reminder_")) {
-        const reminderId = parseInt(data.split("_")[2]);
+      if (data.startsWith('edit_reminder_')) {
+        const reminderId = parseInt(data.split('_')[2]);
         await this.reminderService.iniciarEdicionRecordatorio(
           chatId,
-          reminderId
+          reminderId,
         );
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       // Manejar callbacks de actualización de frecuencia
-      if (data.startsWith("update_freq_")) {
-        const parts = data.split("_");
+      if (data.startsWith('update_freq_')) {
+        const parts = data.split('_');
         const reminderId = parseInt(parts[2]);
         const frecuencia = parts[3];
         await this.reminderService.actualizarFrecuencia(
           chatId,
           reminderId,
-          frecuencia
+          frecuencia,
         );
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       // Manejar callbacks para eliminar recordatorios
-      if (data.startsWith("delete_reminder_")) {
-        const reminderId = parseInt(data.split("_")[2]);
+      if (data.startsWith('delete_reminder_')) {
+        const reminderId = parseInt(data.split('_')[2]);
         await this.reminderService.eliminarRecordatorio(chatId, reminderId);
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       // Manejar callbacks de historial médico
-      if (data.startsWith("historial_detalle_")) {
-        const historialId = parseInt(data.replace("historial_detalle_", ""));
+      if (data.startsWith('historial_detalle_')) {
+        const historialId = parseInt(data.replace('historial_detalle_', ''));
         await this.historialMedicoService.mostrarHistorialMedico(chatId);
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
@@ -361,25 +360,25 @@ export class TelegramService {
 
       // ...existing code inside handleCallbackQuery...
       // Manejar callbacks de actualización de día semanal (edición)
-      if (data.startsWith("update_day_semanal_")) {
-        const parts = data.split("_");
+      if (data.startsWith('update_day_semanal_')) {
+        const parts = data.split('_');
         const reminderId = parseInt(parts[3]);
         const dayNumber = parseInt(parts[4]);
         const dayNames = [
-          "Domingo",
-          "Lunes",
-          "Martes",
-          "Miércoles",
-          "Jueves",
-          "Viernes",
-          "Sábado",
+          'Domingo',
+          'Lunes',
+          'Martes',
+          'Miércoles',
+          'Jueves',
+          'Viernes',
+          'Sábado',
         ];
         const nombreDia = dayNames[dayNumber];
         await this.reminderService.actualizarDiaSemanal(
           chatId,
           reminderId,
           dayNumber,
-          nombreDia
+          nombreDia,
         );
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
@@ -387,111 +386,111 @@ export class TelegramService {
 
       // este callback se activa cuando en creacion de nuevo recordatrio,
       //encuentra un medicamento con el mismo nombre
-      if (data.startsWith("continue_create_")) {
-        const nombreMedicamento = data.substring("continue_create_".length);
+      if (data.startsWith('continue_create_')) {
+        const nombreMedicamento = data.substring('continue_create_'.length);
         await this.reminderService.solicitarDosis(chatId, nombreMedicamento);
         // await this.bot.answerCallbackQuery(callbackQuery.id);
         return;
       }
 
       switch (data) {
-        case "consulta_medica":
+        case 'consulta_medica':
           await this.stateService.set(chatId, {
-            currentOperation: "awaiting_medical_query",
+            currentOperation: 'awaiting_medical_query',
           });
           await this.aiService.iniciarConsultaMedica(chatId);
           break;
-        case "solicitar_ubicacion_farmacia":
+        case 'solicitar_ubicacion_farmacia':
           await this.stateService.delete(chatId);
-          await this.locationService.solicitarUbicacion(chatId, "farmacia");
+          await this.locationService.solicitarUbicacion(chatId, 'farmacia');
           break;
 
-        case "mostrarCentrosCercanos":
+        case 'mostrarCentrosCercanos':
           await this.stateService.delete(chatId);
-          await this.locationService.solicitarUbicacion(chatId, "clinica");
+          await this.locationService.solicitarUbicacion(chatId, 'clinica');
           break;
 
         // Agregar manejo para crear_recordatorio medico (trataniento)
-        case "recordatorios":
+        case 'recordatorios':
           await this.stateService.delete(chatId);
           await this.reminderService.mostrarMenuRecordatorios(chatId);
           break;
 
-        case "ver_recordatorios":
+        case 'ver_recordatorios':
           await this.reminderService.mostrarEditarRecordatorio(chatId);
           break;
 
-        case "crear_recordatorio":
-        case "create_reminder":
+        case 'crear_recordatorio':
+        case 'create_reminder':
           await this.stateService.delete(chatId);
           await this.reminderService.iniciarCreacionRecordatorio(chatId);
           break;
 
-        case "editar_recordatorio_medico":
+        case 'editar_recordatorio_medico':
           await this.reminderService.mostrarEditarRecordatorio(chatId);
           break;
 
         // Agregar casos para los botones de edición específicos
-        case "edit_name":
+        case 'edit_name':
           await this.reminderService.solicitarNuevoNombre(chatId);
           break;
-        case "edit_dosage":
+        case 'edit_dosage':
           await this.reminderService.solicitarNuevaDosis(chatId);
           break;
-        case "edit_time":
+        case 'edit_time':
           await this.reminderService.solicitarNuevaHora(chatId);
           break;
-        case "edit_frequency":
+        case 'edit_frequency':
           await this.reminderService.solicitarNuevaFrecuencia(chatId);
           break;
 
-        case "eliminar_recordatorio":
+        case 'eliminar_recordatorio':
           await this.reminderService.mostrarEliminarRecordatorio(chatId);
           break;
 
-        case "contacto":
+        case 'contacto':
           await this.stateService.delete(chatId);
           await this.contactService.mostrarContacto(chatId);
           break;
 
-        case "historial_medico":
+        case 'historial_medico':
           await this.historialMedicoService.handleHistorialMedicoCommandByChatId(
-            chatId
+            chatId,
           );
           break;
         // Agregar estos casos al switch
-        case "nuevo_historial":
+        case 'nuevo_historial':
           await this.stateService.delete(chatId);
           await this.historialMedicoService.iniciarRegistroHistorialMedico(
-            chatId
+            chatId,
           );
           break;
-        case "ver_historiales":
+        case 'ver_historiales':
           await this.stateService.delete(chatId);
           await this.historialMedicoService.mostrarHistorialMedico(chatId);
           break;
 
-        case "interpretar_resultados":
+        case 'interpretar_resultados':
           await this.stateService.delete(chatId);
           await this.labResultsService.iniciarInterpretacionResultados(chatId);
           break;
         // }
 
-        case "menu_emergencia":
+        case 'menu_emergencia':
           await this.emergencyInfoService.mostrarMenuEmergencia(chatId);
           break;
-        case "configurar_emergencia":
+        case 'configurar_emergencia':
           await this.emergencyInfoService.iniciarConfiguracionEmergencia(
-            chatId
+            chatId,
           );
           break;
-        case "ver_emergencia":
+        case 'ver_emergencia':
           await this.emergencyInfoService.mostrarInformacionEmergencia(chatId);
           break;
-        case "generar_codigo_emergencia":
+        case 'generar_codigo_emergencia':
           await this.emergencyInfoService.generarCodigoAccesoEmergencia(chatId);
           break;
-        case "crear_tarjeta_emergencia":
+        case 'crear_tarjeta_emergencia':
           await this.emergencyInfoService.crearTarjetaEmergencia(chatId);
           break;
 
@@ -508,8 +507,8 @@ export class TelegramService {
       await this.errorHandler.handleServiceError(
         this.bot,
         error,
-        "handleCallbackQuery",
-        chatId
+        'handleCallbackQuery',
+        chatId,
       );
     }
   }
@@ -529,7 +528,7 @@ export class TelegramService {
 
       if (
         userState &&
-        userState.currentOperation === "configure_emergency_info"
+        userState.currentOperation === 'configure_emergency_info'
       ) {
         await this.emergencyInfoService.handleConfigStep(msg);
         return;
@@ -537,7 +536,7 @@ export class TelegramService {
 
       if (
         userState &&
-        userState.currentOperation === "awaiting_medical_query"
+        userState.currentOperation === 'awaiting_medical_query'
       ) {
         // Limpiar el estado inmediatamente para evitar ejecuciones múltiples
         await this.stateService.delete(chatId);
@@ -545,7 +544,7 @@ export class TelegramService {
         if (msg.text) {
           const waitingMessage = await this.bot.sendMessage(
             chatId,
-            "🤔 Estoy analizando tu consulta, por favor espera un momento..."
+            '🤔 Estoy analizando tu consulta, por favor espera un momento...',
           );
           await this.aiService.procesarPreguntaMedica(chatId, msg.text);
           await this.bot.deleteMessage(chatId, waitingMessage.message_id);
@@ -559,23 +558,23 @@ export class TelegramService {
       if (userState) {
         const operation = userState.currentOperation;
         if (
-          operation === "create_appointment" ||
-          operation === "edit_appointment" ||
-          operation === "delete_appointment"
+          operation === 'create_appointment' ||
+          operation === 'edit_appointment' ||
+          operation === 'delete_appointment'
         ) {
           await this.appointmentCommands.handleUserInput(msg);
           return;
         }
-        if (operation === "create_historial_medico") {
+        if (operation === 'create_historial_medico') {
           return;
         }
-        if (operation === "create_reminder") {
+        if (operation === 'create_reminder') {
         }
         // Añadir otros currentOperation para otros servicios (LabResults, AI si dejan de usar onReplyToMessage)
       }
 
       // 2. Mensajes genéricos o inicio de flujos no comandados
-      if (msg.text === "❌ Cancelar") {
+      if (msg.text === '❌ Cancelar') {
         await this.menuService.mostrarMenuPrincipal(chatId);
         return;
       }
@@ -592,14 +591,14 @@ export class TelegramService {
       await this.errorHandler.handleServiceError(
         this.bot,
         error,
-        "handleMessage",
-        chatId
+        'handleMessage',
+        chatId,
       );
     }
   }
   private async handleStartCommand(
     msg: TelegramBot.Message,
-    match: RegExpMatchArray | null
+    match: RegExpMatchArray | null,
   ): Promise<void> {
     const chatId = msg.chat.id;
     await this.stateService.delete(chatId); // Limpiar estado previo
@@ -611,7 +610,7 @@ export class TelegramService {
       const infoMostrada =
         await this.emergencyInfoService.mostrarInformacionPorCodigoAcceso(
           chatId,
-          payload
+          payload,
         );
       if (infoMostrada) {
         return; // Si se mostró la info de emergencia, no mostramos el menú principal inmediatamente.
