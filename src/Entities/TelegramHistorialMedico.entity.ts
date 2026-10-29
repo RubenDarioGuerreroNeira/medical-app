@@ -3,18 +3,18 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn
-} from "typeorm";
+  UpdateDateColumn,
+} from 'typeorm';
 
-@Entity("telegram_historial_medico")
+@Entity('telegram_historial_medico')
 export class TelegramHistorialMedico {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: "bigint" })
+  @Column({ type: 'bigint' })
   userId: string;
 
-  @Column({ type: "bigint" })
+  @Column({ type: 'bigint' })
   chatId: string;
 
   @Column()
@@ -23,7 +23,7 @@ export class TelegramHistorialMedico {
   @Column({ nullable: true })
   tratamiento: string;
 
-  @Column({ type: "text", nullable: true })
+  @Column({ type: 'text', nullable: true })
   descripcion: string;
 
   @Column({ nullable: true })
@@ -35,10 +35,10 @@ export class TelegramHistorialMedico {
   @Column({ nullable: true })
   centroMedico: string;
 
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   condicionesCronicas: any;
 
-  @Column({ type: "jsonb", nullable: true })
+  @Column({ type: 'jsonb', nullable: true })
   alergias: any;
 
   @Column({ nullable: true })
@@ -47,12 +47,12 @@ export class TelegramHistorialMedico {
   @Column({ default: false })
   esCompartible: boolean;
 
-  @CreateDateColumn({ type: "timestamp" })
+  @CreateDateColumn({ type: 'timestamp' })
   fechaConsulta: Date;
 
-  @CreateDateColumn({ type: "timestamp" })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: "timestamp" })
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 }

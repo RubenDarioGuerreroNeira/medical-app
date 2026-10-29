@@ -1,11 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { TelegramHistorialMedicoService } from './telegram-historial-medico.service';
 import { CreateTelegramHistorialMedicoDto } from './dto/create-telegram-historial-medico.dto';
 import { UpdateTelegramHistorialMedicoDto } from './dto/update-telegram-historial-medico.dto';
 
 @Controller('telegram-historial-medico')
 export class TelegramHistorialMedicoController {
-  constructor(private readonly telegramHistorialMedicoService: TelegramHistorialMedicoService) {}
+  constructor(
+    private readonly telegramHistorialMedicoService: TelegramHistorialMedicoService,
+  ) {}
 
   @Post()
   create(@Body() createDto: CreateTelegramHistorialMedicoDto) {
@@ -33,7 +43,10 @@ export class TelegramHistorialMedicoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDto: UpdateTelegramHistorialMedicoDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateTelegramHistorialMedicoDto,
+  ) {
     return this.telegramHistorialMedicoService.update(+id, updateDto);
   }
 

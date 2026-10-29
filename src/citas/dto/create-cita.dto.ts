@@ -1,9 +1,9 @@
-import { IsDateString, IsEnum, IsUUID } from "class-validator";
+import { IsDateString, IsEnum, IsUUID } from 'class-validator';
 
 enum EstadoCita {
-  CONFIRMADA = "confirmada",
-  CANCELADA = "cancelada",
-  COMPLETADA = "completada",
+  CONFIRMADA = 'confirmada',
+  CANCELADA = 'cancelada',
+  COMPLETADA = 'completada',
 }
 
 export class CreateCitaDto {

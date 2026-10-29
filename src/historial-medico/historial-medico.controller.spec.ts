@@ -48,7 +48,9 @@ describe('HistorialMedicoController', () => {
       ],
     }).compile();
 
-    controller = module.get<HistorialMedicoController>(HistorialMedicoController);
+    controller = module.get<HistorialMedicoController>(
+      HistorialMedicoController,
+    );
   });
 
   it('should be defined', () => {

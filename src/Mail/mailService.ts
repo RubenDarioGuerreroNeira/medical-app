@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { MailerService as NestMailerService } from "@nestjs-modules/mailer";
+import { Injectable } from '@nestjs/common';
+import { MailerService as NestMailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class MailerService {
@@ -9,8 +9,8 @@ export class MailerService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: "Verifica tu cuenta",
-        template: "verification",
+        subject: 'Verifica tu cuenta',
+        template: 'verification',
         context: {
           name: name,
           token: token,
@@ -18,7 +18,7 @@ export class MailerService {
       });
       return true;
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error('Error sending email:', error);
       return false;
     }
   }
@@ -27,15 +27,15 @@ export class MailerService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: "Bienvenido",
-        template: "welcome",
+        subject: 'Bienvenido',
+        template: 'welcome',
         context: {
           username,
         },
       });
       return true;
     } catch (error) {
-      console.error("Error sending email:", error);
+      console.error('Error sending email:', error);
       return false;
     }
   }

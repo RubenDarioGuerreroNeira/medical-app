@@ -1,11 +1,11 @@
 // src/Dto Pagination/Pagination.ts
-import { IsOptional, IsInt, Min } from "class-validator";
-import { Type } from "class-transformer";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsOptional, IsInt, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginationDto {
   @ApiProperty({
-    description: "Número de página",
+    description: 'Número de página',
     minimum: 1,
     default: 1,
     required: false,
@@ -17,7 +17,7 @@ export class PaginationDto {
   page?: number = 1;
 
   @ApiProperty({
-    description: "Cantidad de elementos por página",
+    description: 'Cantidad de elementos por página',
     minimum: 1,
     default: 10,
     required: false,

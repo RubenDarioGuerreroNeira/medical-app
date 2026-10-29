@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { ReminderService } from "./reminder.service";
-import * as TelegramBot from "node-telegram-bot-api";
+import { Injectable } from '@nestjs/common';
+import { ReminderService } from './reminder.service';
+import * as TelegramBot from 'node-telegram-bot-api';
 
 @Injectable()
 export class ReminderCommands {
@@ -8,29 +8,29 @@ export class ReminderCommands {
 
   async handleSetReminder(
     msg: TelegramBot.Message,
-    bot: TelegramBot
+    bot: TelegramBot,
   ): Promise<void> {
     const chatId = msg.chat.id;
 
     await bot.sendMessage(
       chatId,
-      "Vamos a configurar un recordatorio para tu medicamento. 💊\n\nPor favor, escribe el nombre del medicamento:"
+      'Vamos a configurar un recordatorio para tu medicamento. 💊\n\nPor favor, escribe el nombre del medicamento:',
     );
 
-    bot.once("message", async (nameMsg) => {
+    bot.once('message', async (nameMsg) => {
       const medicationName = nameMsg.text;
 
-      await bot.sendMessage(chatId, "¿Cuál es la dosis?");
+      await bot.sendMessage(chatId, '¿Cuál es la dosis?');
 
-      bot.once("message", async (doseMsg) => {
+      bot.once('message', async (doseMsg) => {
         const dosage = doseMsg.text;
 
         await bot.sendMessage(
           chatId,
-          "¿A qué hora quieres recibir el recordatorio? (Formato 24h, ejemplo: 14:30)"
+          '¿A qué hora quieres recibir el recordatorio? (Formato 24h, ejemplo: 14:30)',
         );
 
-        bot.once("message", async (timeMsg) => {
+        bot.once('message', async (timeMsg) => {
           const reminderTime = timeMsg.text;
 
           try {
@@ -40,7 +40,7 @@ export class ReminderCommands {
               dosage,
               reminderTime,
               daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Todos los días por defecto
-              timezone: "America/Caracas", // Timezone por defecto
+              timezone: 'America/Caracas', // Timezone por defecto
             });
 
             await bot.sendMessage(
@@ -49,12 +49,12 @@ export class ReminderCommands {
                 `💊 Medicamento: ${medicationName}\n` +
                 `📊 Dosis: ${dosage}\n` +
                 `⏰ Hora: ${reminderTime}\n\n` +
-                `Te notificaré todos los días a esa hora.`
+                `Te notificaré todos los días a esa hora.`,
             );
           } catch (error) {
             await bot.sendMessage(
               chatId,
-              "❌ Lo siento, hubo un error al configurar el recordatorio. Por favor, intenta nuevamente."
+              '❌ Lo siento, hubo un error al configurar el recordatorio. Por favor, intenta nuevamente.',
             );
           }
         });
@@ -64,7 +64,7 @@ export class ReminderCommands {
 
   async handleListReminders(
     msg: TelegramBot.Message,
-    bot: TelegramBot
+    bot: TelegramBot,
   ): Promise<void> {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
@@ -74,12 +74,12 @@ export class ReminderCommands {
     if (reminders.length === 0) {
       await bot.sendMessage(
         chatId,
-        "No tienes recordatorios configurados actualmente."
+        'No tienes recordatorios configurados actualmente.',
       );
       return;
     }
 
-    let message = "📋 Tus recordatorios activos:\n\n";
+    let message = '📋 Tus recordatorios activos:\n\n';
     reminders.forEach((reminder, index) => {
       message +=
         `${index + 1}. ${reminder.medicationName}\n` +

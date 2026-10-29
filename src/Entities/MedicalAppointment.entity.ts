@@ -1,14 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity("medical_appointment")
+@Entity('medical_appointment')
 export class MedicalAppointment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: "bigint" })
+  @Column({ type: 'bigint' })
   userId: string;
 
-  @Column({ type: "bigint" })
+  @Column({ type: 'bigint' })
   chatId: string;
 
   @Column()
@@ -20,7 +20,7 @@ export class MedicalAppointment {
   @Column()
   appointmentDate: Date;
 
-  @Column("time")
+  @Column('time')
   appointmentTime: string;
 
   @Column()
@@ -41,12 +41,12 @@ export class MedicalAppointment {
   @Column()
   timezone: string;
 
-  @Column({ default: "appointment" })
+  @Column({ default: 'appointment' })
   type: string;
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   createdAt: Date;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   updatedAt: Date;
 }

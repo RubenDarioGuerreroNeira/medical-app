@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  Inject,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as TelegramBot from "node-telegram-bot-api";
+import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as TelegramBot from 'node-telegram-bot-api';
 
 /**
  * Servicio responsable de inicializar el bot de Telegram en modo webhook
@@ -22,18 +17,18 @@ export class TelegramBotService implements OnModuleInit {
 
   constructor(
     private readonly configService: ConfigService,
-    @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot,
+    @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const webhookUrl = this.configService.get<string>("TELEGRAM_WEBHOOK_URL");
+    const webhookUrl = this.configService.get<string>('TELEGRAM_WEBHOOK_URL');
     const secretToken = this.configService.get<string>(
-      "TELEGRAM_WEBHOOK_SECRET_TOKEN"
+      'TELEGRAM_WEBHOOK_SECRET_TOKEN',
     );
 
     if (!webhookUrl) {
       this.logger.warn(
-        "TELEGRAM_WEBHOOK_URL no está configurado. El bot no recibirá actualizaciones vía webhook."
+        'TELEGRAM_WEBHOOK_URL no está configurado. El bot no recibirá actualizaciones vía webhook.',
       );
       return;
     }
@@ -46,10 +41,10 @@ export class TelegramBotService implements OnModuleInit {
 
       await this.bot.setWebHook(`${webhookUrl}/telegram-webhook`, options);
       this.logger.log(
-        `Webhook configurado: ${webhookUrl}/telegram-webhook${secretToken ? " (con secret_token)" : ""}`
+        `Webhook configurado: ${webhookUrl}/telegram-webhook${secretToken ? ' (con secret_token)' : ''}`,
       );
     } catch (error) {
-      this.logger.error("Error configurando webhook de Telegram:", error);
+      this.logger.error('Error configurando webhook de Telegram:', error);
       throw error;
     }
   }
@@ -57,7 +52,7 @@ export class TelegramBotService implements OnModuleInit {
   async sendMessage(
     chatId: number,
     text: string,
-    options?: TelegramBot.SendMessageOptions
+    options?: TelegramBot.SendMessageOptions,
   ): Promise<TelegramBot.Message> {
     try {
       return await this.bot.sendMessage(chatId, text, options);

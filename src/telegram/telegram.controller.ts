@@ -1,6 +1,6 @@
 // telegram.controller.ts
-import { Controller, Get, Param, Post, Body } from "@nestjs/common";
-import { TelegramService } from "./services/telegram.service";
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import { TelegramService } from './services/telegram.service';
 import {
   ApiTags,
   ApiOperation,
@@ -8,35 +8,35 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
-} from "@nestjs/swagger";
+} from '@nestjs/swagger';
 
-@ApiTags("Telegram")
-@Controller("telegram")
+@ApiTags('Telegram')
+@Controller('telegram')
 export class TelegramController {
   constructor(private readonly telegramService: TelegramService) {}
 
-  @ApiOperation({ summary: "Envía un mensaje a un chat" })
+  @ApiOperation({ summary: 'Envía un mensaje a un chat' })
   @ApiResponse({
     status: 200,
-    description: "Mensaje enviado correctamente",
+    description: 'Mensaje enviado correctamente',
   })
   @ApiResponse({
     status: 400,
-    description: "Error al enviar el mensaje",
+    description: 'Error al enviar el mensaje',
   })
   @Post()
-  sendMessage(@Param("chatId") chatId: number, @Body() message: string) {
+  sendMessage(@Param('chatId') chatId: number, @Body() message: string) {
     return this.telegramService.sendMessage(chatId, message);
   }
 
   @Get()
   getHello() {
-    return this.telegramService.sendMessage(123456789, "Hola, mundo!");
+    return this.telegramService.sendMessage(123456789, 'Hola, mundo!');
   }
 
   @Post()
   postHello() {
-    return this.telegramService.sendMessage(123456789, "Hola, mundo!");
+    return this.telegramService.sendMessage(123456789, 'Hola, mundo!');
   }
 }
 

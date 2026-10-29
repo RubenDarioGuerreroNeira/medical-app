@@ -3,25 +3,25 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
-} from "@nestjs/common";
-import { FileInterceptor } from "@nestjs/platform-express";
-import { CloudinaryService } from "./cloudinary.service";
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from './cloudinary.service';
 
-@Controller("image")
+@Controller('image')
 export class CloudinaryController {
   constructor(private cloudinary: CloudinaryService) {}
 
-  @Post("upload")
+  @Post('upload')
   @UseInterceptors(
-    FileInterceptor("file", {
+    FileInterceptor('file', {
       limits: { fileSize: 1024 * 1024 * 2 }, // 2 MB máximo
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpg|jpeg|png|gif)$/)) {
-          return cb(new Error("Solo se permiten imágenes"), false);
+          return cb(new Error('Solo se permiten imágenes'), false);
         }
         cb(null, true);
       },
-    })
+    }),
   )
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
     try {
@@ -31,7 +31,7 @@ export class CloudinaryController {
         public_id: result.public_id,
       };
     } catch (error) {
-      throw new Error("Error al subir la imagen");
+      throw new Error('Error al subir la imagen');
     }
   }
 }

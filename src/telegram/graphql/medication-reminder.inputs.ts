@@ -1,4 +1,4 @@
-import { InputType, Field, Int } from "@nestjs/graphql";
+import { InputType, Field, Int } from '@nestjs/graphql';
 
 @InputType()
 export class CreateMedicationReminderInput {
@@ -8,11 +8,11 @@ export class CreateMedicationReminderInput {
   @Field()
   dosage: string;
 
-  @Field({ description: "Time in HH:MM format" })
+  @Field({ description: 'Time in HH:MM format' })
   reminderTime: string;
 
   @Field(() => [Int], {
-    description: "Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)",
+    description: 'Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)',
   })
   daysOfWeek: number[];
 
@@ -33,12 +33,12 @@ export class UpdateMedicationReminderInput {
   @Field({ nullable: true })
   dosage?: string;
 
-  @Field({ nullable: true, description: "Time in HH:MM format" })
+  @Field({ nullable: true, description: 'Time in HH:MM format' })
   reminderTime?: string;
 
   @Field(() => [Int], {
     nullable: true,
-    description: "Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)",
+    description: 'Days of the week (0=Sunday, 1=Monday, ..., 6=Saturday)',
   })
   daysOfWeek?: number[];
 

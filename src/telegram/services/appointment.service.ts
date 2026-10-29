@@ -4,23 +4,23 @@ import {
   forwardRef,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { MedicalAppointment } from "../../Entities/MedicalAppointment.entity";
-import { TelegramService } from "./telegram.service";
-import { SchedulerRegistry } from "@nestjs/schedule";
-import * as moment from "moment-timezone";
-import { CronJob } from "cron";
-import { TelegramNotificationService } from "../telegramNotificationService.service";
-import TelegramBot from "node-telegram-bot-api";
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { MedicalAppointment } from '../../Entities/MedicalAppointment.entity';
+import { TelegramService } from './telegram.service';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import * as moment from 'moment-timezone';
+import { CronJob } from 'cron';
+import { TelegramNotificationService } from '../telegramNotificationService.service';
+import TelegramBot from 'node-telegram-bot-api';
 
 @Injectable()
 export class AppointmentService {
   private readonly logger = new Logger(AppointmentService.name);
   private readonly soundEffects = {
-    appointment: "https://example.com/sounds/appointment-alert.mp3",
-    success: "https://example.com/sounds/success.mp3",
+    appointment: 'https://example.com/sounds/appointment-alert.mp3',
+    success: 'https://example.com/sounds/success.mp3',
   };
 
   constructor(
@@ -30,12 +30,12 @@ export class AppointmentService {
     @Inject(forwardRef(() => TelegramService))
     private telegramService: TelegramService,
     private notificationService: TelegramNotificationService,
-    @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot
+    @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
   ) {
     this.initializeAppointments();
     // Verificar que el bot se inyectó correctamente
     if (!this.bot) {
-      this.logger.error("El bot de Telegram no se inyectó correctamente");
+      this.logger.error('El bot de Telegram no se inyectó correctamente');
     }
   }
 
@@ -44,7 +44,7 @@ export class AppointmentService {
       where: { isActive: true },
     });
     activeAppointments.forEach((appointment) =>
-      this.scheduleAppointment(appointment)
+      this.scheduleAppointment(appointment),
     );
   }
 
@@ -68,7 +68,7 @@ export class AppointmentService {
       phoneNumber?: string;
       notes?: string;
       timezone?: string;
-    }
+    },
   ): Promise<MedicalAppointment> {
     const {
       doctorName,
@@ -80,13 +80,13 @@ export class AppointmentService {
       phoneNumber,
       notes,
       // timezone = "America/Caracas",
-      timezone = this.getUserTimezone(chatId) || "UTC",
+      timezone = this.getUserTimezone(chatId) || 'UTC',
     } = appointmentData;
 
     // Validar formato de fecha
-    const dateObj = moment(appointmentDate, "DD-MM-YYYY");
+    const dateObj = moment(appointmentDate, 'DD-MM-YYYY');
     if (!dateObj.isValid()) {
-      throw new Error("Formato de fecha inválido. Use DD-MM-YYYY");
+      throw new Error('Formato de fecha inválido. Use DD-MM-YYYY');
     }
 
     // Normalizar el formato de hora (acepta AM/PM)
@@ -95,14 +95,14 @@ export class AppointmentService {
     // Validar que la fecha y hora no sean anteriores a la actual
     const now = moment();
     const appointmentDateTime = moment.tz(
-      `${dateObj.format("YYYY-MM-DD")} ${normalizedTime}`,
-      "YYYY-MM-DD HH:mm",
-      timezone
+      `${dateObj.format('YYYY-MM-DD')} ${normalizedTime}`,
+      'YYYY-MM-DD HH:mm',
+      timezone,
     );
 
     if (appointmentDateTime.isBefore(now)) {
       throw new Error(
-        "No se puede programar una cita para una fecha y hora que ya pasó"
+        'No se puede programar una cita para una fecha y hora que ya pasó',
       );
     }
 
@@ -120,7 +120,7 @@ export class AppointmentService {
       timezone,
       createdAt: new Date(),
       isActive: true,
-      type: "appointment",
+      type: 'appointment',
     });
 
     const savedAppointment = await this.appointmentRepository.save(appointment);
@@ -136,23 +136,23 @@ export class AppointmentService {
     let hours: number;
     let minutes: number;
 
-    if (cleanTime.includes("am") || cleanTime.includes("pm")) {
+    if (cleanTime.includes('am') || cleanTime.includes('pm')) {
       // Formato 12 horas (e.g., "9:00 am", "3:30 pm")
-      const timePart = cleanTime.replace(/\s*(am|pm)\s*$/i, "");
-      const [hoursStr, minutesStr] = timePart.split(":");
+      const timePart = cleanTime.replace(/\s*(am|pm)\s*$/i, '');
+      const [hoursStr, minutesStr] = timePart.split(':');
 
       hours = parseInt(hoursStr, 10);
       minutes = parseInt(minutesStr, 10);
 
       // Convertir a formato 24 horas
-      if (cleanTime.includes("pm") && hours < 12) {
+      if (cleanTime.includes('pm') && hours < 12) {
         hours += 12;
-      } else if (cleanTime.includes("am") && hours === 12) {
+      } else if (cleanTime.includes('am') && hours === 12) {
         hours = 0;
       }
     } else {
       // Formato 24 horas (e.g., "09:00", "15:30")
-      const [hoursStr, minutesStr] = cleanTime.split(":");
+      const [hoursStr, minutesStr] = cleanTime.split(':');
       hours = parseInt(hoursStr, 10);
       minutes = parseInt(minutesStr, 10);
     }
@@ -167,14 +167,14 @@ export class AppointmentService {
       minutes > 59
     ) {
       throw new Error(
-        `Formato de hora inválido: ${time}. Use formato HH:MM o HH:MM AM/PM`
+        `Formato de hora inválido: ${time}. Use formato HH:MM o HH:MM AM/PM`,
       );
     }
 
     // Devolver en formato HH:MM
-    return `${hours.toString().padStart(2, "0")}:${minutes
+    return `${hours.toString().padStart(2, '0')}:${minutes
       .toString()
-      .padStart(2, "0")}`;
+      .padStart(2, '0')}`;
   }
 
   private getUserTimezone(chatId: number): string | null {
@@ -185,7 +185,7 @@ export class AppointmentService {
       return null;
     } catch (error) {
       this.logger.error(
-        `Error al obtener zona horaria del usuario: ${error.message}`
+        `Error al obtener zona horaria del usuario: ${error.message}`,
       );
       return null;
     }
@@ -199,30 +199,30 @@ export class AppointmentService {
 
   private scheduleAppointmentReminder(
     appointment: MedicalAppointment,
-    hoursBeforeAppointment: number
+    hoursBeforeAppointment: number,
   ) {
     const appointmentDate = moment(appointment.appointmentDate).format(
-      "YYYY-MM-DD"
+      'YYYY-MM-DD',
     );
-    const [hours, minutes] = appointment.appointmentTime.split(":").map(Number);
+    const [hours, minutes] = appointment.appointmentTime.split(':').map(Number);
 
     // Crear fecha y hora de la cita
     const appointmentDateTime = moment.tz(
       `${appointmentDate} ${appointment.appointmentTime}`,
-      "YYYY-MM-DD HH:mm",
-      appointment.timezone
+      'YYYY-MM-DD HH:mm',
+      appointment.timezone,
     );
 
     // Calcular cuándo enviar el recordatorio
     const reminderTime = moment(appointmentDateTime).subtract(
       hoursBeforeAppointment,
-      "hours"
+      'hours',
     );
 
     // Si el tiempo del recordatorio ya pasó, no programarlo
     if (reminderTime.isBefore(moment())) {
       this.logger.log(
-        `No se programó recordatorio para cita ${appointment.id} porque la hora ya pasó`
+        `No se programó recordatorio para cita ${appointment.id} porque la hora ya pasó`,
       );
       return;
     }
@@ -236,10 +236,10 @@ export class AppointmentService {
         this.sendAppointmentNotification(appointment, hoursBeforeAppointment),
       null,
       true,
-      appointment.timezone
+      appointment.timezone,
     );
 
-    if (this.schedulerRegistry.doesExist("cron", jobName)) {
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
       this.schedulerRegistry.deleteCronJob(jobName);
     }
 
@@ -248,8 +248,8 @@ export class AppointmentService {
 
     this.logger.log(
       `Recordatorio de cita programado ${jobName} para ${reminderTime.format(
-        "YYYY-MM-DD HH:mm"
-      )}`
+        'YYYY-MM-DD HH:mm',
+      )}`,
     );
   }
 
@@ -283,21 +283,21 @@ export class AppointmentService {
 
   private async sendAppointmentNotification(
     appointment: MedicalAppointment,
-    hoursBeforeAppointment: number
+    hoursBeforeAppointment: number,
   ) {
     try {
       const message = this.formatAppointmentMessage(
         appointment,
-        hoursBeforeAppointment
+        hoursBeforeAppointment,
       );
-      
+
       // Usar el servicio de notificaciones
       if (this.notificationService) {
         // Crear un método en TelegramNotificationService si no existe
         if (typeof this.notificationService.sendSimpleMessage === 'function') {
           await this.notificationService.sendSimpleMessage(
             Number(appointment.chatId),
-            message
+            message,
           );
         } else if (this.bot) {
           // Fallback al bot
@@ -307,33 +307,35 @@ export class AppointmentService {
         // Fallback al bot
         await this.bot.sendMessage(Number(appointment.chatId), message);
       } else {
-        this.logger.error("No hay mecanismo disponible para enviar notificaciones");
+        this.logger.error(
+          'No hay mecanismo disponible para enviar notificaciones',
+        );
       }
-  
+
       this.logger.log(
-        `Notificación de cita enviada exitosamente para: ${appointment.doctorName}`
+        `Notificación de cita enviada exitosamente para: ${appointment.doctorName}`,
       );
     } catch (error) {
       this.logger.error(
         `Error al enviar la notificación de cita: ${error.message}`,
-        error.stack
+        error.stack,
       );
     }
   }
 
   private formatAppointmentMessage(
     appointment: MedicalAppointment,
-    hoursBeforeAppointment: number
+    hoursBeforeAppointment: number,
   ): string {
     const appointmentDate = moment(appointment.appointmentDate).format(
-      "DD/MM/YYYY"
+      'DD/MM/YYYY',
     );
 
-    let reminderText = "";
+    let reminderText = '';
     if (hoursBeforeAppointment === 24) {
-      reminderText = "¡Recuerda que mañana tienes una cita médica!";
+      reminderText = '¡Recuerda que mañana tienes una cita médica!';
     } else if (hoursBeforeAppointment === 2) {
-      reminderText = "¡Tu cita médica es en 2 horas!";
+      reminderText = '¡Tu cita médica es en 2 horas!';
     }
 
     let message =
@@ -362,7 +364,7 @@ export class AppointmentService {
   async getUserAppointments(chatId: number): Promise<MedicalAppointment[]> {
     return this.appointmentRepository.find({
       where: { chatId: chatId.toString() },
-      order: { appointmentDate: "ASC", appointmentTime: "ASC" },
+      order: { appointmentDate: 'ASC', appointmentTime: 'ASC' },
     });
   }
 
@@ -376,7 +378,7 @@ export class AppointmentService {
     } catch (error) {
       this.logger.error(
         `Error al buscar cita por ID: ${error.message}`,
-        error.stack
+        error.stack,
       );
       return null;
     }
@@ -384,7 +386,7 @@ export class AppointmentService {
 
   async updateAppointment(
     id: number,
-    updateData: Partial<MedicalAppointment>
+    updateData: Partial<MedicalAppointment>,
   ): Promise<MedicalAppointment> {
     await this.appointmentRepository.update(id, updateData);
     const updatedAppointment = await this.appointmentRepository.findOne({
@@ -401,7 +403,7 @@ export class AppointmentService {
       const jobNames = [`appointment_${id}_24h`, `appointment_${id}_2h`];
 
       jobNames.forEach((jobName) => {
-        if (this.schedulerRegistry.doesExist("cron", jobName)) {
+        if (this.schedulerRegistry.doesExist('cron', jobName)) {
           this.schedulerRegistry.deleteCronJob(jobName);
         }
       });
@@ -426,7 +428,7 @@ export class AppointmentService {
     const jobNames = [`appointment_${id}_24h`, `appointment_${id}_2h`];
 
     jobNames.forEach((jobName) => {
-      if (this.schedulerRegistry.doesExist("cron", jobName)) {
+      if (this.schedulerRegistry.doesExist('cron', jobName)) {
         this.schedulerRegistry.deleteCronJob(jobName);
         this.logger.log(`Trabajo programado ${jobName} eliminado`);
       }

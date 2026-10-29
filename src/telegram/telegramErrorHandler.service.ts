@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import * as TelegramBot from "node-telegram-bot-api";
-import { HttpException } from "@nestjs/common";
+import { Injectable, Logger } from '@nestjs/common';
+import * as TelegramBot from 'node-telegram-bot-api';
+import { HttpException } from '@nestjs/common';
 
 @Injectable()
 export class TelegramErrorHandler {
@@ -13,7 +13,7 @@ export class TelegramErrorHandler {
     bot: TelegramBot,
     error: any,
     methodName: string,
-    chatId?: number
+    chatId?: number,
   ): Promise<void> {
     this.logger.error(`Error en ${methodName}:`, error);
 
@@ -29,29 +29,29 @@ export class TelegramErrorHandler {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
+                  text: '🔙 Volver al menú principal',
+                  callback_data: 'menu_principal',
                 },
               ],
             ],
           },
         });
       } catch (sendError) {
-        this.logger.error("Error al enviar mensaje de error:", sendError);
+        this.logger.error('Error al enviar mensaje de error:', sendError);
       }
     }
   }
 
   private async handlePollingError(
     bot: TelegramBot,
-    error: any
+    error: any,
   ): Promise<void> {
     if (
-      error.code === "ETELEGRAM" &&
+      error.code === 'ETELEGRAM' &&
       error.response?.body?.error_code === 409
     ) {
       this.logger.warn(
-        "Conflicto de webhook detectado, reiniciando polling..."
+        'Conflicto de webhook detectado, reiniciando polling...',
       );
       await this.restartPolling(bot);
       return;
@@ -61,14 +61,14 @@ export class TelegramErrorHandler {
       const delay = Math.pow(2, this.retryCount) * 1000;
       this.retryCount++;
       this.logger.warn(
-        `Reintentando en ${delay}ms (intento ${this.retryCount}/${this.MAX_RETRIES})`
+        `Reintentando en ${delay}ms (intento ${this.retryCount}/${this.MAX_RETRIES})`,
       );
 
       setTimeout(async () => {
         await this.restartPolling(bot);
       }, delay);
     } else {
-      this.logger.error("Máximo número de reintentos alcanzado");
+      this.logger.error('Máximo número de reintentos alcanzado');
       this.retryCount = 0;
     }
   }
@@ -93,10 +93,10 @@ export class TelegramErrorHandler {
         },
       });
 
-      this.logger.log("Polling reiniciado exitosamente");
+      this.logger.log('Polling reiniciado exitosamente');
       this.retryCount = 0;
     } catch (error) {
-      this.logger.error("Error al reiniciar polling:", error);
+      this.logger.error('Error al reiniciar polling:', error);
       await this.handlePollingError(bot, error);
     }
   }
@@ -108,37 +108,37 @@ export class TelegramErrorHandler {
 
     if (error instanceof Error) {
       if (this.isConnectionError(error)) {
-        return "No se pudo conectar con el servicio. Por favor, intenta nuevamente más tarde.";
+        return 'No se pudo conectar con el servicio. Por favor, intenta nuevamente más tarde.';
       }
       if (this.isRateLimitError(error)) {
-        return "Demasiadas solicitudes. Por favor, espera un momento antes de intentar nuevamente.";
+        return 'Demasiadas solicitudes. Por favor, espera un momento antes de intentar nuevamente.';
       }
       return `Lo siento, ocurrió un error: ${error.message}`;
     }
 
-    return "Lo siento, ocurrió un error inesperado. Por favor, intenta nuevamente.";
+    return 'Lo siento, ocurrió un error inesperado. Por favor, intenta nuevamente.';
   }
 
   private isPollingError(error: any): boolean {
     return (
-      error.code === "ETELEGRAM" ||
-      error.code === "ETIMEDOUT" ||
-      (error instanceof Error && error.message.includes("Polling"))
+      error.code === 'ETELEGRAM' ||
+      error.code === 'ETIMEDOUT' ||
+      (error instanceof Error && error.message.includes('Polling'))
     );
   }
 
   private isConnectionError(error: Error): boolean {
     return (
-      error.message.includes("ETIMEDOUT") ||
-      error.message.includes("ECONNREFUSED") ||
-      error.message.includes("ECONNRESET")
+      error.message.includes('ETIMEDOUT') ||
+      error.message.includes('ECONNREFUSED') ||
+      error.message.includes('ECONNRESET')
     );
   }
 
   private isRateLimitError(error: Error): boolean {
     return (
-      error.message.includes("429") ||
-      error.message.includes("Too Many Requests")
+      error.message.includes('429') ||
+      error.message.includes('Too Many Requests')
     );
   }
 }

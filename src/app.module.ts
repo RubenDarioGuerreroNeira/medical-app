@@ -95,7 +95,11 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     RecetaMedicaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AppResolver, ...(process.env.TELEGRAM_BOT_TOKEN ? [ReminderResolver] : [])],
+  providers: [
+    AppService,
+    AppResolver,
+    ...(process.env.TELEGRAM_BOT_TOKEN ? [ReminderResolver] : []),
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

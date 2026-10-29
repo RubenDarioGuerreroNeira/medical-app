@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { ClinicasVenezuela } from "./datos/clinica-datos";
-import { Clinica } from "./intrfaces/interface-clinicas";
+import { Injectable } from '@nestjs/common';
+import { ClinicasVenezuela } from './datos/clinica-datos';
+import { Clinica } from './intrfaces/interface-clinicas';
 @Injectable()
 export class ClinicasVenezuelaService {
   private clinicas: Clinica[] = ClinicasVenezuela;
@@ -14,22 +14,22 @@ export class ClinicasVenezuelaService {
     if (params.estado) {
       resultado = resultado.filter(
         (clinica) =>
-          clinica.estado.toLowerCase() === params.estado.toLowerCase()
+          clinica.estado.toLowerCase() === params.estado.toLowerCase(),
       );
     }
 
     if (params.ciudad) {
       resultado = resultado.filter(
         (clinica) =>
-          clinica.ciudad.toLowerCase() === params.ciudad.toLowerCase()
+          clinica.ciudad.toLowerCase() === params.ciudad.toLowerCase(),
       );
     }
 
     if (params.especialidad) {
       resultado = resultado.filter((clinica) =>
         clinica.especialidades.some(
-          (esp) => esp.toLowerCase() === params.especialidad.toLowerCase()
-        )
+          (esp) => esp.toLowerCase() === params.especialidad.toLowerCase(),
+        ),
       );
     }
 
@@ -38,7 +38,7 @@ export class ClinicasVenezuelaService {
 
   async obtenerClinicaCercana(
     lat: number,
-    lng: number
+    lng: number,
   ): Promise<Clinica | null> {
     if (this.clinicas.length === 0) return null;
 
@@ -47,7 +47,7 @@ export class ClinicasVenezuelaService {
       lat,
       lng,
       clinicaCercana.coordenadas.lat,
-      clinicaCercana.coordenadas.lng
+      clinicaCercana.coordenadas.lng,
     );
 
     for (const clinica of this.clinicas) {
@@ -57,7 +57,7 @@ export class ClinicasVenezuelaService {
         lat,
         lng,
         clinica.coordenadas.lat,
-        clinica.coordenadas.lng
+        clinica.coordenadas.lng,
       );
 
       if (distancia < distanciaMinima) {
@@ -73,7 +73,7 @@ export class ClinicasVenezuelaService {
     lat1: number,
     lon1: number,
     lat2: number,
-    lon2: number
+    lon2: number,
   ): number {
     const R = 6371; // Radio de la Tierra en km
     const dLat = this.toRad(lat2 - lat1);

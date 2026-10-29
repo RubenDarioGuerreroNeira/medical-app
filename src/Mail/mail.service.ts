@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import { MailerService } from "@nestjs-modules/mailer";
+import { Injectable } from '@nestjs/common';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class MailService {
@@ -11,7 +11,7 @@ export class MailService {
     try {
       await this.mailerService.sendMail({
         to: email,
-        subject: "Verifica tu cuenta",
+        subject: 'Verifica tu cuenta',
         html: `
           <h3>Bienvenido! Por favor verifica tu cuenta</h3>
           <p>Para verificar tu cuenta, haz clic en el siguiente enlace:</p>
@@ -20,8 +20,8 @@ export class MailService {
         `,
       });
     } catch (error) {
-      console.error("Error enviando email:", error);
-      throw new Error("Error al enviar el correo de verificación");
+      console.error('Error enviando email:', error);
+      throw new Error('Error al enviar el correo de verificación');
     }
   }
 }

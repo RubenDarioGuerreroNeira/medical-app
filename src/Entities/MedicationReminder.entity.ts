@@ -1,15 +1,15 @@
 // import { timeStamp } from "console";
-import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity("medication_reminder")
+@Entity('medication_reminder')
 export class MedicationReminder {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: "bigint" }) // Cambiado para manejar IDs de Telegram
+  @Column({ type: 'bigint' }) // Cambiado para manejar IDs de Telegram
   userId: string;
 
-  @Column({ type: "bigint" }) // Cambiado para manejar IDs de Telegram
+  @Column({ type: 'bigint' }) // Cambiado para manejar IDs de Telegram
   chatId: string;
 
   @Column()
@@ -18,10 +18,10 @@ export class MedicationReminder {
   @Column()
   dosage: string;
 
-  @Column("time")
+  @Column('time')
   reminderTime: string;
 
-  @Column("simple-array")
+  @Column('simple-array')
   daysOfWeek: number[];
 
   @Column({ default: true })
@@ -33,17 +33,17 @@ export class MedicationReminder {
   @Column()
   type: string;
 
-  @Column({ type: "timestamp" })
+  @Column({ type: 'timestamp' })
   createdAt: Date;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   updatedAt: Date;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastTaken: Date;
 
   @Column({
-    type: "simple-array",
+    type: 'simple-array',
     nullable: true,
     default: () => "'{}'",
   })

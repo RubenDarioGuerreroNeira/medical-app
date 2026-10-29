@@ -1,4 +1,4 @@
-import { Roles } from ".././Usuarios/Entities/Usuarios.entity";
+import { Roles } from '.././Usuarios/Entities/Usuarios.entity';
 
 // Este archivo extiende el objeto Request de Express para incluir la propiedad `user`
 // que es adjuntada por el JwtAuthGuard después de validar el token JWT.

@@ -1,4 +1,4 @@
-import { IsDate, IsString, isUUID, IsBoolean, IsUUID } from "class-validator";
+import { IsDate, IsString, isUUID, IsBoolean, IsUUID } from 'class-validator';
 
 export class CreateNotaMedicaDto {
   @IsUUID()

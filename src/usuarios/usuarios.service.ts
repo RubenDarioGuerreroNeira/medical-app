@@ -7,17 +7,17 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-} from "@nestjs/common";
-import { CreateUsuarioDto } from "./dto/create-usuario.dto";
-import { UpdateUsuarioDto } from "./dto/update-usuario.dto";
-import { Usuario } from "../Entities/Usuarios.entity";
-import { Medico } from "../Entities/Medico.entity";
-import { Roles } from "../Entities/Usuarios.entity";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as bcrypt from "bcrypt";
-import { PaginatedResult } from "src/Dto Pagination/Pagination";
-import { RegisterUserDto } from "./dto/register-user.dto";
+} from '@nestjs/common';
+import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Usuario } from '../Entities/Usuarios.entity';
+import { Medico } from '../Entities/Medico.entity';
+import { Roles } from '../Entities/Usuarios.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { PaginatedResult } from 'src/Dto Pagination/Pagination';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class UsuariosService {
@@ -25,12 +25,12 @@ export class UsuariosService {
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Medico)
-    private medicoRepository: Repository<Medico>
+    private medicoRepository: Repository<Medico>,
   ) {}
 
   async validatePassword(
     plainPassword: string,
-    hashedPassword: string
+    hashedPassword: string,
   ): Promise<boolean> {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
@@ -51,7 +51,7 @@ export class UsuariosService {
     // Verifica si el correo electrónico ya existe
     const existingUser = await this.usuarioRepository.findOneBy({ email });
     if (existingUser) {
-      throw new ConflictException("El correo electrónico ya está registrado.");
+      throw new ConflictException('El correo electrónico ya está registrado.');
     }
 
     // Hashea la contraseña
@@ -78,8 +78,8 @@ export class UsuariosService {
       return usuario;
     } catch (e) {
       throw new HttpException(
-        "Error al crear el usuario",
-        HttpStatus.INTERNAL_SERVER_ERROR
+        'Error al crear el usuario',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -90,7 +90,7 @@ export class UsuariosService {
     });
 
     if (existingUser) {
-      throw new ConflictException("El correo electrónico ya está registrado.");
+      throw new ConflictException('El correo electrónico ya está registrado.');
     }
     const salt = await bcrypt.genSalt(10);
     const hashedPAss = await bcrypt.hash(createUsuarioDto.contrasena, salt);
@@ -118,7 +118,7 @@ export class UsuariosService {
     // Por ahora, devolvemos todos los usuarios sin paginación real.
     // Se puede añadir lógica de paginación con `take` y `skip` si es necesario.
     const [usuarios, total] = await this.usuarioRepository.findAndCount({
-      order: { nombre: "ASC" },
+      order: { nombre: 'ASC' },
     });
 
     // Ocultar contraseñas
@@ -141,7 +141,7 @@ export class UsuariosService {
     const user = await this.usuarioRepository.findOneBy({ id: usuarioId });
     if (!user) {
       throw new NotFoundException(
-        `Usuario con ID '${usuarioId}' no encontrado.`
+        `Usuario con ID '${usuarioId}' no encontrado.`,
       );
     }
     delete user.contrasena;
@@ -160,18 +160,18 @@ export class UsuariosService {
   async update(
     usuarioId: string,
     updateUsuarioDto: UpdateUsuarioDto,
-    authenticatedUser: { id: string; rol: Roles }
+    authenticatedUser: { id: string; rol: Roles },
   ): Promise<Usuario> {
     if (
       authenticatedUser.rol !== Roles.ADMIN &&
       authenticatedUser.id !== usuarioId
     ) {
-      throw new ForbiddenException("No autorizado para realizar esta acción");
+      throw new ForbiddenException('No autorizado para realizar esta acción');
     }
     const usuario = await this.usuarioRepository.findOneBy({ id: usuarioId });
     if (!usuario) {
       throw new NotFoundException(
-        `Usuario con ID '${usuarioId}' no encontrado.`
+        `Usuario con ID '${usuarioId}' no encontrado.`,
       );
     }
 
@@ -197,7 +197,7 @@ export class UsuariosService {
       const salt = await bcrypt.genSalt(10);
       datosActualizados.contrasena = await bcrypt.hash(
         updateUsuarioDto.contrasena,
-        salt
+        salt,
       );
     }
 
@@ -207,7 +207,7 @@ export class UsuariosService {
         email: updateUsuarioDto.email,
       });
       if (emailExistente) {
-        throw new ConflictException("El email ya está registrado");
+        throw new ConflictException('El email ya está registrado');
       }
     }
 
@@ -227,7 +227,7 @@ export class UsuariosService {
     const result = await this.usuarioRepository.delete(usuarioId);
     if (result.affected === 0) {
       throw new NotFoundException(
-        `Usuario con ID '${usuarioId}' no encontrado.`
+        `Usuario con ID '${usuarioId}' no encontrado.`,
       );
     }
   }

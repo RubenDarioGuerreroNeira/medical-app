@@ -1,8 +1,8 @@
-import { Injectable, Logger, Inject } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as TelegramBot from "node-telegram-bot-api";
-import { TelegramDiagnosticService } from "../telegramDiagnosticService.service";
-import { TelegramErrorHandler } from "../telegramErrorHandler.service";
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as TelegramBot from 'node-telegram-bot-api';
+import { TelegramDiagnosticService } from '../telegramDiagnosticService.service';
+import { TelegramErrorHandler } from '../telegramErrorHandler.service';
 
 @Injectable()
 export class TelegramBaseService {
@@ -14,14 +14,14 @@ export class TelegramBaseService {
     protected errorHandler: TelegramErrorHandler,
     protected diagnosticService: TelegramDiagnosticService,
 
-    @Inject("TELEGRAM_BOT") protected bot: TelegramBot
+    @Inject('TELEGRAM_BOT') protected bot: TelegramBot,
   ) {
     this.setupBaseHandlers();
   }
 
   private setupBaseHandlers(): void {
-    this.bot.on("error", (error) => {
-      this.logger.error("Error en el bot de Telegram:", error);
+    this.bot.on('error', (error) => {
+      this.logger.error('Error en el bot de Telegram:', error);
     });
 
     this.setupCommands();
@@ -30,29 +30,29 @@ export class TelegramBaseService {
   private setupCommands(): void {
     try {
       this.bot.setMyCommands([
-        { command: "/start", description: "Iniciar el bot" },
-        { command: "/help", description: "Ver comandos disponibles" },
+        { command: '/start', description: 'Iniciar el bot' },
+        { command: '/help', description: 'Ver comandos disponibles' },
       ]);
     } catch (error) {
-      this.logger.error("Error setting up commands:", error);
+      this.logger.error('Error setting up commands:', error);
     }
   }
 
   protected async sendMessage(
     chatId: number,
-    message: string
+    message: string,
   ): Promise<boolean> {
     try {
       await this.bot.sendMessage(chatId, message);
       return true;
     } catch (error) {
-      this.logger.error("Error enviando mensaje:", error);
+      this.logger.error('Error enviando mensaje:', error);
       return false;
     }
   }
 
   protected escapeMarkdown(text: string): string {
-    if (!text) return "No disponible";
-    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, "\\$1");
+    if (!text) return 'No disponible';
+    return text.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as TelegramBot from "node-telegram-bot-api";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as TelegramBot from 'node-telegram-bot-api';
 
 @Injectable()
 export class TelegramDiagnosticService {
@@ -9,7 +9,7 @@ export class TelegramDiagnosticService {
   constructor(private configService: ConfigService) {}
 
   async diagnoseBot(bot: TelegramBot): Promise<{
-    status: "OK" | "ERROR";
+    status: 'OK' | 'ERROR';
     issues: string[];
     recommendations: string[];
   }> {
@@ -18,11 +18,11 @@ export class TelegramDiagnosticService {
 
     try {
       // Check 1: Verify bot token
-      const token = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
+      const token = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
       if (!token) {
-        issues.push("Bot token is missing");
+        issues.push('Bot token is missing');
         recommendations.push(
-          "Ensure TELEGRAM_BOT_TOKEN is set in environment variables"
+          'Ensure TELEGRAM_BOT_TOKEN is set in environment variables',
         );
       }
 
@@ -31,11 +31,11 @@ export class TelegramDiagnosticService {
         const botInfo = await bot.getMe();
         this.logger.log(`Bot connected successfully: @${botInfo.username}`);
       } catch (error) {
-        issues.push("Failed to connect to Telegram API");
+        issues.push('Failed to connect to Telegram API');
         recommendations.push(
-          "Check if bot token is valid",
-          "Verify network connectivity to api.telegram.org",
-          "Ensure no firewall is blocking the connection"
+          'Check if bot token is valid',
+          'Verify network connectivity to api.telegram.org',
+          'Ensure no firewall is blocking the connection',
         );
       }
 
@@ -43,22 +43,22 @@ export class TelegramDiagnosticService {
       try {
         const webhookInfo = await bot.getWebHookInfo();
         if (webhookInfo.url) {
-          issues.push("Webhook is still active");
+          issues.push('Webhook is still active');
           recommendations.push(
-            "Remove webhook using bot.deleteWebHook()",
-            "Ensure no other instances are running with webhook"
+            'Remove webhook using bot.deleteWebHook()',
+            'Ensure no other instances are running with webhook',
           );
         }
       } catch (error) {
-        issues.push("Failed to check webhook status");
+        issues.push('Failed to check webhook status');
       }
 
       // Check 4: Verify polling status
       if (!bot.isPolling()) {
-        issues.push("Polling is not active");
+        issues.push('Polling is not active');
         recommendations.push(
-          "Ensure bot.startPolling() is called",
-          "Check for any polling errors in logs"
+          'Ensure bot.startPolling() is called',
+          'Check for any polling errors in logs',
         );
       }
 
@@ -66,24 +66,24 @@ export class TelegramDiagnosticService {
       const memoryUsage = process.memoryUsage();
       if (memoryUsage.heapUsed > 500 * 1024 * 1024) {
         // 500MB
-        issues.push("High memory usage detected");
+        issues.push('High memory usage detected');
         recommendations.push(
-          "Check for memory leaks",
-          "Consider restarting the bot"
+          'Check for memory leaks',
+          'Consider restarting the bot',
         );
       }
 
       return {
-        status: issues.length === 0 ? "OK" : "ERROR",
+        status: issues.length === 0 ? 'OK' : 'ERROR',
         issues,
         recommendations: [...new Set(recommendations)],
       };
     } catch (error) {
-      this.logger.error("Diagnostic error:", error);
+      this.logger.error('Diagnostic error:', error);
       return {
-        status: "ERROR",
-        issues: ["Failed to complete diagnostics"],
-        recommendations: ["Check server logs for more details"],
+        status: 'ERROR',
+        issues: ['Failed to complete diagnostics'],
+        recommendations: ['Check server logs for more details'],
       };
     }
   }
@@ -119,20 +119,20 @@ export class TelegramDiagnosticService {
   async fixCommonIssues(bot: TelegramBot): Promise<void> {
     try {
       // Add safety checks before calling methods
-      if (typeof bot.deleteWebHook === "function") {
+      if (typeof bot.deleteWebHook === 'function') {
         await bot.deleteWebHook();
       } else {
-        this.logger.warn("deleteWebHook method not available on bot instance");
+        this.logger.warn('deleteWebHook method not available on bot instance');
       }
 
-      if (typeof bot.isPolling === "function" && bot.isPolling()) {
+      if (typeof bot.isPolling === 'function' && bot.isPolling()) {
         await bot.stopPolling();
       } else {
-        this.logger.warn("isPolling method not available or bot not polling");
+        this.logger.warn('isPolling method not available or bot not polling');
       }
 
       // Only try to start polling if the method exists
-      if (typeof bot.startPolling === "function") {
+      if (typeof bot.startPolling === 'function') {
         await bot.startPolling({
           polling: {
             interval: 300,
@@ -142,12 +142,12 @@ export class TelegramDiagnosticService {
             },
           },
         });
-        this.logger.log("Bot polling restarted successfully");
+        this.logger.log('Bot polling restarted successfully');
       } else {
-        this.logger.warn("startPolling method not available on bot instance");
+        this.logger.warn('startPolling method not available on bot instance');
       }
     } catch (error) {
-      this.logger.error("Failed to fix common issues:", error);
+      this.logger.error('Failed to fix common issues:', error);
       throw error;
     }
   }

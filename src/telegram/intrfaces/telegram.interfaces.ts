@@ -38,6 +38,6 @@ export interface UserState {
 
 // Interfaz para resultados de diagnóstico
 export interface DiagnosticResult {
-  status: "OK" | "WARNING" | "ERROR";
+  status: 'OK' | 'WARNING' | 'ERROR';
   issues?: string[];
 }

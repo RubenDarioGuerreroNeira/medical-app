@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { TelegramBaseService } from "./telegram-base.service";
-import { TelegramKeyboard } from "../intrfaces/telegram.interfaces";
+import { Injectable } from '@nestjs/common';
+import { TelegramBaseService } from './telegram-base.service';
+import { TelegramKeyboard } from '../intrfaces/telegram.interfaces';
 
 @Injectable()
 export class TelegramMenuService extends TelegramBaseService {
@@ -9,14 +9,14 @@ export class TelegramMenuService extends TelegramBaseService {
       inline_keyboard: [
         [
           {
-            text: "🏥  Farmacias Cercanas \n",
-            callback_data: "solicitar_ubicacion_farmacia",
+            text: '🏥  Farmacias Cercanas \n',
+            callback_data: 'solicitar_ubicacion_farmacia',
           },
         ],
         [
           {
-            text: "👨‍🔬  Centros de Atención Médica Cercanos \n ",
-            callback_data: "mostrarCentrosCercanos",
+            text: '👨‍🔬  Centros de Atención Médica Cercanos \n ',
+            callback_data: 'mostrarCentrosCercanos',
           },
         ],
         // [
@@ -27,44 +27,44 @@ export class TelegramMenuService extends TelegramBaseService {
         // ],
         [
           {
-            text: "🩺 Preguntar Acerca de Medicamentos",
-            callback_data: "consulta_medica",
+            text: '🩺 Preguntar Acerca de Medicamentos',
+            callback_data: 'consulta_medica',
           },
         ],
         [
           {
-            text: "⏰ Recordatorios de Medicamentos",
-            callback_data: "recordatorios",
+            text: '⏰ Recordatorios de Medicamentos',
+            callback_data: 'recordatorios',
           },
         ],
         [
           {
-            text: "📲 Recordatorio\nde Cita(s) ",
-            callback_data: "recordatorio_cita_medica",
+            text: '📲 Recordatorio\nde Cita(s) ',
+            callback_data: 'recordatorio_cita_medica',
           },
         ],
         [
           {
-            text: "📊 Interpretar Resultados de Laboratorio",
-            callback_data: "interpretar_resultados",
+            text: '📊 Interpretar Resultados de Laboratorio',
+            callback_data: 'interpretar_resultados',
           },
         ],
         [
           {
-            text: "🗣️ Historial Médico",
-            callback_data: "historial_medico",
+            text: '🗣️ Historial Médico',
+            callback_data: 'historial_medico',
           },
         ],
         [
           {
-            text: "🚑 Crear ó Descargar Qr Emergencia",
-            callback_data: "menu_emergencia", // Usar el callback_data que abre el menú de emergencia
+            text: '🚑 Crear ó Descargar Qr Emergencia',
+            callback_data: 'menu_emergencia', // Usar el callback_data que abre el menú de emergencia
           },
         ],
         [
           {
-            text: "📞 Contacto con Desarrollador",
-            callback_data: "contacto",
+            text: '📞 Contacto con Desarrollador',
+            callback_data: 'contacto',
           },
         ],
       ],
@@ -74,7 +74,7 @@ export class TelegramMenuService extends TelegramBaseService {
   async mostrarMenuPrincipal(chatId: number): Promise<void> {
     try {
       const chat = await this.bot.getChat(chatId);
-      const userName = chat.first_name || "Usuario";
+      const userName = chat.first_name || 'Usuario';
 
       const welcomeMessage =
         `¡Hola ${userName}! 👋\n\n` +
@@ -99,16 +99,16 @@ export class TelegramMenuService extends TelegramBaseService {
         `Selecciona una opción del menú:`;
 
       await this.bot.sendMessage(chatId, welcomeMessage, {
-        parse_mode: "Markdown",
+        parse_mode: 'Markdown',
         reply_markup: this.getMainMenuKeyboard(),
       });
     } catch (error) {
-      this.logger.error("Error al mostrar menú principal:", error);
+      this.logger.error('Error al mostrar menú principal:', error);
       const fallbackMessage =
-        "¡Bienvenido! 👋\n\n" +
-        "Soy tu Asistente Médico Virtual 🏥\n" +
-        "¿En qué puedo ayudarte hoy?\n\n" +
-        "Selecciona una opción del menú:";
+        '¡Bienvenido! 👋\n\n' +
+        'Soy tu Asistente Médico Virtual 🏥\n' +
+        '¿En qué puedo ayudarte hoy?\n\n' +
+        'Selecciona una opción del menú:';
 
       await this.bot.sendMessage(chatId, fallbackMessage, {
         reply_markup: this.getMainMenuKeyboard(),
@@ -119,11 +119,11 @@ export class TelegramMenuService extends TelegramBaseService {
   async mostrarAyuda(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "📋 Comandos disponibles:\n\n" +
-        "/start - Iniciar el bot\n" +
-        "/help - Ver esta lista de comandos\n\n" +
-        "También puedes usar los botones del menú principal:",
-      { reply_markup: this.getMainMenuKeyboard() }
+      '📋 Comandos disponibles:\n\n' +
+        '/start - Iniciar el bot\n' +
+        '/help - Ver esta lista de comandos\n\n' +
+        'También puedes usar los botones del menú principal:',
+      { reply_markup: this.getMainMenuKeyboard() },
     );
   }
 }

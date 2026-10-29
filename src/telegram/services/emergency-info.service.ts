@@ -1,26 +1,26 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import * as TelegramBot from "node-telegram-bot-api";
-import { MedicationReminder } from "../../Entities/MedicationReminder.entity";
-import { EmergencyInfo } from "../../Entities/EmergencyInfo.entity";
-import { BloodType, RhFactor } from "../../Entities/EmergencyInfo.entity";
-import * as QRCode from "qrcode";
-import * as PDFDocument from "pdfkit";
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as TelegramBot from 'node-telegram-bot-api';
+import { MedicationReminder } from '../../Entities/MedicationReminder.entity';
+import { EmergencyInfo } from '../../Entities/EmergencyInfo.entity';
+import { BloodType, RhFactor } from '../../Entities/EmergencyInfo.entity';
+import * as QRCode from 'qrcode';
+import * as PDFDocument from 'pdfkit';
 // import PDFDocument from "pdfkit";
-import { PassThrough } from "stream";
-import { TelegramStateService } from "./telegram-state.service";
+import { PassThrough } from 'stream';
+import { TelegramStateService } from './telegram-state.service';
 // Interfaz para el estado de configuración de emergencia
 interface EmergencyConfigState {
-  currentOperation: "configure_emergency_info";
+  currentOperation: 'configure_emergency_info';
   step:
-    | "awaiting_allergies"
-    | "awaiting_conditions"
-    | "awaiting_contact"
-    | "awaiting_tiene_seguro"
-    | "awaiting_seguro"
-    | "awaiting_blood_type"
-    | "awaiting_rh_factor";
+    | 'awaiting_allergies'
+    | 'awaiting_conditions'
+    | 'awaiting_contact'
+    | 'awaiting_tiene_seguro'
+    | 'awaiting_seguro'
+    | 'awaiting_blood_type'
+    | 'awaiting_rh_factor';
   data: {
     allergies?: string;
     conditions?: string;
@@ -41,25 +41,25 @@ export class EmergencyInfoService {
     private reminderRepository: Repository<MedicationReminder>,
     @InjectRepository(EmergencyInfo)
     private emergencyInfoRepository: Repository<EmergencyInfo>,
-    @Inject("TELEGRAM_BOT") private bot: TelegramBot,
+    @Inject('TELEGRAM_BOT') private bot: TelegramBot,
     private readonly stateService: TelegramStateService,
   ) {}
 
   async mostrarMenuEmergencia(chatId: number): Promise<void> {
     await this.bot.sendMessage(
       chatId,
-      "🚨 *Tu Tarjeta de Emergencia QR* 🚨\n\n" +
-        "Esta función te permite crear una tarjeta digital con un *código QR*. En caso de una emergencia, el personal de primeros auxilios puede escanearlo para acceder a tu información médica vital (alergias, tipo de sangre, persona que pueda ser contactada, Inf sobre Póliza de Seguro .) y ayudarte de forma más segura y rápida.\n\n" +
-        "¿Qué deseas hacer?",
+      '🚨 *Tu Tarjeta de Emergencia QR* 🚨\n\n' +
+        'Esta función te permite crear una tarjeta digital con un *código QR*. En caso de una emergencia, el personal de primeros auxilios puede escanearlo para acceder a tu información médica vital (alergias, tipo de sangre, persona que pueda ser contactada, Inf sobre Póliza de Seguro .) y ayudarte de forma más segura y rápida.\n\n' +
+        '¿Qué deseas hacer?',
       {
-        parse_mode: "Markdown",
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
             [
               {
                 // text: "1-⚕️ Configurar información médica",
-                text: "✅ Crear / Actualizar mi Tarjeta QR",
-                callback_data: "configurar_emergencia",
+                text: '✅ Crear / Actualizar mi Tarjeta QR',
+                callback_data: 'configurar_emergencia',
               },
             ],
 
@@ -72,32 +72,32 @@ export class EmergencyInfoService {
 
             [
               {
-                text: "⬇️ Descargar  QR (PDF)",
-                callback_data: "descargar_tarjeta_pdf",
+                text: '⬇️ Descargar  QR (PDF)',
+                callback_data: 'descargar_tarjeta_pdf',
               },
             ],
             [
               {
-                text: "🔍 Ver mi información de emergencia",
-                callback_data: "ver_emergencia",
+                text: '🔍 Ver mi información de emergencia',
+                callback_data: 'ver_emergencia',
               },
             ],
             [
               {
-                text: "🔙 Volver",
-                callback_data: "menu_principal",
+                text: '🔙 Volver',
+                callback_data: 'menu_principal',
               },
             ],
           ],
         },
-      }
+      },
     );
   }
 
   async iniciarConfiguracionEmergencia(chatId: number): Promise<void> {
     await this.stateService.set(chatId, {
-      currentOperation: "configure_emergency_info",
-      step: "awaiting_allergies",
+      currentOperation: 'configure_emergency_info',
+      step: 'awaiting_allergies',
       data: {},
     });
 
@@ -109,13 +109,13 @@ export class EmergencyInfoService {
           force_reply: true,
           selective: true,
         },
-      }
+      },
     );
   }
 
   private async requestNextStep(
     chatId: number,
-    message: string
+    message: string,
   ): Promise<void> {
     await this.bot.sendMessage(chatId, message, {
       reply_markup: {
@@ -131,210 +131,210 @@ export class EmergencyInfoService {
 
     if (!text) return; // Ignorar mensajes sin texto en este flujo
     const hasAlphanumeric = /[a-zA-Z0-9]/;
-    const state = await this.stateService.get(chatId) as EmergencyConfigState;
+    const state = (await this.stateService.get(chatId)) as EmergencyConfigState;
 
-    if (!state || state.currentOperation !== "configure_emergency_info") {
+    if (!state || state.currentOperation !== 'configure_emergency_info') {
       return; // No está en el flujo correcto
     }
 
     try {
-      let nextQuestion = "";
-      let nextStep: EmergencyConfigState["step"] | "done" = "done";
+      let nextQuestion = '';
+      let nextStep: EmergencyConfigState['step'] | 'done' = 'done';
 
       switch (state.step) {
-        case "awaiting_allergies":
+        case 'awaiting_allergies':
           if (
-            text.toLowerCase() !== "ninguna" &&
-            text.toLowerCase() !== "Ninguna" &&
+            text.toLowerCase() !== 'ninguna' &&
+            text.toLowerCase() !== 'Ninguna' &&
             !hasAlphanumeric.test(text)
           ) {
             await this.bot.sendMessage(
               chatId,
-              "❌ El texto para alergias parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna' ó 'Ninguna' si no tienes alergias."
+              "❌ El texto para alergias parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna' ó 'Ninguna' si no tienes alergias.",
             );
             await this.requestNextStep(
               chatId,
-              "Por favor, ingresa tus alergias conocidas (escribe 'ninguna' ó 'Ninguna' si no tienes):"
+              "Por favor, ingresa tus alergias conocidas (escribe 'ninguna' ó 'Ninguna' si no tienes):",
             );
             return;
           }
           state.data.allergies = text;
-          nextStep = "awaiting_conditions";
+          nextStep = 'awaiting_conditions';
           nextQuestion =
             "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' ó 'Ninguna' si no tienes):";
           break;
 
-        case "awaiting_conditions":
+        case 'awaiting_conditions':
           if (
-            text.toLowerCase() !== "ninguna" &&
-            text.toLocaleLowerCase() !== "Ninguna" &&
+            text.toLowerCase() !== 'ninguna' &&
+            text.toLocaleLowerCase() !== 'Ninguna' &&
             !hasAlphanumeric.test(text)
           ) {
             await this.bot.sendMessage(
               chatId,
-              "❌ El texto para condiciones médicas parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna' ó 'Ninguna'."
+              "❌ El texto para condiciones médicas parece contener solo símbolos o caracteres especiales. Por favor, ingresa información válida o escribe 'ninguna' ó 'Ninguna'.",
             );
             await this.requestNextStep(
               chatId,
-              "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' ó 'Ninguna' si no tienes):"
+              "Ahora, ingresa tus condiciones médicas importantes (escribe 'ninguna' ó 'Ninguna' si no tienes):",
             );
             return;
           }
           state.data.conditions = text;
-          nextStep = "awaiting_tiene_seguro";
+          nextStep = 'awaiting_tiene_seguro';
           nextQuestion =
             "¿Tienes seguro médico? (Responde 'si' 'Si' o 'no' 'No')";
           break;
 
-        case "awaiting_tiene_seguro":
+        case 'awaiting_tiene_seguro':
           if (
-            text.toLowerCase() !== "si" &&
-            text.toLowerCase() !== "Si" &&
-            text.toLowerCase() !== "no" &&
-            text.toLowerCase() !== "No"
+            text.toLowerCase() !== 'si' &&
+            text.toLowerCase() !== 'Si' &&
+            text.toLowerCase() !== 'no' &&
+            text.toLowerCase() !== 'No'
           ) {
             await this.bot.sendMessage(
               chatId,
-              "❌ Respuesta inválida. Por favor, responde 'si' 'Si' o 'no'."
+              "❌ Respuesta inválida. Por favor, responde 'si' 'Si' o 'no'.",
             );
             await this.requestNextStep(
               chatId,
-              "¿Tienes seguro médico? (Responde 'si' o 'no')"
+              "¿Tienes seguro médico? (Responde 'si' o 'no')",
             );
             return;
           }
-          state.data.tieneSeguro = text.toLowerCase() === "si";
+          state.data.tieneSeguro = text.toLowerCase() === 'si';
           if (state.data.tieneSeguro) {
-            nextStep = "awaiting_seguro";
+            nextStep = 'awaiting_seguro';
             nextQuestion =
               "Ingresa el nombre de tu compañía de seguros (escribe 'ninguno' si prefieres no decirlo):";
           } else {
             state.data.seguro = null; // Asegurarse de que sea null si no tiene
-            nextStep = "awaiting_blood_type";
+            nextStep = 'awaiting_blood_type';
             nextQuestion =
               "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)";
           }
           break;
 
-        case "awaiting_seguro":
-          if (text.toLowerCase() !== "ninguno" && !hasAlphanumeric.test(text)) {
+        case 'awaiting_seguro':
+          if (text.toLowerCase() !== 'ninguno' && !hasAlphanumeric.test(text)) {
             await this.bot.sendMessage(
               chatId,
-              "❌ El nombre de la compañía de seguros parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre válido o escribe 'ninguno'."
+              "❌ El nombre de la compañía de seguros parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre válido o escribe 'ninguno'.",
             );
             await this.requestNextStep(
               chatId,
-              "Ingresa el nombre de tu compañía de seguros (escribe 'ninguno' si prefieres no decirlo):"
+              "Ingresa el nombre de tu compañía de seguros (escribe 'ninguno' si prefieres no decirlo):",
             );
             return;
           }
-          state.data.seguro = text.toLowerCase() === "ninguno" ? null : text;
-          nextStep = "awaiting_blood_type";
+          state.data.seguro = text.toLowerCase() === 'ninguno' ? null : text;
+          nextStep = 'awaiting_blood_type';
           nextQuestion =
             "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)";
           break;
 
-        case "awaiting_blood_type":
+        case 'awaiting_blood_type':
           const upperCaseTextBlood = text.toUpperCase();
           if (
-            upperCaseTextBlood !== "no se" &&
+            upperCaseTextBlood !== 'no se' &&
             !Object.values(BloodType).includes(upperCaseTextBlood as BloodType)
           ) {
             await this.bot.sendMessage(
               chatId,
-              "❌ Tipo de sangre inválido. Por favor, ingresa A, B, AB, O, o 'no se'."
+              "❌ Tipo de sangre inválido. Por favor, ingresa A, B, AB, O, o 'no se'.",
             );
             await this.requestNextStep(
               chatId,
-              "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)"
+              "¿Cuál es tu tipo de sangre? (A, B, AB, O) (escribe 'no se' si no lo conoces)",
             );
             return;
           }
           state.data.bloodType =
-            upperCaseTextBlood === "no se"
+            upperCaseTextBlood === 'no se'
               ? undefined
               : (upperCaseTextBlood as BloodType);
-          nextStep = "awaiting_rh_factor";
+          nextStep = 'awaiting_rh_factor';
           nextQuestion =
             "¿Cuál es tu factor Rh? (Positivo, Negativo) (escribe 'no se' si no lo conoces)";
           break;
 
-        case "awaiting_rh_factor":
+        case 'awaiting_rh_factor':
           const userInputRh = text.toLowerCase();
           let rhFactorToStore: RhFactor | undefined = undefined;
 
-          if (userInputRh === "positivo") {
+          if (userInputRh === 'positivo') {
             rhFactorToStore = RhFactor.POSITIVE;
-          } else if (userInputRh === "negativo") {
+          } else if (userInputRh === 'negativo') {
             rhFactorToStore = RhFactor.NEGATIVE;
-          } else if (userInputRh === "no se") {
+          } else if (userInputRh === 'no se') {
             rhFactorToStore = undefined;
           } else {
             // Entrada inválida
             await this.bot.sendMessage(
               chatId,
-              "❌ Factor Rh inválido. Por favor, ingresa 'Positivo', 'Negativo', o 'no se'."
+              "❌ Factor Rh inválido. Por favor, ingresa 'Positivo', 'Negativo', o 'no se'.",
             );
             await this.requestNextStep(
               chatId,
-              "¿Cuál es tu factor Rh? (Positivo, Negativo) (escribe 'no se' si no lo conoces)"
+              "¿Cuál es tu factor Rh? (Positivo, Negativo) (escribe 'no se' si no lo conoces)",
             );
             return; // Importante salir aquí para no continuar con una entrada inválida
           }
 
           state.data.rhFactor = rhFactorToStore;
-          nextStep = "awaiting_contact";
+          nextStep = 'awaiting_contact';
           nextQuestion =
             "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono, escribe 'ninguno' si no deseas agregarlo):";
           break;
 
-        case "awaiting_contact":
-          if (text.toLowerCase() !== "ninguno" && !hasAlphanumeric.test(text)) {
+        case 'awaiting_contact':
+          if (text.toLowerCase() !== 'ninguno' && !hasAlphanumeric.test(text)) {
             await this.bot.sendMessage(
               chatId,
-              "❌ El texto para el contacto de emergencia parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre y número válidos."
+              '❌ El texto para el contacto de emergencia parece contener solo símbolos o caracteres especiales. Por favor, ingresa un nombre y número válidos.',
             );
             await this.requestNextStep(
               chatId,
-              "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono, escribe 'ninguno' si no deseas agregarlo):"
+              "Por último, ingresa un contacto de emergencia (Nombre y Número de teléfono, escribe 'ninguno' si no deseas agregarlo):",
             );
             return;
           }
           state.data.emergencyContact =
-            text.toLowerCase() === "ninguno" ? undefined : text;
-          nextStep = "done";
+            text.toLowerCase() === 'ninguno' ? undefined : text;
+          nextStep = 'done';
           break;
       }
 
-      if (nextStep === "done") {
-        if (state.step === "awaiting_contact") {
+      if (nextStep === 'done') {
+        if (state.step === 'awaiting_contact') {
           // Solo guardar si el último paso fue el contacto
           await this.guardarInformacionEmergencia(chatId, state.data);
           await this.stateService.delete(chatId); // Limpiar estado al finalizar
           await this.bot.sendMessage(
             chatId,
-            "✅ Información de emergencia guardada correctamente.\n\n" +
-              "Puedes acceder a ella en cualquier momento desde el menú de emergencia.\n\n" +
-              "Siguiente paso es generar un código de acceso para que pueda ser Generado el QR que Contendra tu info de emergencia.",
+            '✅ Información de emergencia guardada correctamente.\n\n' +
+              'Puedes acceder a ella en cualquier momento desde el menú de emergencia.\n\n' +
+              'Siguiente paso es generar un código de acceso para que pueda ser Generado el QR que Contendra tu info de emergencia.',
             {
               reply_markup: {
                 inline_keyboard: [
                   [
                     {
-                      text: "2-🔐 Generar código de acceso de emergencia",
-                      callback_data: "generar_codigo_emergencia",
+                      text: '2-🔐 Generar código de acceso de emergencia',
+                      callback_data: 'generar_codigo_emergencia',
                     },
                   ],
 
                   [
                     {
-                      text: "🏠 Volver al menú principal",
-                      callback_data: "menu_principal",
+                      text: '🏠 Volver al menú principal',
+                      callback_data: 'menu_principal',
                     },
                   ],
                 ],
               },
-            }
+            },
           );
         }
       } else {
@@ -345,11 +345,11 @@ export class EmergencyInfoService {
     } catch (error) {
       this.logger.error(
         `Error en handleConfigStep (chatId: ${chatId}, step: ${state.step}): ${error.message}`,
-        error.stack
+        error.stack,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error procesando tu respuesta. Por favor, intenta configurar la información nuevamente desde el menú."
+        '❌ Ocurrió un error procesando tu respuesta. Por favor, intenta configurar la información nuevamente desde el menú.',
       );
       await this.stateService.delete(chatId);
     }
@@ -363,25 +363,25 @@ export class EmergencyInfoService {
       if (!emergencyInfo) {
         await this.bot.sendMessage(
           chatId,
-          "❌ No tienes información de emergencia configurada. Por favor, configúrala primero.",
+          '❌ No tienes información de emergencia configurada. Por favor, configúrala primero.',
           {
             reply_markup: {
               inline_keyboard: [
                 [
                   {
-                    text: "⚕️ Configurar ahora",
-                    callback_data: "configurar_emergencia",
+                    text: '⚕️ Configurar ahora',
+                    callback_data: 'configurar_emergencia',
                   },
                 ],
                 [
                   {
-                    text: "🔙 Volver al menú",
-                    callback_data: "menu_emergencia",
+                    text: '🔙 Volver al menú',
+                    callback_data: 'menu_emergencia',
                   },
                 ],
               ],
             },
-          }
+          },
         );
         return;
       }
@@ -390,58 +390,58 @@ export class EmergencyInfoService {
       const medications = await this.obtenerMedicamentosActuales(chatId);
 
       // Crear mensaje con toda la información
-      let message = "🚨 *TU INFORMACIÓN MÉDICA DE EMERGENCIA* 🚨\n\n";
-      message += `*Alergias:* ${emergencyInfo.allergies || "Ninguna"}\n\n`;
+      let message = '🚨 *TU INFORMACIÓN MÉDICA DE EMERGENCIA* 🚨\n\n';
+      message += `*Alergias:* ${emergencyInfo.allergies || 'Ninguna'}\n\n`;
       message += `*Condiciones médicas:* ${
-        emergencyInfo.conditions || "Ninguna"
+        emergencyInfo.conditions || 'Ninguna'
       }\n\n`;
       message += `*Tiene seguro médico:* ${
-        emergencyInfo.tieneSeguro ? "Sí" : "No"
+        emergencyInfo.tieneSeguro ? 'Sí' : 'No'
       }\n`;
       if (emergencyInfo.tieneSeguro && emergencyInfo.seguro) {
         message += `*Compañía de seguros:* ${emergencyInfo.seguro}\n`;
       }
       message += `*Tipo de sangre:* ${
-        emergencyInfo.bloodType || "No se conoce"
+        emergencyInfo.bloodType || 'No se conoce'
       }\n`;
-      message += `*Factor Rh:* ${emergencyInfo.rhFactor || "No se conoce"}\n\n`;
+      message += `*Factor Rh:* ${emergencyInfo.rhFactor || 'No se conoce'}\n\n`;
       message += `*Contacto de emergencia:* ${
-        emergencyInfo.emergencyContact || "No especificado"
+        emergencyInfo.emergencyContact || 'No especificado'
       }\n\n`;
 
       if (medications.length > 0) {
-        message += "*Medicamentos actuales:*\n";
+        message += '*Medicamentos actuales:*\n';
         medications.forEach((med) => {
           message += `- ${med.medicationName} (${med.dosage})\n`;
         });
       } else {
-        message += "*Medicamentos actuales:* Ninguno registrado\n";
+        message += '*Medicamentos actuales:* Ninguno registrado\n';
       }
 
       message +=
-        "\n🔐 Código de acceso: " + (emergencyInfo.accessCode || "No generado");
+        '\n🔐 Código de acceso: ' + (emergencyInfo.accessCode || 'No generado');
 
       await this.bot.sendMessage(chatId, message, {
-        parse_mode: "Markdown",
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: "🔄 Actualizar información",
-                callback_data: "configurar_emergencia",
+                text: '🔄 Actualizar información',
+                callback_data: 'configurar_emergencia',
               },
             ],
-            [{ text: "🔙 Volver al menú", callback_data: "menu_emergencia" }],
+            [{ text: '🔙 Volver al menú', callback_data: 'menu_emergencia' }],
           ],
         },
       });
     } catch (error) {
       this.logger.error(
-        `Error al mostrar información de emergencia: ${error.message}`
+        `Error al mostrar información de emergencia: ${error.message}`,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error al recuperar tu información de emergencia. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error al recuperar tu información de emergencia. Por favor, intenta nuevamente.',
       );
     }
   }
@@ -459,42 +459,42 @@ export class EmergencyInfoService {
 
       await this.bot.sendMessage(
         chatId,
-        "🔐 *Código de Acceso de Emergencia*\n\n" +
+        '🔐 *Código de Acceso de Emergencia*\n\n' +
           `Tu nuevo código es: *${accessCode}*\n\n` +
-          "Este código permite a personal médico acceder a tu información crítica en caso de emergencia.\n" +
-          "Compártelo solo con personas de confianza o guárdalo en tu billetera/cartera/ o pegalo detras de tu Documentación de Identidad.\n" +
-          "El Siguiente paso es Descargarlo ",
+          'Este código permite a personal médico acceder a tu información crítica en caso de emergencia.\n' +
+          'Compártelo solo con personas de confianza o guárdalo en tu billetera/cartera/ o pegalo detras de tu Documentación de Identidad.\n' +
+          'El Siguiente paso es Descargarlo ',
         {
-          parse_mode: "Markdown",
+          parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: "3-⬇️ Descargar  QR que contiene Inf vital (PDF)",
-                  callback_data: "descargar_tarjeta_pdf",
+                  text: '3-⬇️ Descargar  QR que contiene Inf vital (PDF)',
+                  callback_data: 'descargar_tarjeta_pdf',
                 },
               ],
               [
                 {
-                  text: "🔙 Volver al menú de emergencia",
-                  callback_data: "menu_emergencia",
+                  text: '🔙 Volver al menú de emergencia',
+                  callback_data: 'menu_emergencia',
                 },
               ],
               [
                 {
-                  text: "🏠 Volver al menú principal",
-                  callback_data: "menu_principal",
+                  text: '🏠 Volver al menú principal',
+                  callback_data: 'menu_principal',
                 },
               ],
             ],
           },
-        }
+        },
       );
     } catch (error) {
       this.logger.error(`Error al generar código de acceso: ${error.message}`);
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error al generar el código de acceso. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error al generar el código de acceso. Por favor, intenta nuevamente.',
       );
     }
   }
@@ -502,7 +502,7 @@ export class EmergencyInfoService {
   // Guardar o actualizar la información de emergencia completa
   private async guardarInformacionEmergencia(
     chatId: number,
-    userData: EmergencyConfigState["data"]
+    userData: EmergencyConfigState['data'],
   ): Promise<void> {
     try {
       // Buscar si ya existe información para este usuario
@@ -528,18 +528,18 @@ export class EmergencyInfoService {
       await this.emergencyInfoRepository.save(emergencyInfo);
 
       this.logger.log(
-        `Información de emergencia guardada para chatId: ${chatId}`
+        `Información de emergencia guardada para chatId: ${chatId}`,
       );
     } catch (error) {
       this.logger.error(
-        `Error al guardar información de emergencia: ${error.message}`
+        `Error al guardar información de emergencia: ${error.message}`,
       );
       throw error;
     }
   }
 
   async obtenerInformacionEmergencia(
-    chatId: number
+    chatId: number,
   ): Promise<EmergencyInfo | null> {
     try {
       return await this.emergencyInfoRepository.findOne({
@@ -547,14 +547,14 @@ export class EmergencyInfoService {
       });
     } catch (error) {
       this.logger.error(
-        `Error al obtener información de emergencia: ${error.message}`
+        `Error al obtener información de emergencia: ${error.message}`,
       );
       throw error;
     }
   }
 
   async obtenerMedicamentosActuales(
-    chatId: number
+    chatId: number,
   ): Promise<MedicationReminder[]> {
     try {
       // Obtener recordatorios de medicamentos activos para este usuario
@@ -573,7 +573,7 @@ export class EmergencyInfoService {
   // Guardar/Actualizar solo el código de acceso en la BD
   private async _guardarCodigoAccesoDb(
     chatId: number,
-    accessCode: string
+    accessCode: string,
   ): Promise<void> {
     try {
       let emergencyInfo = await this.emergencyInfoRepository.findOne({
@@ -593,7 +593,7 @@ export class EmergencyInfoService {
     } catch (error) {
       this.logger.error(
         `Error al guardar código de acceso en DB: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error; // Re-lanzar para que el llamador lo maneje
     }
@@ -606,7 +606,7 @@ export class EmergencyInfoService {
       if (!emergencyInfo || !emergencyInfo.accessCode) {
         await this.bot.sendMessage(
           chatId,
-          "❌ Necesitas configurar tu información de emergencia y generar un código de acceso primero."
+          '❌ Necesitas configurar tu información de emergencia y generar un código de acceso primero.',
         );
         return;
       }
@@ -614,11 +614,11 @@ export class EmergencyInfoService {
       const botUsername = (await this.bot.getMe()).username;
       if (!botUsername) {
         this.logger.error(
-          "No se pudo obtener el username del bot para la tarjeta de emergencia."
+          'No se pudo obtener el username del bot para la tarjeta de emergencia.',
         );
         await this.bot.sendMessage(
           chatId,
-          "❌ Ocurrió un error al generar la información para la tarjeta. No se pudo obtener el nombre del bot."
+          '❌ Ocurrió un error al generar la información para la tarjeta. No se pudo obtener el nombre del bot.',
         );
         return;
       }
@@ -627,29 +627,29 @@ export class EmergencyInfoService {
       // Por ahora, enviamos un mensaje con instrucciones
       await this.bot.sendMessage(
         chatId,
-        "🆔 *TARJETA DE EMERGENCIA MÉDICA*\n\n" +
-          "Para acceder a mi información médica en caso de emergencia:\n\n" +
+        '🆔 *TARJETA DE EMERGENCIA MÉDICA*\n\n' +
+          'Para acceder a mi información médica en caso de emergencia:\n\n' +
           `1. Escanea este QR (si se proporciona) o visita: t.me/${botUsername}\n` +
           `2. Usa el código: *${emergencyInfo.accessCode}*\n\n` +
-          "Esta tarjeta proporciona acceso a mis alergias, condiciones médicas, medicamentos actuales y contacto de emergencia.",
+          'Esta tarjeta proporciona acceso a mis alergias, condiciones médicas, medicamentos actuales y contacto de emergencia.',
         {
-          parse_mode: "Markdown",
-        }
+          parse_mode: 'Markdown',
+        },
       );
     } catch (error) {
       this.logger.error(
-        `Error al crear tarjeta de emergencia: ${error.message}`
+        `Error al crear tarjeta de emergencia: ${error.message}`,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error al crear la tarjeta de emergencia. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error al crear la tarjeta de emergencia. Por favor, intenta nuevamente.',
       );
     }
   }
 
   //------------------------
   async generarTarjetaEmergenciaPDF(
-    chatId: number
+    chatId: number,
   ): Promise<PassThrough | null> {
     try {
       const emergencyInfo = await this.obtenerInformacionEmergencia(chatId);
@@ -661,18 +661,18 @@ export class EmergencyInfoService {
       const qrCodeData = await QRCode.toDataURL(deepLinkUrl);
 
       // Usa la clase así:
-      const doc = new PDFDocument({ size: "A6", margin: 20 });
+      const doc = new PDFDocument({ size: 'A6', margin: 20 });
       const stream = new PassThrough();
       doc.pipe(stream);
 
       doc
         .fontSize(16)
-        .text(`QR de Inf. Médica del Paciente`, { align: "center" });
+        .text(`QR de Inf. Médica del Paciente`, { align: 'center' });
       doc.moveDown();
       doc
         .fontSize(10)
-        .text("QR Generado por el Bot de Telegram @CitasMedicBot", {
-          align: "left",
+        .text('QR Generado por el Bot de Telegram @CitasMedicBot', {
+          align: 'left',
         });
       doc.moveDown(2);
       const qrCodeX = (doc.page.width - 100) / 2;
@@ -682,8 +682,8 @@ export class EmergencyInfoService {
       doc
         .fontSize(10)
         .text(
-          "Escanea este código para ver la información médica que el usuario registró.\nEs vital para primeros auxilios y se accede por el bot de Telegram.",
-          { align: "center" }
+          'Escanea este código para ver la información médica que el usuario registró.\nEs vital para primeros auxilios y se accede por el bot de Telegram.',
+          { align: 'center' },
         );
       doc.moveDown(15);
       doc.end();
@@ -691,7 +691,7 @@ export class EmergencyInfoService {
       return stream;
     } catch (error) {
       this.logger.error(
-        `Error al generar tarjeta de emergencia PDF: ${error.message}`
+        `Error al generar tarjeta de emergencia PDF: ${error.message}`,
       );
       return null;
     }
@@ -706,28 +706,28 @@ export class EmergencyInfoService {
           chatId,
           pdfStream,
           {
-            caption: "Tu tarjeta de emergencia médica en formato PDF.",
+            caption: 'Tu tarjeta de emergencia médica en formato PDF.',
           },
           {
-            filename: "QR_Mi_Info_Emergencia.pdf",
-            contentType: "application/pdf",
-          }
+            filename: 'QR_Mi_Info_Emergencia.pdf',
+            contentType: 'application/pdf',
+          },
         );
         return true;
       } else {
         await this.bot.sendMessage(
           chatId,
-          "❌ No se pudo generar la tarjeta de emergencia.  Asegúrate de haber configurado tu información y generado un código de acceso."
+          '❌ No se pudo generar la tarjeta de emergencia.  Asegúrate de haber configurado tu información y generado un código de acceso.',
         );
         return false;
       }
     } catch (error) {
       this.logger.error(
-        `Error al enviar tarjeta de emergencia PDF: ${error.message}`
+        `Error al enviar tarjeta de emergencia PDF: ${error.message}`,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error al enviar la tarjeta de emergencia. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error al enviar la tarjeta de emergencia. Por favor, intenta nuevamente.',
       );
       return false;
     }
@@ -737,7 +737,7 @@ export class EmergencyInfoService {
 
   async mostrarInformacionPorCodigoAcceso(
     chatId: number, // El chatId de la persona que escaneó el QR
-    accessCode: string
+    accessCode: string,
   ): Promise<boolean> {
     try {
       const emergencyInfo = await this.emergencyInfoRepository.findOne({
@@ -747,20 +747,20 @@ export class EmergencyInfoService {
       if (!emergencyInfo) {
         await this.bot.sendMessage(
           chatId,
-          "❌ Código de acceso inválido o no se encontró información de emergencia asociada."
+          '❌ Código de acceso inválido o no se encontró información de emergencia asociada.',
         );
         return false;
       }
 
       // Información solicitada: alergias, tipo de sangre, factor, si tiene seguro y nombre de la empresa.
-      let message = "🚨 *INFORMACIÓN MÉDICA DE EMERGENCIA* 🚨\n\n";
-      message += `*Alergias:* ${emergencyInfo.allergies || "Ninguna"}\n`;
+      let message = '🚨 *INFORMACIÓN MÉDICA DE EMERGENCIA* 🚨\n\n';
+      message += `*Alergias:* ${emergencyInfo.allergies || 'Ninguna'}\n`;
       message += `*Tipo de sangre:* ${
-        emergencyInfo.bloodType || "No se conoce"
+        emergencyInfo.bloodType || 'No se conoce'
       }\n`;
-      message += `*Factor Rh:* ${emergencyInfo.rhFactor || "No se conoce"}\n`;
+      message += `*Factor Rh:* ${emergencyInfo.rhFactor || 'No se conoce'}\n`;
       message += `*Tiene seguro médico:* ${
-        emergencyInfo.tieneSeguro ? "Sí" : "No"
+        emergencyInfo.tieneSeguro ? 'Sí' : 'No'
       }\n`;
 
       if (emergencyInfo.tieneSeguro && emergencyInfo.seguro) {
@@ -776,14 +776,14 @@ export class EmergencyInfoService {
       }
 
       await this.bot.sendMessage(chatId, message, {
-        parse_mode: "Markdown",
+        parse_mode: 'Markdown',
         reply_markup: {
           // Ofrecer volver al menú principal al que escaneó
           inline_keyboard: [
             [
               {
-                text: "🏠 Volver al menú principal",
-                callback_data: "menu_principal",
+                text: '🏠 Volver al menú principal',
+                callback_data: 'menu_principal',
               },
             ],
           ],
@@ -793,11 +793,11 @@ export class EmergencyInfoService {
     } catch (error) {
       this.logger.error(
         `Error al mostrar información por código de acceso (${accessCode}): ${error.message}`,
-        error.stack
+        error.stack,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error al intentar recuperar la información de emergencia. Por favor, intenta más tarde."
+        '❌ Ocurrió un error al intentar recuperar la información de emergencia. Por favor, intenta más tarde.',
       );
       return false;
     }

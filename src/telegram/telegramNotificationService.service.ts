@@ -1,16 +1,16 @@
-import { Injectable, Inject, Logger, forwardRef } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import * as TelegramBot from "node-telegram-bot-api";
-import { MedicationReminder } from "../Entities/MedicationReminder.entity";
-import { ReminderService } from "./reminder.service";
+import { Injectable, Inject, Logger, forwardRef } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as TelegramBot from 'node-telegram-bot-api';
+import { MedicationReminder } from '../Entities/MedicationReminder.entity';
+import { ReminderService } from './reminder.service';
 
 @Injectable()
 export class TelegramNotificationService {
   private readonly logger = new Logger(TelegramNotificationService.name);
 
   private readonly soundEffects = {
-    reminder: "https://example.com/sounds/reminder.mp3", // Replace with actual sound URL
-    alert: "https://example.com/sounds/alert.mp3", // Replace with actual sound URL
+    reminder: 'https://example.com/sounds/reminder.mp3', // Replace with actual sound URL
+    alert: 'https://example.com/sounds/alert.mp3', // Replace with actual sound URL
   };
 
   constructor(
@@ -18,21 +18,21 @@ export class TelegramNotificationService {
     @Inject(forwardRef(() => ReminderService))
     private reminderService: ReminderService,
     // private bot: TelegramBot
-    @Inject("TELEGRAM_BOT") private readonly bot: TelegramBot
+    @Inject('TELEGRAM_BOT') private readonly bot: TelegramBot,
   ) {
     // Inicializar efectos de sonido
     // Inicializar efectos de sonido
     this.soundEffects = {
       reminder:
-        this.configService.get<string>("REMINDER_SOUND_PATH") ||
-        "path/to/default/sound.mp3",
+        this.configService.get<string>('REMINDER_SOUND_PATH') ||
+        'path/to/default/sound.mp3',
       alert:
-        this.configService.get<string>("ALERT_SOUND_PATH") ||
-        "path/to/default/alert.mp3",
+        this.configService.get<string>('ALERT_SOUND_PATH') ||
+        'path/to/default/alert.mp3',
     };
 
     // inicializa los callback
-    this.bot.on("callback_query", async (callbackQuery) => {
+    this.bot.on('callback_query', async (callbackQuery) => {
       await this.handleReminderCallback(callbackQuery);
     });
   }
@@ -45,7 +45,7 @@ export class TelegramNotificationService {
       // Construir el mensaje y las opciones correctamente
       const text = this.formatReminderMessage(reminder);
       const options = {
-        parse_mode: "Markdown" as const,
+        parse_mode: 'Markdown' as const,
         reply_markup: {
           inline_keyboard: [
             // [
@@ -62,7 +62,7 @@ export class TelegramNotificationService {
             // ],
             [
               {
-                text: " ✅ Tomado",
+                text: ' ✅ Tomado',
                 // callback_data: `menu_principal`,
                 callback_data: `mark_taken_${reminder.id}`,
               },
@@ -75,12 +75,12 @@ export class TelegramNotificationService {
       await this.bot.sendMessage(Number(reminder.chatId), text, options);
 
       this.logger.log(
-        `Reminder notification sent successfully for reminder ID: ${reminder.id}`
+        `Reminder notification sent successfully for reminder ID: ${reminder.id}`,
       );
     } catch (error) {
       this.logger.error(
         `Error sending reminder notification: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }
@@ -90,7 +90,7 @@ export class TelegramNotificationService {
     try {
       // Send notification sound
       await this.bot.sendVoice(chatId, this.soundEffects.reminder, {
-        caption: "🔔 ¡Es hora de tu medicamento!",
+        caption: '🔔 ¡Es hora de tu medicamento!',
       });
     } catch (error) {
       this.logger.error(`Error sending sound alert: ${error.message}`);
@@ -109,40 +109,40 @@ export class TelegramNotificationService {
   }
 
   async handleReminderCallback(
-    callbackQuery: TelegramBot.CallbackQuery
+    callbackQuery: TelegramBot.CallbackQuery,
   ): Promise<void> {
     const chatId = callbackQuery.message.chat.id;
 
     // Responder al callback_query para evitar que el botón quede "cargando"
     await this.bot.answerCallbackQuery(callbackQuery.id);
 
-    const [action, reminderId, ...params] = callbackQuery.data.split("_");
+    const [action, reminderId, ...params] = callbackQuery.data.split('_');
 
     try {
       switch (action) {
-        case "play":
+        case 'play':
           await this.sendSoundAlert(chatId);
           break;
-        case "taken":
+        case 'taken':
           await this.handleMedicationTaken(chatId, Number(reminderId));
           break;
-        case "postpone":
+        case 'postpone':
           const minutes = Number(params[0]);
           await this.handlePostponeReminder(
             chatId,
             Number(reminderId),
-            minutes
+            minutes,
           );
           break;
       }
     } catch (error) {
       this.logger.error(
         `Error handling reminder callback: ${error.message}`,
-        error.stack
+        error.stack,
       );
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error. Por favor, intenta nuevamente.',
       );
     }
   }
@@ -150,7 +150,7 @@ export class TelegramNotificationService {
   private async handlePostponeReminder(
     chatId: number,
     reminderId: number,
-    minutes: number
+    minutes: number,
   ): Promise<void> {
     try {
       const reminder = await this.reminderService.getReminderById(reminderId);
@@ -160,7 +160,7 @@ export class TelegramNotificationService {
 
       const newTime = await this.reminderService.postponeReminder(
         reminderId,
-        minutes
+        minutes,
       );
 
       await this.bot.sendMessage(
@@ -171,26 +171,26 @@ export class TelegramNotificationService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
+                  text: '🔙 Volver al menú principal',
+                  callback_data: 'menu_principal',
                 },
               ],
             ],
           },
-        }
+        },
       );
     } catch (error) {
       this.logger.error(`Error postponing reminder: ${error.message}`);
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error. Por favor, intenta nuevamente.',
       );
     }
   }
 
   private async handleMedicationTaken(
     chatId: number,
-    reminderId: number
+    reminderId: number,
   ): Promise<void> {
     try {
       const reminder = await this.reminderService.getReminderById(reminderId);
@@ -208,19 +208,19 @@ export class TelegramNotificationService {
             inline_keyboard: [
               [
                 {
-                  text: "🔙 Volver al menú principal",
-                  callback_data: "menu_principal",
+                  text: '🔙 Volver al menú principal',
+                  callback_data: 'menu_principal',
                 },
               ],
             ],
           },
-        }
+        },
       );
     } catch (error) {
       this.logger.error(`Error handling medication taken: ${error.message}`);
       await this.bot.sendMessage(
         chatId,
-        "❌ Ocurrió un error. Por favor, intenta nuevamente."
+        '❌ Ocurrió un error. Por favor, intenta nuevamente.',
       );
     }
   }
@@ -234,7 +234,7 @@ export class TelegramNotificationService {
   async sendSimpleMessage(
     chatId: number,
     message: string,
-    parseMode: "Markdown" | "HTML" = "Markdown"
+    parseMode: 'Markdown' | 'HTML' = 'Markdown',
   ): Promise<void> {
     try {
       await this.bot.sendMessage(chatId, message, {
@@ -245,7 +245,7 @@ export class TelegramNotificationService {
     } catch (error) {
       this.logger.error(
         `Error enviando mensaje simple: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw error;
     }

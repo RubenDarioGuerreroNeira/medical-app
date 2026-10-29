@@ -2,12 +2,12 @@ import {
   Injectable,
   ExecutionContext,
   UnauthorizedException,
-} from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-import { Reflector } from "@nestjs/core";
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard("jwt") {
+export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -21,7 +21,7 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
       throw (
         err ||
         new UnauthorizedException(
-          "No estás autorizado para acceder a este recurso"
+          'No estás autorizado para acceder a este recurso',
         )
       );
     }

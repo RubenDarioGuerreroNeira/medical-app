@@ -1,6 +1,11 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import Redis from "ioredis";
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 
 /**
  * Servicio de estado de conversación para el bot de Telegram.
@@ -15,46 +20,50 @@ export class TelegramStateService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(TelegramStateService.name);
   private redis: Redis | null = null;
   private readonly fallback = new Map<number, any>();
-  private readonly prefix = "telegram:state:";
+  private readonly prefix = 'telegram:state:';
   private isRedisAvailable = false;
 
   constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
-    const useRedis = this.configService.get<string>("USE_REDIS");
+    const useRedis = this.configService.get<string>('USE_REDIS');
     const shouldUseRedis =
-      useRedis !== "false" && useRedis !== undefined && useRedis !== "";
+      useRedis !== 'false' && useRedis !== undefined && useRedis !== '';
 
     if (!shouldUseRedis) {
-      this.logger.log("Redis deshabilitado (USE_REDIS=false). Usando estado en memoria.");
+      this.logger.log(
+        'Redis deshabilitado (USE_REDIS=false). Usando estado en memoria.',
+      );
       return;
     }
 
     try {
       this.redis = new Redis({
-        host: this.configService.get<string>("REDIS_HOST") || "localhost",
-        port: this.configService.get<number>("REDIS_PORT") || 6379,
+        host: this.configService.get<string>('REDIS_HOST') || 'localhost',
+        port: this.configService.get<number>('REDIS_PORT') || 6379,
         retryStrategy: (times) => Math.min(times * 50, 2000),
         maxRetriesPerRequest: 3,
         enableReadyCheck: true,
         lazyConnect: true,
       });
 
-      this.redis.on("connect", () => {
+      this.redis.on('connect', () => {
         this.isRedisAvailable = true;
-        this.logger.log("Conectado a Redis para estado de conversación de Telegram");
+        this.logger.log(
+          'Conectado a Redis para estado de conversación de Telegram',
+        );
       });
 
-      this.redis.on("error", (err) => {
-        this.logger.error("Error de Redis en estado de Telegram:", err.message);
+      this.redis.on('error', (err) => {
+        this.logger.error('Error de Redis en estado de Telegram:', err.message);
         this.isRedisAvailable = false;
       });
 
       await this.redis.connect();
     } catch (error) {
       this.logger.error(
-        "No se pudo inicializar Redis para estado. Usando fallback en memoria.",
-        error
+        'No se pudo inicializar Redis para estado. Usando fallback en memoria.',
+        error,
       );
       this.redis = null;
       this.isRedisAvailable = false;

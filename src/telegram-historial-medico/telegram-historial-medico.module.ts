@@ -5,9 +5,7 @@ import { TelegramHistorialMedicoController } from './telegram-historial-medico.c
 import { TelegramHistorialMedico } from '../Entities/TelegramHistorialMedico.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TelegramHistorialMedico]),
-  ],
+  imports: [TypeOrmModule.forFeature([TelegramHistorialMedico])],
   controllers: [TelegramHistorialMedicoController],
   providers: [TelegramHistorialMedicoService],
   exports: [TelegramHistorialMedicoService],

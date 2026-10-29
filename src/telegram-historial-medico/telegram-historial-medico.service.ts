@@ -1,19 +1,19 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { TelegramHistorialMedico } from "../Entities/TelegramHistorialMedico.entity";
-import { CreateTelegramHistorialMedicoDto } from "./dto/create-telegram-historial-medico.dto";
-import { UpdateTelegramHistorialMedicoDto } from "./dto/update-telegram-historial-medico.dto";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TelegramHistorialMedico } from '../Entities/TelegramHistorialMedico.entity';
+import { CreateTelegramHistorialMedicoDto } from './dto/create-telegram-historial-medico.dto';
+import { UpdateTelegramHistorialMedicoDto } from './dto/update-telegram-historial-medico.dto';
 
 @Injectable()
 export class TelegramHistorialMedicoService {
   constructor(
     @InjectRepository(TelegramHistorialMedico)
-    private telegramHistorialMedicoRepository: Repository<TelegramHistorialMedico>
+    private telegramHistorialMedicoRepository: Repository<TelegramHistorialMedico>,
   ) {}
 
   async create(
-    createDto: CreateTelegramHistorialMedicoDto
+    createDto: CreateTelegramHistorialMedicoDto,
   ): Promise<TelegramHistorialMedico> {
     const historial = this.telegramHistorialMedicoRepository.create(createDto);
     return this.telegramHistorialMedicoRepository.save(historial);
@@ -30,7 +30,7 @@ export class TelegramHistorialMedicoService {
 
     if (!historial) {
       throw new NotFoundException(
-        `Historial médico con ID ${id} no encontrado`
+        `Historial médico con ID ${id} no encontrado`,
       );
     }
 
@@ -47,7 +47,7 @@ export class TelegramHistorialMedicoService {
 
   async update(
     id: number,
-    updateDto: UpdateTelegramHistorialMedicoDto
+    updateDto: UpdateTelegramHistorialMedicoDto,
   ): Promise<TelegramHistorialMedico> {
     const historial = await this.findOne(id);
 

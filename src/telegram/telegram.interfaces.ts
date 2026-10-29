@@ -20,7 +20,7 @@ export interface TelegramUser {
 export interface TelegramMessage {
   chatId: number;
   message: string;
-  type: "notification" | "reminder" | "confirmation" | "cancellation";
+  type: 'notification' | 'reminder' | 'confirmation' | 'cancellation';
 }
 
 export interface AppointmentReminder {
