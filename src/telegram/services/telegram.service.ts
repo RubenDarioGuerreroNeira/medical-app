@@ -14,6 +14,7 @@ import { TelegramHistorialMedicoService } from '../services/telegram-historial-m
 import { TelegramLabResultsService } from './telegram-lab-results.service';
 import { EmergencyInfoService } from './emergency-info.service';
 import { TelegramStateService } from './telegram-state.service';
+import { TelegramRateLimitService } from './telegram-rate-limit.service';
 
 @Injectable()
 export class TelegramService {
@@ -34,6 +35,7 @@ export class TelegramService {
     private labResultsService: TelegramLabResultsService,
     private appointmentCommands: AppointmentCommands,
     private stateService: TelegramStateService,
+    private rateLimitService: TelegramRateLimitService,
     @Inject('TELEGRAM_BOT') private bot: TelegramBot,
     private emergencyInfoService: EmergencyInfoService,
   ) {
