@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+﻿import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   GoogleGenerativeAI,
   GenerativeModel,
   GenerationConfig,
-  Part,
+  
 } from '@google/generative-ai';
 
 @Injectable()
@@ -25,7 +25,7 @@ export class GeminiAIService {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    // Ahora usamos 'gemini-pro-vision' por defecto, ya que soportará texto e imágenes
+    // Ahora usamos 'gemini-pro-vision' por defecto, ya que soportarÃ¡ texto e imÃ¡genes
     this.model = genAI.getGenerativeModel({
       model: 'gemini-1.5-flash',
       generationConfig: this.generationConfig,
@@ -35,9 +35,9 @@ export class GeminiAIService {
   async generateMedicalResponse(prompt: string): Promise<string> {
     try {
       const medicalPrompt = `
-        Como asistente médico de IA, proporciona una respuesta útil e informativa a la siguiente pregunta médica.
-        Incluye información médica relevante, posibles causas y consejos generales cuando sea apropiado.
-        Mantén un tono profesional y asegúrate de incluir las advertencias apropiadas.
+        Como asistente mÃ©dico de IA, proporciona una respuesta Ãºtil e informativa a la siguiente pregunta mÃ©dica.
+        Incluye informaciÃ³n mÃ©dica relevante, posibles causas y consejos generales cuando sea apropiado.
+        MantÃ©n un tono profesional y asegÃºrate de incluir las advertencias apropiadas.
 
         Pregunta del usuario: ${prompt}
       `;
@@ -47,10 +47,10 @@ export class GeminiAIService {
       const text = response.text();
 
       return `${text}
-⚠️ Aviso importante: Esta información es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para un diagnóstico y tratamiento adecuado.`;
+âš ï¸ Aviso importante: Esta informaciÃ³n es solo para orientaciÃ³n general y no reemplaza el consejo mÃ©dico profesional. Por favor, consulta a un profesional de la salud para un diagnÃ³stico y tratamiento adecuado.`;
     } catch (error) {
       this.logger.error('Error generating Gemini medical response:', error);
-      return 'Lo siento, hubo un error al procesar tu consulta médica. Por favor, intenta nuevamente más tarde.';
+      return 'Lo siento, hubo un error al procesar tu consulta mÃ©dica. Por favor, intenta nuevamente mÃ¡s tarde.';
     }
   }
 
@@ -101,16 +101,16 @@ export class GeminiAIService {
   async interpretarResultadosLaboratorio(resultados: string): Promise<string> {
     try {
       const prompt = `
-    Actúa como un asistente médico profesional. Analiza los siguientes resultados de laboratorio:
+    ActÃºa como un asistente mÃ©dico profesional. Analiza los siguientes resultados de laboratorio:
 
     ${resultados}
 
     Por favor proporciona:
-    1. Una interpretación clara de cada valor, indicando si está dentro del rango normal
+    1. Una interpretaciÃ³n clara de cada valor, indicando si estÃ¡ dentro del rango normal
     2. Posibles implicaciones de valores anormales (si los hay)
     3. Recomendaciones generales basadas en estos resultados
 
-    Importante: Incluye un descargo de responsabilidad indicando que esta interpretación no reemplaza el consejo médico profesional.
+    Importante: Incluye un descargo de responsabilidad indicando que esta interpretaciÃ³n no reemplaza el consejo mÃ©dico profesional.
     `;
 
       const result = await this.model.generateContent(prompt);
@@ -118,10 +118,10 @@ export class GeminiAIService {
       const text = response.text();
 
       return `${text}
-⚠️ Aviso importante: Esta interpretación es solo para orientación general y no reemplaza el consejo médico profesional. Por favor, consulta a un profesional de la salud para una interpretación completa de tus resultados.`;
+âš ï¸ Aviso importante: Esta interpretaciÃ³n es solo para orientaciÃ³n general y no reemplaza el consejo mÃ©dico profesional. Por favor, consulta a un profesional de la salud para una interpretaciÃ³n completa de tus resultados.`;
     } catch (error) {
       this.logger.error('Error generating lab results interpretation:', error);
-      return 'Lo siento, hubo un error al interpretar tus resultados de laboratorio. Por favor, intenta nuevamente más tarde.';
+      return 'Lo siento, hubo un error al interpretar tus resultados de laboratorio. Por favor, intenta nuevamente mÃ¡s tarde.';
     }
   }
 }
